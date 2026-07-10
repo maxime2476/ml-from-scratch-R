@@ -1,0 +1,331 @@
+---
+title: "Module 1 — Moindres carrés ordinaires et inférence"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet et notations {#sec-intro}
+
+On dérive l'estimateur des **moindres carrés ordinaires** (MCO/OLS), on établit
+ses propriétés (sans biais, variance, **BLUE** via Gauss-Markov), puis toute
+l'**inférence** sous normalité (lois de $\hat\beta$, statistiques $t$ et $F$
+depuis les formes quadratiques gaussiennes), le **théorème de Frisch-Waugh-Lovell**
+(preuve + vérification numérique), et enfin le $R^2$ et son ajustement.
+
+### Notations {.unnumbered}
+
+- $y\in\mathbb{R}^n$ : réponse ; $X\in\mathbb{R}^{n\times p}$ : design (la
+  première colonne est la constante $\mathbf 1$, sauf mention contraire).
+- $\beta\in\mathbb{R}^p$ : paramètre ; $\varepsilon\in\mathbb{R}^n$ : aléa.
+- $H = X(X^\top X)^{-1}X^\top$ : **matrice chapeau** (projection orthogonale sur
+  $\operatorname{Im}X$) ; $M = I_n - H$ : projection sur l'orthogonal.
+- $\hat y = X\hat\beta = Hy$ ; $\hat\varepsilon = y-\hat y = My$ : résidus.
+- $\operatorname{RSS} = \hat\varepsilon^\top\hat\varepsilon$ ; $s^2 =
+  \operatorname{RSS}/(n-p)$.
+
+## Hypothèses (Gauss-Markov) {#sec-hyp}
+
+- **(H1) Linéarité.** $y = X\beta + \varepsilon$.
+- **(H2) Rang plein.** $\operatorname{rang}(X)=p$ (donc $n\ge p$ et $X^\top X$
+  inversible ; pas de colinéarité parfaite).
+- **(H3) Exogénéité stricte.** $\mathbb{E}[\varepsilon\mid X]=0$.
+- **(H4) Sphéricité.** $\operatorname{Var}(\varepsilon\mid X)=\sigma^2 I_n$
+  (homoscédasticité **et** non-corrélation).
+- **(H5) Normalité** *(pour l'inférence exacte)*.
+  $\varepsilon\mid X \sim \mathcal N(0,\sigma^2 I_n)$.
+
+(H1)–(H4) suffisent pour Gauss-Markov ; (H5) s'ajoute pour les lois exactes des
+tests. $X$ est traité comme fixe (raisonnement conditionnel à $X$).
+
+## L'estimateur MCO {#sec-ols}
+
+On minimise la somme des carrés des résidus
+$$
+S(\beta) = \|y - X\beta\|^2 = (y-X\beta)^\top(y-X\beta)
+= y^\top y - 2\beta^\top X^\top y + \beta^\top X^\top X\beta .
+\tag{1.1}
+$$
+
+**Condition de premier ordre.** Le gradient (règles de dérivation matricielle
+$\partial_\beta a^\top\beta = a$, $\partial_\beta \beta^\top A\beta = 2A\beta$
+pour $A$ symétrique) vaut
+$$
+\nabla S(\beta) = -2X^\top y + 2X^\top X\beta \overset{!}{=} 0
+\;\Longrightarrow\; X^\top X\,\hat\beta = X^\top y .
+\tag{1.2}
+$$
+Ce sont les **équations normales**. Sous (H2), $X^\top X\succ 0$ est inversible :
+$$
+\boxed{\;\hat\beta = (X^\top X)^{-1}X^\top y\;}
+\tag{1.3}
+$$
+**Condition de second ordre.** $\nabla^2 S(\beta) = 2X^\top X \succ 0$ : $S$ est
+strictement convexe, (1.3) est l'unique minimum global.
+
+> *Numériquement*, on **ne calcule pas** $(X^\top X)^{-1}$ : on résout (1.2) par
+> QR (Module 0, éq. 0.8), qui préserve le conditionnement $\kappa_2(X)$.
+
+## Propriétés en échantillon fini {#sec-prop}
+
+En injectant (H1) dans (1.3) :
+$$
+\hat\beta = (X^\top X)^{-1}X^\top(X\beta+\varepsilon)
+= \beta + (X^\top X)^{-1}X^\top\varepsilon .
+\tag{1.4}
+$$
+
+**Sans biais** (sous H1–H3) : $\mathbb{E}[\hat\beta\mid X] = \beta +
+(X^\top X)^{-1}X^\top\underbrace{\mathbb{E}[\varepsilon\mid X]}_{=0}=\beta.$
+
+**Variance** (sous H4) : comme $\operatorname{Var}(A\varepsilon\mid X)=
+A\operatorname{Var}(\varepsilon\mid X)A^\top$ avec $A=(X^\top X)^{-1}X^\top$,
+$$
+\operatorname{Var}(\hat\beta\mid X) = \sigma^2 (X^\top X)^{-1}X^\top X (X^\top X)^{-1}
+= \sigma^2 (X^\top X)^{-1}.
+\tag{1.5}
+$$
+
+### Théorème de Gauss-Markov {#sec-gm}
+
+> **Théorème 1.1 (Gauss-Markov).** Sous (H1)–(H4), $\hat\beta$ est le **meilleur
+> estimateur linéaire sans biais** (BLUE) : pour tout estimateur linéaire sans
+> biais $\tilde\beta = Cy$, on a $\operatorname{Var}(\tilde\beta\mid X)
+> \succeq \operatorname{Var}(\hat\beta\mid X)$ (au sens de l'ordre des matrices
+> semi-définies positives), avec égalité ssi $\tilde\beta=\hat\beta$.
+
+**Preuve.** Soit $\tilde\beta = Cy$ linéaire, $C\in\mathbb{R}^{p\times n}$.
+Sans biais pour **tout** $\beta$ : $\mathbb{E}[\tilde\beta\mid X]=CX\beta = \beta$
+$\forall\beta \Rightarrow CX = I_p$. Écrivons
+$$
+C = (X^\top X)^{-1}X^\top + D , \qquad\text{d'où}\qquad
+CX = I_p + DX = I_p \;\Rightarrow\; DX = 0 .
+$$
+La variance vaut $\operatorname{Var}(\tilde\beta\mid X)=\sigma^2 CC^\top$. En
+développant avec $A=(X^\top X)^{-1}X^\top$ (donc $AA^\top=(X^\top X)^{-1}$ et
+$AD^\top = (X^\top X)^{-1}(DX)^\top = 0$) :
+$$
+CC^\top = (A+D)(A+D)^\top = AA^\top + \underbrace{AD^\top}_{0} +
+\underbrace{DA^\top}_{0} + DD^\top = (X^\top X)^{-1} + DD^\top .
+$$
+Donc
+$$
+\operatorname{Var}(\tilde\beta\mid X) - \operatorname{Var}(\hat\beta\mid X)
+= \sigma^2 DD^\top \succeq 0 ,
+$$
+car $DD^\top$ est semi-définie positive ($v^\top DD^\top v = \|D^\top v\|^2\ge 0$).
+L'égalité tient ssi $DD^\top=0$, c.-à-d. $D=0$, soit $\tilde\beta=\hat\beta$.
+$\blacksquare$
+
+### Estimation de $\sigma^2$ {#sec-sigma}
+
+Les résidus s'écrivent $\hat\varepsilon = My = M(X\beta+\varepsilon)=M\varepsilon$
+(car $MX=0$). Donc $\operatorname{RSS}=\varepsilon^\top M\varepsilon$. Comme
+$M$ est symétrique idempotente ($M^2=M$) de rang $n-p$ (voir @sec-quad),
+$\operatorname{tr}(M)=n-p$, et via l'astuce de la trace
+$$
+\mathbb{E}[\operatorname{RSS}\mid X] = \mathbb{E}[\varepsilon^\top M\varepsilon\mid X]
+= \operatorname{tr}\!\big(M\,\mathbb{E}[\varepsilon\varepsilon^\top\mid X]\big)
+= \sigma^2\operatorname{tr}(M) = \sigma^2(n-p).
+\tag{1.6}
+$$
+Ainsi $\;s^2 = \operatorname{RSS}/(n-p)\;$ est **sans biais** pour $\sigma^2$. Le
+diviseur $n-p$ (et non $n$) corrige la perte de $p$ degrés de liberté.
+
+## Inférence exacte sous normalité {#sec-inf}
+
+### Formes quadratiques gaussiennes {#sec-quad}
+
+> **Lemme 1.2.** Si $z\sim\mathcal N(0,I_n)$ et $A$ est symétrique idempotente de
+> rang $m$, alors $z^\top A z \sim \chi^2_m$.
+
+**Preuve.** $A$ idempotente symétrique se diagonalise $A=Q\Lambda Q^\top$ avec
+$Q$ orthogonale et $\Lambda=\operatorname{diag}(1,\dots,1,0,\dots,0)$ ($m$ uns,
+car les valeurs propres d'une matrice idempotente valent $0$ ou $1$, et leur
+somme $=\operatorname{tr}(A)=\operatorname{rang}(A)=m$). Posons $w=Q^\top z\sim
+\mathcal N(0,I_n)$ (invariance par rotation). Alors $z^\top Az = w^\top\Lambda w
+= \sum_{i=1}^m w_i^2\sim\chi^2_m$. $\blacksquare$
+
+Rang de $M$ : $\operatorname{tr}(M)=\operatorname{tr}(I_n)-\operatorname{tr}(H)$
+et $\operatorname{tr}(H)=\operatorname{tr}\big((X^\top X)^{-1}X^\top X\big)=
+\operatorname{tr}(I_p)=p$, donc $\operatorname{rang}(M)=n-p$.
+
+### Loi de $\hat\beta$ et indépendance {#sec-loi}
+
+Sous (H1)–(H5), $\hat\beta-\beta=(X^\top X)^{-1}X^\top\varepsilon$ est **linéaire
+gaussienne** :
+$$
+\hat\beta \mid X \sim \mathcal N\!\big(\beta,\ \sigma^2 (X^\top X)^{-1}\big).
+\tag{1.7}
+$$
+Et $\operatorname{RSS}/\sigma^2 = (\varepsilon/\sigma)^\top M (\varepsilon/\sigma)
+\sim\chi^2_{n-p}$ par le Lemme 1.2.
+
+> **Indépendance de $\hat\beta$ et $\operatorname{RSS}$.** Les vecteurs
+> $A\varepsilon$ (avec $A=(X^\top X)^{-1}X^\top$) et $M\varepsilon$ sont
+> conjointement gaussiens et $\operatorname{Cov}(A\varepsilon, M\varepsilon\mid X)
+> = \sigma^2 A M^\top = \sigma^2 (X^\top X)^{-1}X^\top M = 0$ (car $X^\top M=0$).
+> Covariance nulle + gaussianité conjointe $\Rightarrow$ **indépendance**. Donc
+> $\hat\beta \perp \operatorname{RSS}$.
+
+### Statistique $t$ {#sec-t}
+
+Notons $v_j = [(X^\top X)^{-1}]_{jj}$. De (1.7), $\dfrac{\hat\beta_j-\beta_j}{\sigma
+\sqrt{v_j}}\sim\mathcal N(0,1)$. En divisant par $\sqrt{\operatorname{RSS}/
+(\sigma^2(n-p))}=\sqrt{s^2/\sigma^2}$ — quotient d'une $\mathcal N(0,1)$ par la
+racine d'une $\chi^2_{n-p}/(n-p)$ **indépendante** — on obtient par définition de
+la loi de Student :
+$$
+t_j = \frac{\hat\beta_j - \beta_j}{s\sqrt{v_j}}
+= \frac{\hat\beta_j-\beta_j}{\widehat{\operatorname{se}}(\hat\beta_j)}
+\ \sim\ t_{n-p},
+\qquad \widehat{\operatorname{se}}(\hat\beta_j)=s\sqrt{v_j}.
+\tag{1.8}
+$$
+D'où l'intervalle de confiance à $1-\alpha$ :
+$\hat\beta_j \pm t_{n-p,\,1-\alpha/2}\,\widehat{\operatorname{se}}(\hat\beta_j)$.
+
+### Statistique $F$ {#sec-F}
+
+Pour tester $q$ restrictions linéaires $H_0: R\beta = r$ ($R\in\mathbb{R}^{q\times
+p}$ de rang $q$), on a sous $H_0$, par (1.7), $R\hat\beta - r\sim\mathcal N\!\big(0,
+\sigma^2 R(X^\top X)^{-1}R^\top\big)$, donc la forme quadratique standardisée
+$$
+\frac{(R\hat\beta-r)^\top\big[R(X^\top X)^{-1}R^\top\big]^{-1}(R\hat\beta-r)}{\sigma^2}
+\sim \chi^2_q .
+$$
+En la rapportant à $\operatorname{RSS}/\sigma^2\sim\chi^2_{n-p}$ (indépendante) et
+en divisant chaque $\chi^2$ par ses degrés de liberté :
+$$
+F = \frac{(R\hat\beta-r)^\top\big[R(X^\top X)^{-1}R^\top\big]^{-1}(R\hat\beta-r)/q}{s^2}
+\ \sim\ F_{q,\,n-p} \quad\text{sous } H_0 .
+\tag{1.9}
+$$
+**Cas du $F$ global** ($H_0:$ tous les coefficients de pente nuls) : (1.9) se
+réécrit avec les $R^2$, $F = \dfrac{R^2/(p-1)}{(1-R^2)/(n-p)}$ (cf. @sec-r2).
+
+## Théorème de Frisch-Waugh-Lovell {#sec-fwl}
+
+Partitionnons $X=[\,X_1\ \ X_2\,]$ ($X_1$ : $n\times p_1$, $X_2$ : $n\times p_2$)
+et $\beta=(\beta_1^\top,\beta_2^\top)^\top$. Soit $M_1 = I_n -
+X_1(X_1^\top X_1)^{-1}X_1^\top$ le projecteur « résidualisant » par rapport à
+$X_1$.
+
+> **Théorème 1.3 (FWL).** Le sous-vecteur $\hat\beta_2$ de la régression complète
+> $y$ sur $[X_1\ X_2]$ est **identique** au coefficient de la régression de
+> $M_1 y$ sur $M_1 X_2$ :
+> $$
+> \hat\beta_2 = \big((M_1X_2)^\top (M_1X_2)\big)^{-1}(M_1X_2)^\top (M_1 y).
+> \tag{1.10}
+> $$
+> De plus, les résidus des deux régressions coïncident.
+
+**Preuve.** Les équations normales du modèle complet s'écrivent par blocs :
+$$
+\begin{bmatrix} X_1^\top X_1 & X_1^\top X_2 \\ X_2^\top X_1 & X_2^\top X_2\end{bmatrix}
+\begin{bmatrix}\hat\beta_1\\ \hat\beta_2\end{bmatrix}
+=\begin{bmatrix}X_1^\top y\\ X_2^\top y\end{bmatrix}.
+$$
+La première ligne donne $X_1^\top X_1\hat\beta_1 + X_1^\top X_2\hat\beta_2 =
+X_1^\top y$, soit
+$$
+\hat\beta_1 = (X_1^\top X_1)^{-1}X_1^\top(y - X_2\hat\beta_2).
+\tag{$\dagger$}
+$$
+En reportant dans la seconde ligne $X_2^\top X_1\hat\beta_1 + X_2^\top X_2
+\hat\beta_2 = X_2^\top y$ :
+$$
+X_2^\top X_1(X_1^\top X_1)^{-1}X_1^\top(y-X_2\hat\beta_2) + X_2^\top X_2\hat\beta_2
+= X_2^\top y .
+$$
+En regroupant et en faisant apparaître $M_1 = I - X_1(X_1^\top X_1)^{-1}X_1^\top$
+(symétrique idempotent, $M_1X_1=0$) :
+$$
+X_2^\top M_1 X_2\,\hat\beta_2 = X_2^\top M_1 y
+\;\Longrightarrow\;
+\hat\beta_2 = (X_2^\top M_1 X_2)^{-1} X_2^\top M_1 y .
+$$
+Comme $M_1$ est idempotent et symétrique, $X_2^\top M_1 X_2 = (M_1X_2)^\top(M_1X_2)$
+et $X_2^\top M_1 y = (M_1X_2)^\top(M_1 y)$, ce qui est exactement (1.10).
+L'égalité des résidus découle de ce que les deux régressions produisent le même
+$\hat\beta_2$ et la même projection résiduelle sur $\operatorname{Im}[X_1\ X_2]$.
+$\blacksquare$
+
+**Lecture.** FWL formalise le « **contrôle** » : le coefficient de $X_2$
+mesure son effet *après avoir partiellé $X_1$ hors de $y$ et de $X_2$*. C'est la
+matrice-mère de résultats du projet : la régression partielle du Module 5 (IV),
+et surtout l'**orthogonalisation de Neyman** du Module 16 (DML) en sont la
+généralisation non linéaire. La **vérification numérique** ($\hat\beta_2$
+identique aux deux voies, à $10^{-8}$) est faite dans
+`tests/testthat/test-01.R` et illustrée dans la simulation.
+
+## $R^2$, $R^2$ ajusté, et l'augmentation mécanique {#sec-r2}
+
+Avec constante, décomposition de la variance (théorème de Pythagore sur
+$y-\bar y\mathbf 1 = (\hat y-\bar y\mathbf 1) + \hat\varepsilon$, les deux termes
+orthogonaux) :
+$$
+\underbrace{\sum_i (y_i-\bar y)^2}_{\text{TSS}}
+= \underbrace{\sum_i(\hat y_i-\bar y)^2}_{\text{ESS}} + \underbrace{\sum_i\hat\varepsilon_i^2}_{\text{RSS}},
+\qquad R^2 = 1-\frac{\operatorname{RSS}}{\operatorname{TSS}} = \frac{\operatorname{ESS}}{\operatorname{TSS}} .
+\tag{1.11}
+$$
+
+> **Proposition 1.4 (augmentation mécanique).** Ajouter une variable à $X$ ne
+> peut que **diminuer** (au sens large) $\operatorname{RSS}$, donc **augmenter**
+> $R^2$, même si la variable est du bruit.
+
+**Preuve.** Soit $X_{(p)}$ le design courant et $X_{(p+1)}=[X_{(p)}\ x_{p+1}]$.
+$\operatorname{RSS}$ est le minimum de $\|y-X\beta\|^2$ sur $\beta$, c.-à-d. le
+carré de la distance de $y$ au sous-espace $\operatorname{Im}X$. Or
+$\operatorname{Im}X_{(p)}\subseteq\operatorname{Im}X_{(p+1)}$ : minimiser sur un
+espace **plus grand** donne un minimum **au plus égal**. Donc
+$\operatorname{RSS}_{p+1}\le\operatorname{RSS}_p$, et $R^2$ ne décroît jamais.
+$\blacksquare$
+
+D'où l'inutilité du $R^2$ pour **choisir** le nombre de variables. Le $R^2$
+**ajusté** pénalise la complexité en comparant des variances corrigées des
+degrés de liberté :
+$$
+\bar R^2 = 1 - \frac{\operatorname{RSS}/(n-p)}{\operatorname{TSS}/(n-1)}
+= 1 - (1-R^2)\,\frac{n-1}{n-p} .
+\tag{1.12}
+$$
+$\bar R^2$ n'augmente à l'ajout d'une variable que si sa statistique $t$ dépasse
+$1$ en valeur absolue (résultat classique, cf. Greene §3.5) — il peut donc
+**diminuer**, ce qui en fait un critère de sélection rudimentaire (préfigurant
+AIC/BIC du Module 6).
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/01_ols.R`](../R/01_ols.R) :
+
+| Équation / résultat | Fonction / sortie R |
+|---------------------|---------------------|
+| (1.3) via QR (Module 0) | `ols_fit()` → `coefficients` (résout 1.2 par `solve_ls_qr`) |
+| (1.5) $\sigma^2(X^\top X)^{-1}$ | `ols_fit()` → `vcov` |
+| (1.6) $s^2=\operatorname{RSS}/(n-p)$ | `ols_fit()` → `sigma2`, `df.residual` |
+| diag de $H$ | `ols_fit()` → `hat` (leviers) |
+| (1.8) statistique $t$ et se | `ols_summary()` → colonnes `se`, `t`, `p_value` |
+| (1.8) IC | `ols_confint()` |
+| (1.9) statistique $F$ | `ols_ftest()` (global et restrictions $R\beta=r$) |
+| (1.10) FWL | `fwl_beta2()` (vérification numérique) |
+| (1.11)-(1.12) $R^2$, $\bar R^2$ | `ols_summary()` → `r2`, `adj_r2` |
+
+Validation : `ols_fit`/`ols_summary` contre `lm()` et `summary.lm()` à $10^{-8}$
+(coefficients, se, $t$, $F$, $R^2$, leviers). Monte Carlo : couverture empirique
+des IC à 95 % ($\approx 0.95$) et loi empirique de $t$ sous $H_0$ vs densité
+de Student.
+
+## Références {.unnumbered}
+
+- Greene — *Econometric Analysis*, ch. 2–4 (MCO, Gauss-Markov, FWL, inférence).
+- Hastie, Tibshirani, Friedman — *ESL*, §3.2.
+- Hayashi — *Econometrics*, ch. 1 (formes quadratiques, lois exactes).

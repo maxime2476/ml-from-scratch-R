@@ -1,0 +1,478 @@
+---
+title: "Module 0 — Algèbre linéaire numérique et optimiseurs génériques"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+bibliography: false
+---
+
+## Objet et notations {#sec-notations}
+
+Ce module pose les **briques numériques** réutilisées par tout le reste du
+projet : les factorisations matricielles (QR, Cholesky, SVD) qui servent à
+résoudre les systèmes linéaires des moindres carrés de façon **numériquement
+stable**, et une **boîte à outils d'optimiseurs génériques** (gradient, Newton,
+coordinate descent, gradient stochastique) que les modules suivants
+instancieront avec leur propre fonction objectif.
+
+Le fil conducteur est le suivant : la plupart des estimateurs du projet se
+ramènent soit à un système linéaire $X^\top X\,\beta = X^\top y$ (moindres
+carrés, ridge), soit à la minimisation d'une fonction $f(\theta)$ (vraisemblance,
+perte pénalisée). Ce module fournit **le moteur des deux**.
+
+### Notations {.unnumbered}
+
+- $X \in \mathbb{R}^{n\times p}$ : matrice de design, $n$ observations, $p$
+  variables ; on suppose sauf mention contraire $n \ge p$.
+- $y \in \mathbb{R}^n$ : vecteur réponse.
+- $\|v\|$ : norme euclidienne $\ell_2$ d'un vecteur ; $\|A\|_2$ : norme spectrale
+  (plus grande valeur singulière) d'une matrice.
+- $e_j$ : $j$-ème vecteur de la base canonique.
+- $I_n$ : matrice identité $n\times n$.
+- Une matrice est dite **SPD** si elle est symétrique définie positive.
+
+L'objectif de moindres carrés central est
+$$
+\hat\beta \;=\; \arg\min_{\beta\in\mathbb{R}^p} \; \|X\beta - y\|^2 .
+\tag{0.1}
+$$
+Sa condition d'optimalité (gradient nul) donne les **équations normales**
+$$
+X^\top X\,\beta \;=\; X^\top y .
+\tag{0.2}
+$$
+Tout l'enjeu numérique est : **comment résoudre (0.2) sans jamais former ni
+inverser $X^\top X$**, et pourquoi c'est important.
+
+---
+
+## Conditionnement : pourquoi ne pas inverser $X^\top X$ {#sec-cond}
+
+### Nombre de conditionnement
+
+Pour un système $A z = b$ avec $A$ inversible, une perturbation relative de $b$
+se propage sur $z$ avec un facteur d'amplification borné par le **nombre de
+conditionnement**
+$$
+\kappa_2(A) \;=\; \|A\|_2\,\|A^{-1}\|_2 \;=\; \frac{\sigma_{\max}(A)}{\sigma_{\min}(A)},
+\tag{0.3}
+$$
+où $\sigma_{\max}, \sigma_{\min}$ sont les valeurs singulières extrêmes de $A$.
+Un $\kappa_2$ grand signifie que le système est **mal conditionné** : les erreurs
+d'arrondi (de l'ordre de la précision machine $\varepsilon_{\text{mach}}\approx
+2.2\times 10^{-16}$ en double précision) peuvent être amplifiées d'un facteur
+$\kappa_2$, faisant perdre $\log_{10}\kappa_2$ chiffres significatifs.
+
+### Hypothèses {.unnumbered}
+
+- **(H0-1)** $X$ est de plein rang colonne, $\operatorname{rang}(X)=p$.
+
+### Proposition (le carré du conditionnement) {#prp-kappa}
+
+> **Proposition 0.1.** Sous (H0-1), $\ \kappa_2(X^\top X) = \kappa_2(X)^2.$
+
+**Preuve.** Par la décomposition en valeurs singulières (voir @sec-svd), on
+écrit $X = U\Sigma V^\top$ avec $U\in\mathbb{R}^{n\times n}$, $V\in\mathbb{R}^{p
+\times p}$ orthogonales et $\Sigma\in\mathbb{R}^{n\times p}$ contenant sur sa
+diagonale les valeurs singulières $\sigma_1 \ge \dots \ge \sigma_p > 0$ (toutes
+strictement positives par (H0-1)). Les colonnes de $U,V$ étant orthonormées,
+$U^\top U = I_n$ et $V^\top V = I_p$, d'où
+$$
+X^\top X = V \Sigma^\top U^\top U \Sigma V^\top = V (\Sigma^\top\Sigma) V^\top
+= V \operatorname{diag}(\sigma_1^2,\dots,\sigma_p^2) V^\top .
+$$
+C'est une diagonalisation de la matrice symétrique $X^\top X$ : ses valeurs
+propres sont les $\sigma_i^2$, qui sont **aussi** ses valeurs singulières
+(matrice SPD). Donc
+$$
+\kappa_2(X^\top X) = \frac{\sigma_{\max}(X)^2}{\sigma_{\min}(X)^2}
+= \left(\frac{\sigma_{\max}(X)}{\sigma_{\min}(X)}\right)^2 = \kappa_2(X)^2 .
+\qquad\blacksquare
+$$
+
+**Conséquence pratique.** Former $X^\top X$ puis l'inverser (ou la factoriser)
+**élève le conditionnement au carré** : on perd deux fois plus de chiffres
+significatifs. Si $\kappa_2(X)=10^8$, alors $\kappa_2(X^\top X)=10^{16}\approx
+1/\varsigma_{\text{mach}}$ et la solution des équations normales n'a plus **aucun**
+chiffre fiable. En revanche, travailler directement sur $X$ via une
+factorisation **QR** préserve le conditionnement $\kappa_2(X)$. C'est la
+justification de fond du choix « QR plutôt que $(X^\top X)^{-1}$ ».
+L'illustration numérique (matrice de Hilbert, où les deux approches divergent
+visiblement) est produite dans `simulations/mc_00_conditionnement.R`.
+
+---
+
+## Décomposition QR par réflexions de Householder {#sec-qr}
+
+### Idée et objet
+
+On veut factoriser $X = QR$ avec $Q\in\mathbb{R}^{n\times n}$ orthogonale
+($Q^\top Q = I_n$) et $R\in\mathbb{R}^{n\times p}$ triangulaire supérieure (ses
+$p$ premières lignes forment un bloc triangulaire $R_1$, le reste est nul). On
+construit $Q^\top$ comme un **produit de réflexions** qui annulent, colonne
+après colonne, tout ce qui est sous la diagonale.
+
+### Réflecteur de Householder {#sec-householder}
+
+> **Définition 0.2.** Pour $v\in\mathbb{R}^n\setminus\{0\}$, la matrice
+> $$
+> H(v) = I_n - 2\,\frac{v v^\top}{v^\top v}
+> \tag{0.4}
+> $$
+> est la **réflexion de Householder** d'axe $v$.
+
+**Propriétés.** $H$ est symétrique ($H^\top = H$) et orthogonale ($H^\top H =
+H^2 = I_n$ ; calcul direct : $H^2 = I - 4\frac{vv^\top}{v^\top v} +
+4\frac{v(v^\top v)v^\top}{(v^\top v)^2} = I$). Elle réfléchit tout vecteur par
+rapport à l'hyperplan orthogonal à $v$, en préservant la norme.
+
+**Choix de $v$ pour annuler une colonne.** Soit $x\in\mathbb{R}^m$ la partie
+d'une colonne à réduire. On cherche $H$ tel que $Hx = \alpha e_1$. La
+conservation de la norme impose $|\alpha| = \|x\|$. On prend
+$$
+\alpha = -\operatorname{sign}(x_1)\,\|x\|, \qquad
+v = x - \alpha e_1 = x + \operatorname{sign}(x_1)\,\|x\|\,e_1 .
+\tag{0.5}
+$$
+Le **signe** est choisi pour que $v_1 = x_1 - \alpha$ additionne deux quantités
+de même signe : on évite ainsi la **soustraction catastrophique** (annulation)
+qui surviendrait si $x_1 \approx \|x\|$. On vérifie que ce $v$ donne bien
+$H(v)x = \alpha e_1$.
+
+### Algorithme QR
+
+Pour $j = 1,\dots,p$ : on applique un réflecteur $H_j$ (agissant sur les lignes
+$j..n$) qui annule les éléments $X_{j+1,j},\dots,X_{n,j}$ sous le pivot. Après
+$p$ étapes,
+$$
+\underbrace{H_p \cdots H_1}_{=\,Q^\top} X = R, \qquad
+Q = H_1 \cdots H_p .
+\tag{0.6}
+$$
+(Chaque $H_j$ est symétrique, donc $Q^\top = H_p\cdots H_1$.) En pratique on ne
+forme jamais $Q$ explicitement : on stocke les vecteurs $v_j$ et on **applique**
+$Q^\top$ à $y$ par produits successifs $H_j (\cdots)$, chacun en $O(n)$.
+
+### Résolution des moindres carrés par QR {#sec-qr-ls}
+
+L'orthogonalité de $Q$ **préserve la norme** : pour tout $\beta$,
+$$
+\|X\beta - y\|^2 = \|Q^\top(X\beta - y)\|^2 = \|R\beta - Q^\top y\|^2 .
+$$
+Partitionnons $R = \begin{bmatrix} R_1 \\ 0 \end{bmatrix}$ ($R_1$ triangulaire
+$p\times p$) et $Q^\top y = \begin{bmatrix} c_1 \\ c_2 \end{bmatrix}$ ($c_1$ de
+taille $p$). Alors
+$$
+\|X\beta - y\|^2 = \underbrace{\|R_1\beta - c_1\|^2}_{\text{annulable}}
++ \underbrace{\|c_2\|^2}_{\text{incompressible}} .
+\tag{0.7}
+$$
+Le minimum est atteint en résolvant le **système triangulaire**
+$$
+R_1 \hat\beta = c_1
+\tag{0.8}
+$$
+par **remontée** (back-substitution, $O(p^2)$), et la **somme des carrés des
+résidus** vaut $\text{RSS} = \|c_2\|^2$ — obtenue gratuitement, sans former les
+résidus. On n'a jamais touché à $X^\top X$ : le conditionnement reste
+$\kappa_2(X)$, pas son carré.
+
+---
+
+## Factorisation de Cholesky {#sec-chol}
+
+### Existence
+
+> **Théorème 0.3 (Cholesky).** Toute matrice SPD $A\in\mathbb{R}^{p\times p}$
+> admet une unique factorisation $A = LL^\top$ avec $L$ triangulaire inférieure
+> à diagonale strictement positive.
+
+**Preuve (constructive, par récurrence sur $p$).** Pour $p=1$ : $A=(a_{11})$
+avec $a_{11}>0$, on pose $L=(\sqrt{a_{11}})$. Supposons le résultat pour $p-1$.
+Écrivons par blocs
+$$
+A = \begin{bmatrix} a_{11} & b^\top \\ b & A_{22} \end{bmatrix}, \qquad
+L = \begin{bmatrix} \ell_{11} & 0 \\ \ell & L_{22} \end{bmatrix} .
+$$
+L'identification $A = LL^\top$ donne $\ell_{11}=\sqrt{a_{11}}$ (licite car
+$a_{11} = e_1^\top A e_1 > 0$), $\ell = b/\ell_{11}$, et
+$$
+A_{22} - \ell\ell^\top = L_{22}L_{22}^\top .
+$$
+Le **complément de Schur** $A_{22} - \ell\ell^\top = A_{22} - bb^\top/a_{11}$ est
+SPD (car $A$ l'est), donc admet par hypothèse de récurrence une factorisation de
+Cholesky $L_{22}L_{22}^\top$, à diagonale positive. Unicité : les $\ell_{ij}$
+sont déterminés de proche en proche sans ambiguïté de signe (racine positive).
+$\blacksquare$
+
+### Formules explicites
+
+En parcourant colonnes puis lignes, pour $j=1,\dots,p$ :
+$$
+\ell_{jj} = \sqrt{a_{jj} - \sum_{k<j}\ell_{jk}^2}, \qquad
+\ell_{ij} = \frac{1}{\ell_{jj}}\Big(a_{ij} - \sum_{k<j}\ell_{ik}\ell_{jk}\Big),\ i>j .
+\tag{0.9}
+$$
+
+### Résolution des équations normales par Cholesky
+
+Quand $X^\top X$ est **bien conditionnée** (données propres, $p$ modéré),
+résoudre (0.2) via Cholesky est le chemin le plus rapide ($\sim np^2/... $ pour
+former $X^\top X$, puis $p^3/3$ pour la factorisation). On factorise $X^\top X =
+LL^\top$, puis on résout deux systèmes triangulaires :
+$$
+L z = X^\top y \ \text{(descente)}, \qquad L^\top \hat\beta = z \ \text{(remontée)} .
+\tag{0.10}
+$$
+**Avertissement** cohérent avec @prp-kappa : cette voie subit le
+conditionnement $\kappa_2(X)^2$. On l'emploie pour la vitesse quand on sait le
+problème bien conditionné (elle sert notamment au **ridge**, où l'ajout de
+$\lambda I$ garantit $X^\top X + \lambda I \succ 0$ et **améliore** le
+conditionnement — cf. Module 4).
+
+---
+
+## Décomposition en valeurs singulières (SVD) {#sec-svd}
+
+### Énoncé
+
+> **Théorème 0.4 (SVD).** Toute matrice $X\in\mathbb{R}^{n\times p}$ admet une
+> factorisation
+> $$
+> X = U\Sigma V^\top, \tag{0.11}
+> $$
+> avec $U\in\mathbb{R}^{n\times n}$, $V\in\mathbb{R}^{p\times p}$ orthogonales et
+> $\Sigma\in\mathbb{R}^{n\times p}$ « diagonale » à coefficients
+> $\sigma_1\ge\dots\ge\sigma_r > 0 = \dots = 0$, où $r=\operatorname{rang}(X)$.
+
+*Preuve admise* (existence classique ; voir Golub & Van Loan, *Matrix
+Computations*, §2.4, ou Trefethen & Bau, *Numerical Linear Algebra*, lect. 4).
+On l'utilise ici comme outil, l'implémentation R déléguant à `La.svd`.
+
+### Trois usages structurants
+
+**(a) Rang et conditionnement.** Le rang numérique est le nombre de
+$\sigma_i$ au-dessus d'un seuil (ex. $\sigma_1\cdot\max(n,p)\cdot
+\varepsilon_{\text{mach}}$). Le conditionnement est $\kappa_2(X)=\sigma_1/\sigma_r$
+(cf. 0.3). La SVD est **l'outil de diagnostic** de la colinéarité.
+
+**(b) Pseudo-inverse de Moore-Penrose.** On définit
+$$
+X^{+} = V\Sigma^{+}U^\top, \qquad
+\Sigma^{+} = \operatorname{diag}\!\big(\tfrac1{\sigma_1},\dots,\tfrac1{\sigma_r},0,\dots,0\big) .
+\tag{0.12}
+$$
+$X^+$ vérifie les quatre axiomes de Penrose ($XX^+X=X$, $X^+XX^+=X^+$,
+$(XX^+)^\top=XX^+$, $(X^+X)^\top=X^+X$) et coïncide avec $(X^\top X)^{-1}X^\top$
+quand $X$ est de plein rang colonne.
+
+**(c) Solution de norme minimale.** Lorsque $X$ **n'est pas** de plein rang
+(colinéarité parfaite, ou $p>n$), le problème (0.1) admet une **infinité** de
+minimiseurs. Parmi eux, celui de plus petite norme $\ell_2$ est **unique** et
+donné par la pseudo-inverse :
+$$
+\hat\beta_{\min} = X^{+}y .
+\tag{0.13}
+$$
+
+> **Proposition 0.5.** $\hat\beta_{\min}=X^+y$ minimise $\|X\beta-y\|$ et, parmi
+> tous les minimiseurs, a la plus petite norme $\|\beta\|$.
+
+**Preuve.** Écrivons $\beta = V c$ (changement de base orthonormé,
+$\|\beta\|=\|c\|$) et $U^\top y = d$. Alors
+$\|X\beta-y\|^2=\|U(\Sigma c - d)\|^2 = \sum_{i\le r}(\sigma_i c_i - d_i)^2 +
+\sum_{i>r} d_i^2$. Le premier terme est minimisé (annulé) ssi $c_i = d_i/\sigma_i$
+pour $i\le r$ ; les $c_i$ pour $i>r$ sont **libres** (n'affectent pas l'ajustement)
+et contribuent $\sum_{i>r}c_i^2$ à $\|c\|^2$. La norme est donc minimale en les
+prenant nuls, ce qui donne exactement $c = \Sigma^+ d$, soit
+$\beta = V\Sigma^+U^\top y = X^+y$. $\blacksquare$
+
+Ce résultat est la **réponse propre** à la colinéarité parfaite : plutôt que de
+planter sur une inversion impossible, l'implémentation renverra la solution de
+norme minimale et signalera le déficit de rang.
+
+---
+
+## Optimiseurs génériques {#sec-optim}
+
+Les modules non linéaires (GLM, lasso, MLP, boosting) minimisent une fonction
+$f:\mathbb{R}^d\to\mathbb{R}$ sans forme fermée. On implémente **une fois** quatre
+moteurs génériques, réutilisés ensuite en changeant seulement $f$, $\nabla f$,
+$\nabla^2 f$.
+
+Cadre standard : $f$ **convexe** et **$L$-lisse** (gradient $L$-lipschitzien),
+c.-à-d.
+$$
+\|\nabla f(x) - \nabla f(y)\| \le L\|x-y\| \quad\Longleftrightarrow\quad
+f(y) \le f(x) + \nabla f(x)^\top(y-x) + \tfrac{L}{2}\|y-x\|^2 .
+\tag{0.14}
+$$
+La forme de droite (**inégalité de descente**) est la clé des preuves.
+
+### Descente de gradient {#sec-gd}
+
+Itération, pas constant $t$ :
+$$
+x_{k+1} = x_k - t\,\nabla f(x_k) .
+\tag{0.15}
+$$
+
+> **Théorème 0.6 (vitesse $O(1/k)$).** Si $f$ est convexe et $L$-lisse, avec pas
+> $t = 1/L$, alors pour tout minimiseur $x^\star$,
+> $$
+> f(x_k) - f(x^\star) \le \frac{L\,\|x_0 - x^\star\|^2}{2k} .
+> \tag{0.16}
+> $$
+
+**Preuve.** *Étape 1 — décroissance.* En injectant $y=x_{k+1}=x_k-\tfrac1L\nabla
+f(x_k)$ dans (0.14) :
+$$
+f(x_{k+1}) \le f(x_k) - \tfrac1L\|\nabla f(x_k)\|^2 + \tfrac{L}{2}\tfrac1{L^2}\|\nabla f(x_k)\|^2
+= f(x_k) - \tfrac{1}{2L}\|\nabla f(x_k)\|^2 .
+\tag{$\ast$}
+$$
+*Étape 2 — borne par convexité.* La convexité donne $f(x^\star)\ge f(x_k) +
+\nabla f(x_k)^\top(x^\star - x_k)$, soit $f(x_k)-f(x^\star)\le \nabla
+f(x_k)^\top(x_k-x^\star)$. En reportant dans $(\ast)$ et en notant $g=\nabla
+f(x_k)$ :
+$$
+f(x_{k+1}) - f(x^\star) \le g^\top(x_k-x^\star) - \tfrac1{2L}\|g\|^2
+= \tfrac{L}{2}\Big(\|x_k-x^\star\|^2 - \|x_k - x^\star - \tfrac1L g\|^2\Big)
+= \tfrac{L}{2}\big(\|x_k-x^\star\|^2 - \|x_{k+1}-x^\star\|^2\big),
+$$
+en complétant le carré (identité $2a^\top b - \|b\|^2 = \|a\|^2-\|a-b\|^2$ avec
+$a=x_k-x^\star$, $b=\tfrac1L g$). *Étape 3 — télescopage.* En sommant de $0$ à
+$k-1$, les distances se télescopent :
+$$
+\sum_{i=0}^{k-1}\big(f(x_{i+1})-f(x^\star)\big) \le \tfrac{L}{2}\|x_0-x^\star\|^2 .
+$$
+Comme $(\ast)$ montre que $f(x_i)$ est **décroissante**, $f(x_k)-f(x^\star) \le
+\tfrac1k\sum_{i=1}^{k}(f(x_i)-f(x^\star)) \le \tfrac{L}{2k}\|x_0-x^\star\|^2$.
+$\blacksquare$
+
+Sous forte convexité (paramètre $\mu>0$), la même mécanique donne une vitesse
+**linéaire** $f(x_k)-f^\star \le (1-\mu/L)^k(\dots)$ (admis ici, cf. Boyd &
+Vandenberghe, §9.3).
+
+### Newton-Raphson {#sec-newton}
+
+Itération :
+$$
+x_{k+1} = x_k - [\nabla^2 f(x_k)]^{-1}\nabla f(x_k) .
+\tag{0.17}
+$$
+Interprétation : on minimise à chaque pas le **modèle quadratique local** de $f$.
+
+> **Théorème 0.7 (convergence quadratique locale).** Si $\nabla^2 f$ est
+> lipschitzienne (constante $M$) et $\nabla^2 f(x^\star)\succ 0$ (valeur propre
+> min $m>0$), alors pour $x_0$ assez proche de $x^\star$,
+> $$
+> \|x_{k+1}-x^\star\| \le \frac{M}{2m}\|x_k - x^\star\|^2 .
+> \tag{0.18}
+> $$
+
+*Énoncé admis ici* (preuve standard par développement de Taylor du gradient
+autour de $x^\star$ ; cf. Boyd & Vandenberghe, §9.5.3, ou Nocedal & Wright,
+*Numerical Optimization*, th. 3.5). L'illustration numérique (Newton vs gradient
+sur une fonction convexe : nombre d'itérations pour atteindre $10^{-10}$) est
+dans `simulations/mc_00_optimiseurs.R`. **Le lien central du projet** : dans le
+Module 3, appliqué à la log-vraisemblance, Newton **devient l'IRLS**.
+
+### Coordinate descent {#sec-cd}
+
+On minimise cycliquement selon **une coordonnée à la fois**, les autres fixées :
+$$
+x_j^{(k+1)} = \arg\min_{\xi\in\mathbb{R}} f\big(x_1^{(k+1)},\dots,\xi,\dots,x_d^{(k)}\big) .
+\tag{0.19}
+$$
+Intérêt : quand le sous-problème 1-D a une **solution fermée**, chaque mise à
+jour est triviale et très rapide. Convergence garantie pour $f$ convexe lisse,
+et — point crucial pour le **lasso** (Module 4) — pour $f = g + \sum_j h_j(x_j)$
+avec $g$ convexe lisse et $h_j$ convexes **séparables** possiblement non
+différentiables (Tseng, 2001). C'est précisément la structure « lisse +
+pénalité $\ell_1$ séparable », d'où le rôle du coordinate descent comme
+**moteur du lasso** : la mise à jour 1-D y sera le *soft-thresholding*.
+
+### Gradient stochastique (SGD) {#sec-sgd}
+
+Quand $f(x)=\frac1n\sum_{i=1}^n f_i(x)$ (perte empirique), on remplace le
+gradient complet par un gradient **bruité** peu coûteux $g_k$ (un ou quelques
+$i$ tirés au hasard), avec $\mathbb{E}[g_k\mid x_k]=\nabla f(x_k)$ :
+$$
+x_{k+1} = x_k - t_k\, g_k .
+\tag{0.20}
+$$
+**Compromis pas/variance.** Un pas constant $t$ converge vite au début mais
+laisse un **plancher de variance** : le régime stationnaire oscille dans un
+voisinage de $x^\star$ de rayon $\propto t\,\mathbb{V}[g]$. Un pas **décroissant**
+respectant les conditions de Robbins-Monro
+$$
+\sum_k t_k = \infty, \qquad \sum_k t_k^2 < \infty
+\tag{0.21}
+$$
+(p.ex. $t_k = t_0/(1+\gamma k)$) fait tendre le plancher vers $0$ et garantit la
+convergence (en espérance) au prix d'une vitesse plus lente. L'arbitrage
+**biais du pas ↔ variance du gradient** est illustré numériquement dans le
+Monte Carlo. Le SGD est le **moteur du MLP** (Module 12).
+
+---
+
+## Encadré — quel solveur pour quel problème {#sec-choix}
+
+| Situation | Solveur recommandé | Raison |
+|-----------|--------------------|--------|
+| MCO, forme fermée, $X$ bien conditionnée | **QR** (0.8) | stable, $\kappa_2(X)$ préservé ; RSS gratuite |
+| Système SPD bien conditionné, vitesse | **Cholesky** (0.10) | 2× plus rapide que QR, mais subit $\kappa_2^2$ |
+| Rang déficient / colinéarité / $p>n$ | **SVD** + pseudo-inverse (0.13) | solution de norme minimale, diagnostic de rang |
+| $f$ convexe lisse, hessienne coûteuse ($d$ grand) | **Gradient** (0.15) | $O(1/k)$, itérations $O(d)$ |
+| $f$ lisse, hessienne abordable, précision élevée | **Newton** (0.17) | convergence quadratique locale |
+| $f$ = lisse + pénalité séparable (lasso) | **Coordinate descent** (0.19) | sous-problème 1-D fermé (soft-threshold) |
+| Perte-somme, $n$ très grand | **SGD** (0.20) | coût/itération indépendant de $n$ |
+
+**Règle de décision** : forme fermée si elle existe et le problème est bien
+conditionné (QR/Cholesky/SVD) ; sinon premier ordre si $d$ est grand ou la
+hessienne trop chère (gradient/SGD), second ordre si la hessienne est
+abordable et la précision requise élevée (Newton) ; coordinate descent dès que
+le problème est séparable avec sous-problèmes fermés.
+
+---
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance entre équations de ce document et fonctions de
+[`R/00_linalg.R`](../R/00_linalg.R) :
+
+| Équation / résultat | Fonction R | Rôle |
+|---------------------|-----------|------|
+| (0.4)–(0.5) réflecteur | `householder_vector()` | vecteur $v$ stable (choix de signe) |
+| (0.6) factorisation | `qr_householder()` | renvoie $Q$ (implicite), $R$ |
+| (0.7)–(0.8) MCO par QR | `solve_ls_qr()` | résout $R_1\beta=c_1$, RSS $=\|c_2\|^2$ |
+| (0.9) Cholesky | `chol_crout()` | facteur $L$ triangulaire |
+| (0.10) équations normales | `solve_ls_chol()` | double système triangulaire |
+| (0.3), (0.11)–(0.12) SVD | `svd_tools()` | rang, $\kappa_2$, pseudo-inverse |
+| (0.13) norme minimale | `solve_ls_svd()` | $\hat\beta_{\min}=X^+y$ |
+| (0.15)–(0.16) gradient | `optim_gd()` | moteur générique 1er ordre |
+| (0.17) Newton | `optim_newton()` | moteur générique 2nd ordre |
+| (0.19) coordinate descent | `optim_cd()` | moteur séparable (→ lasso) |
+| (0.20)–(0.21) SGD | `optim_sgd()` | moteur perte-somme (→ MLP) |
+
+Les optimiseurs `optim_*()` prennent la fonction objectif et ses dérivées **en
+argument** : ce sont les moteurs réutilisés par les modules suivants, matérialisant
+le fil « un moteur, plusieurs objectifs ».
+
+---
+
+## Références {.unnumbered}
+
+- Golub & Van Loan — *Matrix Computations* (4ᵉ éd.), §2.4 (SVD), §5.1–5.2 (Householder, Cholesky).
+- Trefethen & Bau — *Numerical Linear Algebra*, lectures 4, 10, 16.
+- Boyd & Vandenberghe — *Convex Optimization*, §9.3 (gradient), §9.5 (Newton).
+- Nocedal & Wright — *Numerical Optimization*, ch. 3.
+- Tseng (2001), « Convergence of a block coordinate descent method for nondifferentiable minimization », *J. Optim. Theory Appl.*

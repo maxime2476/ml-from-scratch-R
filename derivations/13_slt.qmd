@@ -1,0 +1,319 @@
+---
+title: "Module 13 — Théorie de l'apprentissage statistique"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On passe d'« estimer l'erreur » (Module 6) à « **borner** l'erreur ». On pose le
+cadre **PAC**, on démontre les inégalités de concentration (**Markov →
+Tchebychev → Hoeffding**), la borne uniforme pour une **classe finie**, la
+**dimension de Vapnik-Chervonenkis** (avec Sauer-Shelah), la **complexité de
+Rademacher** et son **lien avec la régularisation** (Module 4) — le pont
+théorie/pratique du projet. On finit par une discussion critique du caractère
+souvent **vide** de ces bornes.
+
+Ce module est **théorique** : les livrables sont les preuves ci-dessous et leurs
+**illustrations numériques** (`simulations/mc_13_slt.R`, helpers
+`R/13_slt.R`).
+
+## Cadre PAC {#sec-pac}
+
+### Risque vrai et risque empirique {#sec-risque}
+
+Données $(x,y)\sim\mathcal D$ i.i.d. ; hypothèse $h\in\mathcal H$ ; fonction de
+perte $\ell(h(x),y)\in[0,1]$. On définit :
+$$
+R(h) = \mathbb E_{\mathcal D}[\ell(h(x),y)] \quad\text{(risque vrai)},\qquad
+\hat R_n(h) = \frac1n\sum_{i=1}^n \ell(h(x_i),y_i) \quad\text{(risque empirique)}.
+\tag{13.1}
+$$
+La **minimisation du risque empirique** (MRE) renvoie $\hat h = \arg\min_{h\in
+\mathcal H}\hat R_n(h)$. On veut garantir que $R(\hat h)$ est proche du meilleur
+risque possible dans $\mathcal H$.
+
+### Apprenabilité PAC {#sec-apprenable}
+
+> **Définition 13.1.** $\mathcal H$ est **PAC-apprenable** s'il existe un
+> algorithme et une fonction $n_{\mathcal H}(\varepsilon,\delta)$ tels que, pour
+> tout $\mathcal D$, avec $n\ge n_{\mathcal H}(\varepsilon,\delta)$ exemples, on a
+> avec probabilité $\ge 1-\delta$ : $R(\hat h)\le \min_{h\in\mathcal H}R(h) +
+> \varepsilon$.
+
+« Probablement (≥ 1−δ) approximativement (à ε près) correct ». L'enjeu est de
+contrôler l'écart $|\hat R_n(h) - R(h)|$ **uniformément** sur $\mathcal H$ : c'est
+ce qui justifie que minimiser $\hat R_n$ minimise (presque) $R$.
+
+## Inégalités de concentration {#sec-concentration}
+
+### Markov et Tchebychev {#sec-markov}
+
+> **Markov.** Pour $X\ge 0$ et $t>0$ : $\ \mathbb P(X\ge t)\le \mathbb E[X]/t.$
+
+**Preuve.** $t\,\mathbf 1\{X\ge t\}\le X$ (vrai point par point) ; en prenant
+l'espérance, $t\,\mathbb P(X\ge t)\le\mathbb E[X]$. $\blacksquare$
+
+> **Tchebychev.** $\ \mathbb P(|X-\mu|\ge t)\le \operatorname{Var}(X)/t^2.$
+
+**Preuve.** Appliquer Markov à $(X-\mu)^2\ge 0$ avec seuil $t^2$. $\blacksquare$
+
+Tchebychev sur $\hat R_n$ (variance $\le 1/(4n)$ pour une perte dans $[0,1]$)
+donne déjà $\mathbb P(|\hat R_n - R|\ge\varepsilon)\le 1/(4n\varepsilon^2)$ :
+décroissance **polynomiale**. Hoeffding l'améliore en décroissance
+**exponentielle**.
+
+### Lemme de Hoeffding {#sec-lemme}
+
+> **Lemme 13.2 (Hoeffding).** Soit $X$ avec $\mathbb E[X]=0$ et $a\le X\le b$.
+> Alors pour tout $s\in\mathbb R$, $\ \mathbb E[e^{sX}]\le \exp\!\big(s^2(b-a)^2/8\big).$
+
+**Preuve.** Par convexité de $x\mapsto e^{sx}$ sur $[a,b]$ :
+$e^{sX}\le \frac{b-X}{b-a}e^{sa} + \frac{X-a}{b-a}e^{sb}$. En prenant l'espérance
+($\mathbb E[X]=0$) :
+$$
+\mathbb E[e^{sX}]\le \frac{b}{b-a}e^{sa} - \frac{a}{b-a}e^{sb} =: e^{\varphi(s)}.
+$$
+Posons $p=-a/(b-a)$, de sorte que $\varphi(s)=sa + \log(1-p+p\,e^{s(b-a)})$. On
+calcule $\varphi(0)=0$, $\varphi'(0)=0$, et $\varphi''(s)\le (b-a)^2/4$ pour tout
+$s$ (c'est $u(1-u)(b-a)^2$ avec $u=p e^{s(b-a)}/(1-p+p e^{s(b-a)})\in[0,1]$, et
+$u(1-u)\le 1/4$). Par Taylor avec reste, $\varphi(s)\le s^2(b-a)^2/8$. $\blacksquare$
+
+### Inégalité de Hoeffding {#sec-hoeffding}
+
+> **Théorème 13.3 (Hoeffding).** Soient $X_1,\dots,X_n$ indépendantes,
+> $X_i\in[a_i,b_i]$, $S_n=\sum_i X_i$. Alors pour $t>0$,
+> $$
+> \mathbb P\big(S_n - \mathbb E[S_n]\ge t\big)\le \exp\!\Big(\frac{-2t^2}{\sum_i (b_i-a_i)^2}\Big).
+> \tag{13.2}
+> $$
+> En particulier, pour $\hat R_n$ (moyenne de pertes i.i.d. dans $[0,1]$) :
+> $\mathbb P(|\hat R_n - R|\ge\varepsilon)\le 2e^{-2n\varepsilon^2}$.
+
+**Preuve (méthode de Chernoff).** Soit $Y_i=X_i-\mathbb E[X_i]$ (centrées,
+$\in[a_i-\mathbb E X_i, b_i-\mathbb E X_i]$ de longueur $b_i-a_i$). Pour $s>0$,
+Markov sur $e^{s\sum Y_i}$ :
+$$
+\mathbb P\big(\textstyle\sum Y_i\ge t\big) \le e^{-st}\,\mathbb E\big[e^{s\sum Y_i}\big]
+= e^{-st}\prod_i \mathbb E[e^{sY_i}]
+\le e^{-st}\prod_i e^{s^2(b_i-a_i)^2/8},
+$$
+par indépendance puis le Lemme 13.2. L'exposant $-st + \frac{s^2}{8}\sum(b_i-a_i)^2$
+est minimisé en $s^\star = 4t/\sum(b_i-a_i)^2$, donnant $-2t^2/\sum(b_i-a_i)^2$.
+La borne bilatérale suit par symétrie. $\blacksquare$
+
+### McDiarmid (inégalité des différences bornées) {#sec-mcdiarmid}
+
+> **Théorème 13.4 (McDiarmid, admis).** Si $f(x_1,\dots,x_n)$ vérifie la
+> propriété des **différences bornées** — changer un seul argument modifie $f$
+> d'au plus $c_i$ — alors $\mathbb P(f-\mathbb E f\ge t)\le \exp(-2t^2/\sum c_i^2)$.
+
+*Preuve admise* (méthode des martingales / différences de Doob ; cf.
+Boucheron, Lugosi & Massart, *Concentration Inequalities*, ch. 6). Hoeffding en
+est le cas $f=\sum x_i$. McDiarmid sert à la borne de Rademacher (@sec-rademacher).
+
+## Classe finie : borne uniforme {#sec-finie}
+
+> **Théorème 13.5.** Soit $|\mathcal H|=M<\infty$, perte dans $[0,1]$. Avec
+> probabilité $\ge 1-\delta$, pour **tout** $h\in\mathcal H$ simultanément :
+> $$
+> R(h)\le \hat R_n(h) + \sqrt{\frac{\log M + \log(1/\delta)}{2n}}.
+> \tag{13.3}
+> $$
+
+**Preuve.** Pour un $h$ **fixé**, Hoeffding donne $\mathbb P(R(h)-\hat R_n(h)\ge
+\varepsilon)\le e^{-2n\varepsilon^2}$. Par **borne d'union** sur les $M$
+hypothèses :
+$$
+\mathbb P\big(\exists h:\ R(h)-\hat R_n(h)\ge\varepsilon\big)\le M e^{-2n\varepsilon^2}.
+$$
+En posant $\delta = M e^{-2n\varepsilon^2}$ et en résolvant pour $\varepsilon$,
+on obtient (13.3). $\blacksquare$
+
+**Lecture.** La « pénalité de complexité » $\sqrt{\log M/(2n)}$ croît avec la
+taille de la classe : plus $\mathcal H$ est riche, plus il faut d'exemples. Pour
+$\mathcal H$ **infinie**, $\log M=\infty$ — il faut une mesure de complexité plus
+fine : la VC-dimension.
+
+## Dimension de Vapnik-Chervonenkis {#sec-vc}
+
+### Pulvérisation et VC-dim {#sec-shatter}
+
+Pour une classe de **classifieurs** $\mathcal H$ (valeurs dans $\{0,1\}$) et un
+ensemble $S=\{x_1,\dots,x_m\}$, la **fonction de croissance** est
+$\Pi_{\mathcal H}(m)=\max_{|S|=m}\big|\{(h(x_1),\dots,h(x_m)):h\in\mathcal H\}\big|
+\le 2^m$. On dit que $\mathcal H$ **pulvérise** $S$ si $\Pi=2^m$ (tous les
+étiquetages réalisables).
+
+> **Définition 13.6.** La **VC-dimension** $\mathrm{VC}(\mathcal H)$ est le plus
+> grand $m$ tel qu'il existe un ensemble de $m$ points pulvérisé par $\mathcal H$.
+
+### Calculs explicites {#sec-vc-calc}
+
+**Demi-droites (seuils)** $\mathcal H=\{x\mapsto\mathbf 1\{x\ge\theta\}\}$ sur
+$\mathbb R$ : un point est pulvérisé (les deux étiquetages atteignables) ; deux
+points $x_1<x_2$ ne le sont pas (l'étiquetage $(1,0)$ = « positif à gauche,
+négatif à droite » est impossible). Donc $\mathrm{VC}=1$.
+
+**Intervalles** $\mathcal H=\{\mathbf 1\{x\in[a,b]\}\}$ : deux points pulvérisés
+(4 étiquetages) ; trois points $x_1<x_2<x_3$ : l'étiquetage $(1,0,1)$ est
+impossible (un intervalle contenant $x_1,x_3$ contient $x_2$). Donc
+$\mathrm{VC}=2$.
+
+**Demi-plans / hyperplans de $\mathbb R^d$** : $\mathrm{VC}=d+1$.
+
+> **Proposition 13.7 (cas $d=2$).** Les demi-plans de $\mathbb R^2$ ont
+> $\mathrm{VC}=3$.
+
+**Preuve.** *(≥ 3)* Trois points en position générale (non alignés) : pour tout
+étiquetage, les points « positifs » et « négatifs » forment deux ensembles
+**linéairement séparables** (leurs enveloppes convexes sont disjointes), donc un
+demi-plan les sépare — les 8 étiquetages sont réalisables. *(< 4)* Pour 4 points,
+par le **théorème de Radon**, tout ensemble de $d+2=4$ points de $\mathbb R^2$ se
+partitionne en deux sous-ensembles dont les enveloppes convexes s'**intersectent**.
+Étiqueter ces deux sous-ensembles $+$ et $-$ ne peut être réalisé par aucun
+demi-plan (il séparerait deux convexes qui se coupent). Donc aucun ensemble de 4
+points n'est pulvérisé. $\blacksquare$
+
+### Lemme de Sauer-Shelah {#sec-sauer}
+
+> **Lemme 13.8 (Sauer-Shelah).** Si $\mathrm{VC}(\mathcal H)=d$, alors pour tout
+> $m$, $\ \Pi_{\mathcal H}(m)\le \sum_{i=0}^{d}\binom{m}{i} \le \big(\tfrac{em}{d}\big)^d.$
+
+**Preuve (récurrence sur $m+d$).** Notons $\Phi_d(m)=\sum_{i=0}^d\binom mi$. On
+montre $\Pi_{\mathcal H}(m)\le\Phi_d(m)$. Base : $m=0$ ou $d=0$ triviaux
+($\Pi=1$). Fixons $S=\{x_1,\dots,x_m\}$ et l'ensemble des étiquetages
+$\mathcal H_S$. Considérons $S'=\{x_1,\dots,x_{m-1}\}$ et deux classes :
+$\mathcal H_{S'}$ (restrictions à $S'$) et $\mathcal H'_{S'}$ (les étiquetages de
+$S'$ réalisables **avec les deux valeurs** sur $x_m$). Alors
+$|\mathcal H_S| = |\mathcal H_{S'}| + |\mathcal H'_{S'}|$. Or $\mathcal H_{S'}$ a
+VC-dim $\le d$, donc $|\mathcal H_{S'}|\le\Phi_d(m-1)$ ; et tout ensemble
+pulvérisé par $\mathcal H'_{S'}$, augmenté de $x_m$, est pulvérisé par
+$\mathcal H$, donc $\mathrm{VC}(\mathcal H'_{S'})\le d-1$ et
+$|\mathcal H'_{S'}|\le\Phi_{d-1}(m-1)$. L'identité de Pascal
+$\Phi_d(m-1)+\Phi_{d-1}(m-1)=\Phi_d(m)$ conclut. $\blacksquare$
+
+Point clé : dès que $\mathrm{VC}$ est **fini**, la fonction de croissance passe de
+$2^m$ (exponentielle) à un régime **polynomial** $m^d$ — c'est ce qui rend
+l'apprentissage possible.
+
+### Théorème fondamental {#sec-fondamental}
+
+> **Théorème 13.9 (admis).** Une classe $\mathcal H$ est PAC-apprenable **si et
+> seulement si** $\mathrm{VC}(\mathcal H)<\infty$. De plus la complexité
+> d'échantillon est $n_{\mathcal H}(\varepsilon,\delta)=\Theta\!\big(\frac{d+\log(1/\delta)}{\varepsilon^2}\big)$.
+
+*Preuve admise* (borne supérieure via Sauer-Shelah + argument de symétrisation ;
+borne inférieure par construction ; cf. Shalev-Shwartz & Ben-David, ch. 6, ou
+Mohri et al., ch. 3). C'est le résultat central de la théorie.
+
+## Complexité de Rademacher {#sec-rademacher}
+
+Mesure **dépendante des données** (souvent plus fine que la VC-dim).
+
+> **Définition 13.10.** Pour une classe de fonctions $\mathcal F$ (à valeurs
+> réelles) et un échantillon $S=(z_1,\dots,z_n)$, la **complexité de Rademacher
+> empirique** est
+> $$
+> \hat{\mathfrak R}_S(\mathcal F) = \mathbb E_\sigma\Big[\sup_{f\in\mathcal F}\frac1n\sum_{i=1}^n \sigma_i f(z_i)\Big],
+> \qquad \sigma_i\ \text{i.i.d. uniformes sur }\{-1,+1\}.
+> $$
+> Sa version espérée est $\mathfrak R_n(\mathcal F)=\mathbb E_S[\hat{\mathfrak R}_S]$.
+
+Interprétation : à quel point $\mathcal F$ peut « coller » à un **bruit** aléatoire
+$\sigma$ — une classe très flexible s'aligne bien sur n'importe quel bruit
+(complexité élevée).
+
+### Borne de généralisation {#sec-rad-bound}
+
+> **Théorème 13.11.** Perte dans $[0,1]$. Avec probabilité $\ge 1-\delta$, pour
+> tout $h\in\mathcal H$ :
+> $$
+> R(h)\le \hat R_n(h) + 2\,\mathfrak R_n(\ell\circ\mathcal H) + \sqrt{\frac{\log(1/\delta)}{2n}}.
+> \tag{13.4}
+> $$
+
+**Esquisse de preuve** (étapes techniques signalées). Soit $\Phi(S)=\sup_h(R(h)
+-\hat R_n(h))$. *(1) Concentration.* Changer un $z_i$ modifie $\Phi$ d'au plus
+$1/n$ ; McDiarmid (Th. 13.4) donne $\Phi(S)\le\mathbb E_S[\Phi] +
+\sqrt{\log(1/\delta)/(2n)}$ avec proba $\ge 1-\delta$. *(2) Symétrisation
+(admise).* En introduisant un échantillon fantôme $S'$ et des signes de
+Rademacher, on montre $\mathbb E_S[\Phi]\le 2\,\mathfrak R_n(\ell\circ\mathcal H)$
+(c'est l'étape clé, cf. Mohri et al., §3.1). La combinaison donne (13.4).
+$\blacksquare$
+
+### Classes linéaires à norme bornée {#sec-rad-lin}
+
+> **Proposition 13.12.** Pour $\mathcal F=\{x\mapsto w^\top x:\ \|w\|_2\le B\}$ et
+> des données $\|x_i\|_2\le \rho$,
+> $$
+> \hat{\mathfrak R}_S(\mathcal F)\le \frac{B\,\rho}{\sqrt n}.
+> \tag{13.5}
+> $$
+
+**Preuve.**
+$$
+\hat{\mathfrak R}_S = \frac1n\mathbb E_\sigma\Big[\sup_{\|w\|\le B} w^\top\!\sum_i\sigma_i x_i\Big]
+= \frac{B}{n}\mathbb E_\sigma\Big\|\sum_i\sigma_i x_i\Big\|
+\le \frac{B}{n}\sqrt{\mathbb E_\sigma\Big\|\sum_i\sigma_i x_i\Big\|^2},
+$$
+par Cauchy-Schwarz (sup atteint en $w=B\,u/\|u\|$) puis Jensen. Or
+$\mathbb E_\sigma\|\sum_i\sigma_i x_i\|^2 = \sum_{i,j}\mathbb E[\sigma_i\sigma_j]
+x_i^\top x_j = \sum_i\|x_i\|^2\le n\rho^2$ (les $\sigma$ indépendants centrés,
+$\mathbb E[\sigma_i\sigma_j]=\mathbf 1\{i=j\}$). D'où $\hat{\mathfrak R}_S\le
+\frac{B}{n}\sqrt{n\rho^2}=B\rho/\sqrt n$. $\blacksquare$
+
+### Le pont théorie/pratique : régularisation = contrôle de complexité {#sec-pont}
+
+(13.5) est **le** résultat qui relie ce module au Module 4 : **borner $\|w\|$**
+(ce que font ridge, $\|w\|_2\le B$, et lasso, $\|w\|_1\le B$) **borne directement
+la complexité de Rademacher**, donc l'écart de généralisation (13.4). La
+pénalisation n'est pas un artifice de calcul : c'est un **contrôle explicite de
+la capacité** de la classe. Réciproquement, une norme non contrôlée laisse la
+complexité — et le sur-ajustement — exploser. C'est la justification théorique
+profonde de la régularisation.
+
+## Discussion critique : des bornes souvent vides {#sec-critique}
+
+Ces bornes sont **distribution-libres** et **dans le pire cas** : pour les
+modèles réels (forêts profondes, réseaux de neurones), $\mathrm{VC}$ est énorme
+ou infinie, et (13.3)-(13.4) donnent des majorants $>1$ — **numériquement vides**
+(une borne « $R\le 15$ » sur une erreur dans $[0,1]$ n'informe pas). Leur valeur
+est **conceptuelle** :
+
+1. elles **expliquent** pourquoi l'apprentissage est possible (VC finie ⟺
+   apprenabilité) et pourquoi il faut plus de données quand la classe est riche ;
+2. elles **fondent** la régularisation comme contrôle de capacité (§13.7.3) ;
+3. elles guident la **forme** des algorithmes (marges, normes), même quand les
+   constantes sont pessimistes.
+
+Les bornes fines pour le *deep learning* (normes spectrales, PAC-bayésien,
+interpolation bénigne) restent un domaine de recherche actif — hors périmètre ici.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/13_slt.R`](../R/13_slt.R) et
+`simulations/mc_13_slt.R` :
+
+| Résultat | Fonction / illustration |
+|----------|-------------------------|
+| (13.2) Hoeffding | `hoeffding_bound()` ; fréquence des déviations vs borne |
+| Déf. 13.10 Rademacher empirique | `empirical_rademacher()` (moyenne sur tirages $\sigma$) |
+| (13.5) classe linéaire | Rademacher estimée vs $B\rho/\sqrt n$ |
+| Déf. 13.6 pulvérisation | `shatters()` ; 3 points de $\mathbb R^2$ oui, 4 non |
+| (13.4) écart généralisation | écart train/test observé vs borne de Rademacher |
+
+## Références {.unnumbered}
+
+- Shalev-Shwartz & Ben-David — *Understanding Machine Learning* (réf. principale).
+- Mohri, Rostamizadeh & Talwalkar — *Foundations of Machine Learning* (Rademacher).
+- Boucheron, Lugosi & Massart — *Concentration Inequalities* (McDiarmid).
+- Vapnik — *The Nature of Statistical Learning Theory*.

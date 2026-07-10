@@ -1,0 +1,241 @@
+---
+title: "Module 3 — Modèles linéaires généralisés et IRLS"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive les **modèles linéaires généralisés** (GLM) depuis la **famille
+exponentielle** : espérance et variance depuis $b(\theta)$, log-vraisemblance de
+la logistique, **gradient et hessienne à la main**, algorithme de
+**Newton-Raphson** et sa réécriture en **IRLS** (moindres carrés pondérés
+itérés) avec preuve de l'équivalence, erreurs standards par l'**information de
+Fisher**, et les **trois tests** (Wald, rapport de vraisemblance, score) avec
+leur équivalence asymptotique et la **déviance**.
+
+## Famille exponentielle {#sec-expfam}
+
+> **Définition 3.1.** Une loi appartient à la **famille exponentielle à
+> dispersion** si sa densité (ou masse) s'écrit
+> $$
+> f(y;\theta,\phi) = \exp\!\Big\{\frac{y\theta - b(\theta)}{a(\phi)} + c(y,\phi)\Big\},
+> \tag{3.1}
+> $$
+> où $\theta$ est le **paramètre canonique**, $\phi$ le paramètre de dispersion,
+> $b(\cdot)$ la fonction de cumulants.
+
+### Espérance et variance depuis $b(\theta)$ {#sec-moments}
+
+Le **score** par rapport à $\theta$ est $\partial_\theta\log f = (y-b'(\theta))/
+a(\phi)$. Deux identités de vraisemblance :
+
+**(i)** $\mathbb E[\partial_\theta\log f]=0$ (score centré) donne
+$$
+\mathbb E[Y] = b'(\theta) =: \mu .
+\tag{3.2}
+$$
+**(ii)** L'identité d'information $\mathbb E[(\partial_\theta\log f)^2] =
+-\mathbb E[\partial^2_\theta\log f]$ donne, avec $\partial^2_\theta\log f =
+-b''(\theta)/a(\phi)$,
+$$
+\frac{\operatorname{Var}(Y)}{a(\phi)^2} = \frac{b''(\theta)}{a(\phi)}
+\;\Longrightarrow\;
+\operatorname{Var}(Y) = a(\phi)\,b''(\theta) = a(\phi)\,V(\mu),
+\tag{3.3}
+$$
+où $V(\mu)=b''(\theta)$ est la **fonction de variance**. La variance d'un GLM se
+factorise ainsi en dispersion $\times$ fonction de la moyenne.
+
+### Composantes d'un GLM {.unnumbered}
+
+Un GLM combine (a) une loi de la famille exponentielle, (b) un **prédicteur
+linéaire** $\eta_i = x_i^\top\beta$, (c) une **fonction de lien** $g$ telle que
+$g(\mu_i)=\eta_i$. Le lien est **canonique** si $\theta_i=\eta_i$, c.-à-d.
+$g = (b')^{-1}$. Exemples :
+
+| Loi | $b(\theta)$ | $\mu=b'(\theta)$ | $V(\mu)$ | lien canonique |
+|-----|-------------|------------------|----------|----------------|
+| Bernoulli | $\log(1+e^\theta)$ | $\frac{e^\theta}{1+e^\theta}$ | $\mu(1-\mu)$ | logit |
+| Poisson | $e^\theta$ | $e^\theta$ | $\mu$ | log |
+| Gaussienne | $\theta^2/2$ | $\theta$ | $1$ | identité |
+
+## Vraisemblance logistique, gradient, hessienne {#sec-logit}
+
+Cadre Bernoulli, lien logit ($a(\phi)=1$). Avec $\mu_i=\sigma(\eta_i)$,
+$\sigma(t)=1/(1+e^{-t})$ la sigmoïde et $\eta_i=x_i^\top\beta$, la
+log-vraisemblance est
+$$
+\ell(\beta) = \sum_{i=1}^n \big[y_i\log\mu_i + (1-y_i)\log(1-\mu_i)\big]
+= \sum_{i=1}^n \big[y_i\, x_i^\top\beta - \log(1+e^{x_i^\top\beta})\big],
+\tag{3.4}
+$$
+en utilisant $\log\frac{\mu_i}{1-\mu_i}=\eta_i$ et $\log(1-\mu_i)=-\log(1+e^{\eta_i})$.
+
+**Gradient (score).** Comme $\sigma'(t)=\sigma(t)(1-\sigma(t))$, $\partial_\beta
+\log(1+e^{x_i^\top\beta}) = \mu_i x_i$, d'où
+$$
+\nabla\ell(\beta) = \sum_{i=1}^n (y_i - \mu_i)\,x_i = X^\top(y-\mu).
+\tag{3.5}
+$$
+
+**Hessienne.** En dérivant (3.5), $\partial_\beta\mu_i = \mu_i(1-\mu_i)x_i$ :
+$$
+\nabla^2\ell(\beta) = -\sum_{i=1}^n \mu_i(1-\mu_i)\,x_i x_i^\top = -X^\top W X,
+\qquad W=\operatorname{diag}\!\big(\mu_i(1-\mu_i)\big).
+\tag{3.6}
+$$
+$W\succeq 0$ donne $\nabla^2\ell\preceq 0$ : $\ell$ est **concave**, le maximum de
+vraisemblance est unique (si $X$ de plein rang et données non séparées).
+
+## Newton-Raphson et IRLS {#sec-irls}
+
+### Pas de Newton {#sec-newton}
+
+Maximiser $\ell$ = résoudre $\nabla\ell=0$. Le pas de Newton (Module 0, éq. 0.17,
+appliqué à $-\ell$) est
+$$
+\beta^{(t+1)} = \beta^{(t)} - \big[\nabla^2\ell\big]^{-1}\nabla\ell
+= \beta^{(t)} + (X^\top W X)^{-1} X^\top(y-\mu),
+\tag{3.7}
+$$
+toutes les quantités $\mu,W$ étant évaluées en $\beta^{(t)}$.
+
+### Réécriture en moindres carrés pondérés {#sec-equiv}
+
+> **Proposition 3.2 (Newton = IRLS).** Le pas (3.7) est identique à la solution
+> des moindres carrés **pondérés** de la **réponse de travail**
+> $$
+> z^{(t)} = X\beta^{(t)} + W^{-1}(y-\mu)
+> \tag{3.8}
+> $$
+> sur $X$ avec poids $W$ : $\ \beta^{(t+1)} = (X^\top W X)^{-1}X^\top W z^{(t)}.$
+
+**Preuve.** En développant la formule WLS avec $z^{(t)}$ de (3.8) :
+$$
+(X^\top W X)^{-1}X^\top W z^{(t)}
+= (X^\top W X)^{-1}X^\top W\big(X\beta^{(t)} + W^{-1}(y-\mu)\big)
+$$
+$$
+= (X^\top W X)^{-1}\big(X^\top W X\,\beta^{(t)} + X^\top(y-\mu)\big)
+= \beta^{(t)} + (X^\top W X)^{-1}X^\top(y-\mu),
+$$
+ce qui est exactement (3.7). $\blacksquare$
+
+**Interprétation.** Chaque itération de Newton = une régression pondérée
+(résolue par la QR du Module 0). D'où le nom **IRLS** (*iteratively reweighted
+least squares*) : on met à jour $\mu$, $W$, $z$, puis on résout une WLS, en
+boucle jusqu'à convergence.
+
+### Forme générale (lien quelconque) {#sec-general}
+
+Pour un GLM général, la même mécanique (score de Fisher) donne les poids et la
+réponse de travail
+$$
+W_i = \frac{(\partial\mu_i/\partial\eta_i)^2}{\operatorname{Var}(y_i)}, \qquad
+z_i = \eta_i + (y_i-\mu_i)\frac{\partial\eta_i}{\partial\mu_i}.
+\tag{3.9}
+$$
+Pour un **lien canonique**, $\partial\mu_i/\partial\eta_i=V(\mu_i)$ et (3.9) se
+simplifie : Poisson-log donne $W=\operatorname{diag}(\mu_i)$, $z_i=\eta_i+
+(y_i-\mu_i)/\mu_i$ ; logit redonne $W=\operatorname{diag}(\mu_i(1-\mu_i))$. Le
+**critère de convergence** retenu (implémentation) est la variation relative de
+la déviance $|D^{(t+1)}-D^{(t)}|/(|D^{(t)}|+0.1) < \varepsilon$.
+
+## Information de Fisher et erreurs standards {#sec-fisher}
+
+L'**information de Fisher** est $\mathcal I(\beta)=-\mathbb E[\nabla^2\ell]=
+X^\top W X$ (pour un lien canonique, hessienne observée = espérée). La théorie
+asymptotique du MLE donne
+$$
+\hat\beta \;\overset{a}{\sim}\; \mathcal N\!\big(\beta,\ \mathcal I(\beta)^{-1}\big),
+\qquad
+\widehat{\operatorname{Var}}(\hat\beta) = (X^\top \hat W X)^{-1},
+\tag{3.10}
+$$
+$\hat W$ évaluée en $\hat\beta$. Les erreurs standards sont les racines de la
+diagonale : ce sont **exactement** les $(X^\top W X)^{-1}$ produits par la
+dernière itération IRLS — l'inférence tombe « gratuitement ».
+
+## Trois tests, une même limite {#sec-tests}
+
+Pour $H_0: R\beta = r$ ($q$ restrictions), notons $\hat\beta$ le MLE non
+contraint, $\tilde\beta$ le MLE contraint, $U(\beta)=\nabla\ell$ le score.
+
+- **Wald** (distance du non contraint à $H_0$) :
+$$
+W = (R\hat\beta - r)^\top\big[R\,\mathcal I(\hat\beta)^{-1}R^\top\big]^{-1}(R\hat\beta - r).
+\tag{3.11}
+$$
+- **Rapport de vraisemblance (LR)** (écart de vraisemblance) :
+$$
+\mathrm{LR} = 2\big(\ell(\hat\beta) - \ell(\tilde\beta)\big).
+\tag{3.12}
+$$
+- **Score / Rao** (pente en $\tilde\beta$, n'utilise que le modèle contraint) :
+$$
+S = U(\tilde\beta)^\top \mathcal I(\tilde\beta)^{-1} U(\tilde\beta).
+\tag{3.13}
+$$
+
+> **Théorème 3.3.** Sous $H_0$ et conditions de régularité, $W$, $\mathrm{LR}$ et
+> $S$ convergent chacun en loi vers $\chi^2_q$, et sont **asymptotiquement
+> équivalents** ($W - \mathrm{LR} = o_p(1)$, etc.).
+
+*Idée* (preuve admise, cf. Greene §14.6 ou van der Vaart §16) : un développement
+de Taylor de $\ell$ à l'ordre 2 autour de $\hat\beta$ rend $\ell$ localement
+quadratique ; les trois statistiques mesurent alors la même distance dans la
+métrique de l'information, respectivement par l'axe des $\beta$ (Wald), la
+hauteur de log-vraisemblance (LR) et la pente au point contraint (score). En
+échantillon fini ils diffèrent : **Wald** ne requiert que $\hat\beta$, **score**
+que $\tilde\beta$, **LR** les deux ; on compare leurs tailles en petit
+échantillon dans le Monte Carlo.
+
+## Déviance {#sec-deviance}
+
+La **déviance** compare le modèle ajusté au modèle **saturé** (un paramètre par
+observation, $\hat\mu_i^{\text{sat}}=y_i$) :
+$$
+D = 2\big(\ell_{\text{sat}} - \ell(\hat\beta)\big)
+= 2\sum_{i=1}^n \Big[ y_i\log\tfrac{y_i}{\hat\mu_i} - (y_i-\hat\mu_i)\Big]
+\ \text{(Poisson)},
+\tag{3.14}
+$$
+et pour la Bernoulli $D = -2\sum_i[y_i\log\hat\mu_i + (1-y_i)\log(1-\hat\mu_i)]$.
+La déviance joue le rôle de la RSS des MCO : la statistique **LR** de comparaison
+de deux modèles emboîtés est simplement $D_{\text{réduit}} - D_{\text{complet}}$.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/03_glm_irls.R`](../R/03_glm_irls.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (3.5)-(3.6) score, hessienne | internes à `glm_irls()` |
+| (3.7)-(3.9) boucle IRLS | `glm_irls(formula, data, family)` (logit, Poisson) |
+| (3.8) réponse de travail / WLS | via `solve_ls_qr` (Module 0) sur données pondérées |
+| (3.10) Fisher, se | `glm_irls()` → `vcov`, `se` |
+| (3.11) Wald | `wald_test(fit, R, r)` |
+| (3.12) LR | `lr_test(fit_full, fit_reduced)` |
+| (3.13) score | `score_test(fit_reduced, R)` |
+| (3.14) déviance | `glm_irls()` → `deviance` |
+
+Validation : coefficients, `vcov`, déviance, valeurs ajustées et nombre
+d'itérations contre `glm(family=binomial)` et `glm(family=poisson)` à $10^{-8}$.
+Monte Carlo : normalité asymptotique de $\hat\beta$ et comparaison Wald/LR/score
+en petit échantillon.
+
+## Références {.unnumbered}
+
+- McCullagh & Nelder — *Generalized Linear Models* (2ᵉ éd.), ch. 2 (IRLS).
+- Greene — *Econometric Analysis*, ch. 14 (MLE), §14.6 (Wald/LR/score).
+- Hastie, Tibshirani, Friedman — *ESL*, §4.4 (régression logistique).
+- van der Vaart — *Asymptotic Statistics*, ch. 5, 16.

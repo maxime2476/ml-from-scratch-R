@@ -1,0 +1,206 @@
+---
+title: "Module 2 — Hétéroscédasticité, erreurs robustes et GLS"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On lève l'hypothèse de sphéricité (H4) du Module 1 : $\operatorname{Var}(\varepsilon
+\mid X)=\Omega$ **quelconque** (diagonale non constante = hétéroscédasticité ;
+non diagonale = autocorrélation). On montre que **l'OLS reste sans biais mais que
+sa variance classique est fausse**, on construit l'**estimateur sandwich** et ses
+variantes **HC0–HC3**, on dérive **GLS/WLS** comme OLS sur données transformées
+(théorème d'Aitken), et on présente **Newey-West** (HAC).
+
+### Notations {.unnumbered}
+
+- $y = X\beta + \varepsilon$, $\mathbb E[\varepsilon\mid X]=0$,
+  $\operatorname{Var}(\varepsilon\mid X)=\Omega\in\mathbb R^{n\times n}$.
+- $x_i^\top$ : $i$-ème ligne de $X$ ; $\hat\varepsilon = My$ : résidus OLS ;
+  $h_{ii}=[H]_{ii}$ : leviers ; $M=I-H$.
+- Cas hétéroscédastique pur : $\Omega=\operatorname{diag}(\sigma_1^2,\dots,\sigma_n^2)$.
+
+## Conséquences de la violation de la sphéricité {#sec-conseq}
+
+### L'OLS reste sans biais
+
+$\hat\beta = \beta + (X^\top X)^{-1}X^\top\varepsilon$, donc
+$\mathbb E[\hat\beta\mid X]=\beta$ dès que $\mathbb E[\varepsilon\mid X]=0$ :
+**l'absence de biais ne dépend pas de (H4)**. Ce qui change, c'est la variance.
+
+### La vraie variance est un « sandwich »
+
+Avec $A=(X^\top X)^{-1}X^\top$ et $\operatorname{Var}(\varepsilon\mid X)=\Omega$ :
+$$
+\operatorname{Var}(\hat\beta\mid X) = A\,\Omega\,A^\top
+= (X^\top X)^{-1}\,\underbrace{X^\top \Omega X}_{\text{« viande »}}\,(X^\top X)^{-1}.
+\tag{2.1}
+$$
+Le « pain » $(X^\top X)^{-1}$ enserre la « viande » $X^\top\Omega X$.
+
+### Pourquoi la variance classique est fausse {#sec-faux}
+
+> **Proposition 2.1.** Sous hétéroscédasticité ($\Omega\neq\sigma^2 I$), la
+> variance classique $s^2(X^\top X)^{-1}$ n'estime pas (2.1) : elle est
+> **biaisée**, de signe indéterminé (souvent trop optimiste).
+
+**Preuve (esquisse quantifiée).** La variance classique cible $\sigma^2
+(X^\top X)^{-1}$ avec $\sigma^2$ « moyen ». Or la vraie variance est
+$(X^\top X)^{-1}(X^\top\Omega X)(X^\top X)^{-1}$. L'égalité des deux exigerait
+$X^\top\Omega X = \sigma^2 X^\top X$, c.-à-d. $X^\top(\Omega-\sigma^2 I)X=0$, ce
+qui est faux en général dès que $\Omega$ n'est pas scalaire (sauf orthogonalité
+fortuite entre l'hétéroscédasticité et les colonnes de $X$). De plus $\mathbb
+E[s^2]=\operatorname{tr}(M\Omega)/(n-p)\neq\sigma^2$ en général. Concrètement, si
+la variance des erreurs **croît avec un régresseur**, la variance classique
+**sous-estime** la vraie variance des pentes concernées : les $t$ sont gonflés,
+les IC trop étroits, le taux de rejet sous $H_0$ dépasse le niveau nominal. La
+démonstration Monte Carlo est dans `simulations/mc_02_robuste.R`. $\blacksquare$
+
+## Estimateur sandwich et corrections HC0–HC3 {#sec-hc}
+
+Il faut estimer la viande $X^\top\Omega X=\sum_{i=1}^n \omega_i\,x_i x_i^\top$
+(cas hétéroscédastique, $\omega_i=\sigma_i^2$). On ne peut estimer chaque
+$\sigma_i^2$ (une obs.), mais White (1980) montre qu'il suffit d'estimer la
+**somme** $X^\top\Omega X$, ce que permettent les résidus. On pose
+$$
+\widehat{\operatorname{Var}}_{\mathrm{HC}}(\hat\beta)
+= (X^\top X)^{-1}\Big(\sum_{i=1}^n \phi_i\,\hat\varepsilon_i^2\,x_i x_i^\top\Big)(X^\top X)^{-1}
+= (X^\top X)^{-1} X^\top \operatorname{diag}(\phi_i\hat\varepsilon_i^2) X (X^\top X)^{-1},
+\tag{2.2}
+$$
+les variantes différant par le facteur $\phi_i$ :
+
+| Variante | $\phi_i$ | Justification |
+|----------|----------|---------------|
+| **HC0** (White) | $1$ | brut, consistant mais biaisé en échantillon fini |
+| **HC1** | $\dfrac{n}{n-p}$ | correction globale des d.d.l. (analogue à $s^2$) |
+| **HC2** | $\dfrac{1}{1-h_{ii}}$ | correction **exacte** du levier (voir Prop. 2.2) |
+| **HC3** | $\dfrac{1}{(1-h_{ii})^2}$ | approxime le jackknife ; conservateur, recommandé en petit $n$ |
+
+### Justification de la correction de levier {#sec-levier}
+
+> **Proposition 2.2.** Sous **homoscédasticité** $\Omega=\sigma^2 I$,
+> $\mathbb E[\hat\varepsilon_i^2\mid X]=\sigma^2(1-h_{ii})$. Le résidu carré
+> **sous-estime** donc $\sigma^2$ d'un facteur $(1-h_{ii})$ ; diviser par
+> $(1-h_{ii})$ (HC2) le corrige exactement en moyenne.
+
+**Preuve.** $\hat\varepsilon = M\varepsilon$, donc $\hat\varepsilon_i =
+\sum_j M_{ij}\varepsilon_j$ et
+$$
+\mathbb E[\hat\varepsilon_i^2\mid X] = \sum_{j,k} M_{ij}M_{ik}\,
+\mathbb E[\varepsilon_j\varepsilon_k] = \sigma^2\sum_j M_{ij}^2
+= \sigma^2 [M^2]_{ii} = \sigma^2 M_{ii} = \sigma^2(1-h_{ii}),
+$$
+en utilisant $\mathbb E[\varepsilon_j\varepsilon_k]=\sigma^2\mathbf 1\{j=k\}$ puis
+l'**idempotence** $M^2=M$ (d'où $\sum_j M_{ij}^2=[M^2]_{ii}=M_{ii}$) et
+$M_{ii}=1-h_{ii}$. $\blacksquare$
+
+Les observations à **fort levier** ($h_{ii}$ proche de 1) ont des résidus
+particulièrement rétrécis ; HC2/HC3 leur redonnent du poids, ce qui rend
+l'inférence robuste fiable même quand quelques points dominent le design. HC3,
+en divisant par $(1-h_{ii})^2$, sur-corrige légèrement et fournit une borne
+prudente — c'est le choix par défaut recommandé (Long & Ervin 2000) en petit
+échantillon.
+
+## GLS et WLS : OLS sur données transformées {#sec-gls}
+
+### Théorème d'Aitken (GLS est BLUE) {#sec-aitken}
+
+Supposons $\Omega\succ 0$ **connue**. Comme $\Omega$ est SPD, elle admet une
+factorisation $\Omega = P P^\top$ (Cholesky, Module 0). Prémultiplions le modèle
+par $P^{-1}$ :
+$$
+\underbrace{P^{-1}y}_{y^\ast} = \underbrace{P^{-1}X}_{X^\ast}\beta + \underbrace{P^{-1}\varepsilon}_{\varepsilon^\ast},
+\qquad
+\operatorname{Var}(\varepsilon^\ast\mid X) = P^{-1}\Omega P^{-\top}
+= P^{-1}PP^\top P^{-\top} = I_n .
+\tag{2.3}
+$$
+Le modèle transformé vérifie (H4) : l'OLS y est BLUE (Module 1). L'OLS sur
+$(y^\ast,X^\ast)$ donne l'estimateur **GLS** :
+$$
+\hat\beta_{\mathrm{GLS}} = (X^{\ast\top}X^\ast)^{-1}X^{\ast\top}y^\ast
+= (X^\top \Omega^{-1} X)^{-1} X^\top \Omega^{-1} y,
+\tag{2.4}
+$$
+de variance $\operatorname{Var}(\hat\beta_{\mathrm{GLS}}\mid X) =
+(X^\top\Omega^{-1}X)^{-1}$.
+
+> **Théorème 2.3 (Aitken).** Sous (H1)-(H3) et $\operatorname{Var}(\varepsilon\mid
+> X)=\Omega\succ 0$, $\hat\beta_{\mathrm{GLS}}$ est BLUE ; sa variance est
+> inférieure (au sens matriciel) à celle de l'OLS.
+
+*Preuve* : appliquer Gauss-Markov (Th. 1.1) au modèle transformé (2.3), qui
+vérifie exactement ses hypothèses. $\blacksquare$
+
+### WLS (cas diagonal) {#sec-wls}
+
+Si $\Omega=\operatorname{diag}(\sigma_1^2,\dots,\sigma_n^2)$, alors $\Omega^{-1}=
+\operatorname{diag}(1/\sigma_i^2)$ et (2.4) devient les **moindres carrés
+pondérés** de poids $w_i=1/\sigma_i^2$ :
+$$
+\hat\beta_{\mathrm{WLS}} = \arg\min_\beta \sum_{i=1}^n w_i (y_i - x_i^\top\beta)^2
+= (X^\top W X)^{-1}X^\top W y, \quad W=\operatorname{diag}(w_i).
+\tag{2.5}
+$$
+Interprétation : on **pèse davantage les observations les plus fiables** (petite
+variance). En pratique $\Omega$ est inconnue → **FGLS** (feasible GLS) : estimer
+$\hat\sigma_i^2$ (p.ex. régression des $\log\hat\varepsilon_i^2$), puis pondérer.
+
+## Newey-West (HAC) {#sec-nw}
+
+Quand les erreurs sont **autocorrélées** (séries temporelles), la viande n'est
+plus $\sum_i \omega_i x_ix_i^\top$ mais fait intervenir les covariances croisées
+$\mathbb E[\varepsilon_i\varepsilon_j]$. On estime la matrice de covariance de
+long terme $S=\lim \frac1n \operatorname{Var}(\sum_i x_i\varepsilon_i)$ par
+$$
+\hat S = \hat\Gamma_0 + \sum_{\ell=1}^{L} w_\ell\big(\hat\Gamma_\ell + \hat\Gamma_\ell^\top\big),
+\quad
+\hat\Gamma_\ell = \frac1n\sum_{i=\ell+1}^n \hat\varepsilon_i\hat\varepsilon_{i-\ell}\,x_i x_{i-\ell}^\top,
+\quad
+w_\ell = 1-\frac{\ell}{L+1},
+\tag{2.6}
+$$
+avec les **poids de Bartlett** $w_\ell$ (décroissants), qui garantissent que
+$\hat S$ est **semi-définie positive** (essentiel pour une matrice de variance).
+La variance HAC est alors $(X^\top X)^{-1}(n\hat S)(X^\top X)^{-1}$. La
+**consistance** de $\hat S$ (quand $L\to\infty$ à un rythme $L=o(n^{1/4})$) est
+**admise** ici (preuve technique ; cf. Newey & West 1987, ou Greene §20.5) : on
+se limite à l'idée (troncature + pondération pour la positivité).
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/02_gls_robust.R`](../R/02_gls_robust.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (2.1) vraie variance sandwich | `sandwich_vcov()` (viande générique) |
+| (2.2) HC0–HC3 | `vcov_hc(fit, type)` |
+| (2.2) tests robustes | `coeftest_hc()` (t robustes) |
+| (2.5) WLS | `wls_fit(formula, data, weights)` |
+| (2.4) GLS | `gls_fit(formula, data, Omega)` |
+| (2.6) Newey-West | `vcov_nw(fit, lag)` |
+
+Validation : `vcov_hc` contre `sandwich::vcovHC(type=...)` (HC0–HC3) et
+`coeftest_hc` contre `lmtest::coeftest` ; `wls_fit` contre `lm(weights=)` ;
+`gls_fit` contre `nlme::gls` ; `vcov_nw` contre `sandwich::NeweyWest`. Monte
+Carlo : sous hétéroscédasticité, montrer que les IC classiques sous-couvrent et
+que **HC3 restaure la couverture** à ~0.95.
+
+## Références {.unnumbered}
+
+- White (1980), « A Heteroskedasticity-Consistent Covariance Matrix Estimator »,
+  *Econometrica*.
+- MacKinnon & White (1985) ; Long & Ervin (2000) (choix HC2/HC3 en petit $n$).
+- Newey & West (1987), « A Simple, Positive Semi-Definite… », *Econometrica*.
+- Greene — *Econometric Analysis*, ch. 9 (hétéroscédasticité), §20.5 (HAC).
+- Aitken (1935) ; Hayashi — *Econometrics*, §1.6 (GLS).

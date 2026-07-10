@@ -34,6 +34,11 @@ compréhension profonde des fondements** mathématiques, statistiques et
   ≥ 1000 réplications Monte Carlo.
 - **Rigueur inférentielle** : tout estimateur est présenté avec ses propriétés
   (biais, variance, loi asymptotique) et les hypothèses qui les fondent.
+- **Auto-suffisance par module.** Chaque module réimplémente localement les
+  briques dont il a besoin (notamment son optimiseur), plutôt que d'importer
+  celles du Module 0. Le lecteur d'un module n'a jamais à remonter ailleurs pour
+  comprendre son code. Le Module 0 reste le lieu **unique** des preuves de
+  convergence et des versions canoniques de référence.
 
 ## Structure
 
@@ -67,11 +72,11 @@ après coup, s'insèrent à leur place logique. Ordre global :
 
 | Ordre | Fichier | Module | Points clés de dérivation | Référence de validation |
 |:-----:|:-------:|--------|---------------------------|-------------------------|
-| 1 | `00` | Algèbre linéaire & optimiseurs | QR (Householder), Cholesky, **SVD** (rang, pseudo-inverse Moore-Penrose) ; κ(XᵀX)=κ(X)² ; **optimiseurs génériques réutilisables** : descente de gradient (conv. O(1/k)), Newton (conv. quadratique), coordinate descent, SGD | `qr`, `chol`, `svd` |
+| 1 | `00` | Algèbre linéaire & optimiseurs | QR (Householder), Cholesky, **SVD** (rang, pseudo-inverse Moore-Penrose) ; κ(XᵀX)=κ(X)² ; **catalogue de référence des optimiseurs** : descente de gradient (conv. O(1/k)), Newton (conv. quadratique), coordinate descent, SGD | `qr`, `chol`, `svd` |
 | 2 | `01` | OLS et inférence | Gauss-Markov (preuve), lois t/F, Frisch-Waugh-Lovell | `lm`, `summary.lm` |
 | 3 | `02` | Hétéroscédasticité & robustesse | sandwich HC0–HC3, Newey-West, WLS/GLS | `sandwich`, `nlme::gls` |
 | 4 | `03` | GLM et IRLS | famille exponentielle, Newton ⇔ IRLS, Wald/LR/score | `glm` |
-| 5 | `04` | Régularisation | ridge (biais/variance via SVD), lasso (soft-thresholding, coordinate descent du M0) | `MASS::lm.ridge`, `glmnet` |
+| 5 | `04` | Régularisation | ridge (biais/variance via SVD), lasso (soft-thresholding, coordinate descent réimplémenté localement) | `MASS::lm.ridge`, `glmnet` |
 | 6 | `05` | Variables instrumentales | biais d'endogénéité, 2SLS, instruments faibles | `AER::ivreg` |
 | 7 | `06` | Validation de modèles | biais-variance (preuve), LOOCV via hat matrix, AIC/BIC | — |
 | 8 | `13` | **Théorie de l'apprentissage statistique** | PAC/MRE, Hoeffding (preuve), VC-dim & Sauer-Shelah, complexité de Rademacher, lien avec la régularisation | *illustrations numériques* |
@@ -81,7 +86,7 @@ après coup, s'insèrent à leur place logique. Ordre global :
 | 12 | `10` | Gradient boosting | descente de gradient fonctionnelle, Newton boosting | `gbm` |
 | 13 | `14` | **Le regard économétrique sur le ML** | M-estimation unificatrice (sandwich A⁻¹BA⁻¹), lecture bayésienne/MAP, inférence post-sélection cassée | *illustrations numériques* |
 | 14 | `11` | Non supervisé | PCA (2 voies), k-means, EM gaussien | `prcomp`, `mclust` |
-| 15 | `12` | MLP minimal | backpropagation, vérification du gradient (SGD du M0) | — |
+| 15 | `12` | MLP minimal | backpropagation, vérification du gradient (SGD réimplémenté localement) | — |
 | 16 | `15` | **Interprétabilité post-hoc** | PDP/ICE, valeurs de Shapley (axiomes + preuve), SHAP, forme fermée linéaire | `iml` / `fastshap` |
 | 17 | `16` | **Pont ML ↔ causalité** *(module final)* | résultats potentiels, score orthogonal de Neyman, DML + cross-fitting, forêts causales | `DoubleML`, `grf` |
 

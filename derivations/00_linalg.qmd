@@ -100,7 +100,7 @@ $$
 **Conséquence pratique.** Former $X^\top X$ puis l'inverser (ou la factoriser)
 **élève le conditionnement au carré** : on perd deux fois plus de chiffres
 significatifs. Si $\kappa_2(X)=10^8$, alors $\kappa_2(X^\top X)=10^{16}\approx
-1/\varsigma_{\text{mach}}$ et la solution des équations normales n'a plus **aucun**
+1/\varepsilon_{\text{mach}}$ et la solution des équations normales n'a plus **aucun**
 chiffre fiable. En revanche, travailler directement sur $X$ via une
 factorisation **QR** préserve le conditionnement $\kappa_2(X)$. C'est la
 justification de fond du choix « QR plutôt que $(X^\top X)^{-1}$ ».
@@ -303,9 +303,21 @@ norme minimale et signalera le déficit de rang.
 ## Optimiseurs génériques {#sec-optim}
 
 Les modules non linéaires (GLM, lasso, MLP, boosting) minimisent une fonction
-$f:\mathbb{R}^d\to\mathbb{R}$ sans forme fermée. On implémente **une fois** quatre
-moteurs génériques, réutilisés ensuite en changeant seulement $f$, $\nabla f$,
-$\nabla^2 f$.
+$f:\mathbb{R}^d\to\mathbb{R}$ sans forme fermée. Ce module présente les **quatre
+moteurs de base** (gradient, Newton, coordinate descent, SGD) avec leur théorie
+de convergence. Ils constituent la **référence** du projet.
+
+> **Parti pris pédagogique (auto-suffisance par module).** Contrairement à une
+> architecture « un moteur générique appelé partout », **chaque module
+> réimplémentera localement** l'optimiseur dont il a besoin, spécialisé à son
+> objectif (le lasso écrira son propre coordinate descent avec le
+> soft-thresholding en dur, le MLP son propre SGD, le GLM son propre Newton/IRLS).
+> Objectif : que le lecteur suivant un module n'ait **jamais** à revenir ici pour
+> comprendre le code. Le Module 0 reste le lieu **unique** où les preuves de
+> convergence sont faites ; les modules y renvoient sans en dépendre au niveau du
+> code. Les fonctions `optim_*()` de `R/00_linalg.R` servent donc de version
+> canonique commentée et de banc d'essai (Monte Carlo), pas de dépendance
+> importée.
 
 Cadre standard : $f$ **convexe** et **$L$-lisse** (gradient $L$-lipschitzien),
 c.-à-d.
@@ -378,9 +390,40 @@ Interprétation : on minimise à chaque pas le **modèle quadratique local** de 
 > \tag{0.18}
 > $$
 
-*Énoncé admis ici* (preuve standard par développement de Taylor du gradient
-autour de $x^\star$ ; cf. Boyd & Vandenberghe, §9.5.3, ou Nocedal & Wright,
-*Numerical Optimization*, th. 3.5). L'illustration numérique (Newton vs gradient
+**Preuve.** Notons $g=\nabla f$, $H=\nabla^2 f$. Comme $g(x^\star)=0$, l'itération
+(0.17) donne
+$$
+x_{k+1}-x^\star = x_k - x^\star - H(x_k)^{-1}g(x_k)
+= H(x_k)^{-1}\Big[H(x_k)(x_k-x^\star) - \big(g(x_k)-g(x^\star)\big)\Big] .
+$$
+Le théorème fondamental de l'analyse appliqué à $\tau\mapsto g(x^\star+\tau(x_k-
+x^\star))$ donne $g(x_k)-g(x^\star)=\int_0^1 H\big(x^\star+\tau(x_k-x^\star)\big)
+(x_k-x^\star)\,d\tau$. En soustrayant $H(x_k)(x_k-x^\star)=\int_0^1
+H(x_k)(x_k-x^\star)\,d\tau$ :
+$$
+H(x_k)(x_k-x^\star) - \big(g(x_k)-g(x^\star)\big)
+= \int_0^1 \Big[H(x_k) - H\big(x^\star+\tau(x_k-x^\star)\big)\Big](x_k-x^\star)\,d\tau .
+$$
+La lipschitzianité de $H$ (constante $M$) borne l'intégrande :
+$\big\|H(x_k)-H(x^\star+\tau(x_k-x^\star))\big\| \le M\,\|x_k-(x^\star+\tau(x_k-
+x^\star))\| = M(1-\tau)\|x_k-x^\star\|$. Comme $\int_0^1(1-\tau)\,d\tau=\tfrac12$,
+$$
+\Big\|H(x_k)(x_k-x^\star) - \big(g(x_k)-g(x^\star)\big)\Big\|
+\le \frac{M}{2}\,\|x_k-x^\star\|^2 .
+$$
+Enfin, par continuité de $H$ et $H(x^\star)\succ 0$ (v.p. min $m>0$), il existe un
+voisinage de $x^\star$ sur lequel $\|H(x_k)^{-1}\|\le 1/m'$ pour un $m'\in(0,m]$
+fixé ; sur ce voisinage
+$$
+\|x_{k+1}-x^\star\| \le \|H(x_k)^{-1}\|\cdot\frac{M}{2}\|x_k-x^\star\|^2
+\le \frac{M}{2m'}\,\|x_k-x^\star\|^2 .
+$$
+Si de plus $x_0$ vérifie $\tfrac{M}{2m'}\|x_0-x^\star\|<1$, la récurrence contracte
+et l'on obtient la convergence **quadratique** annoncée (avec $m'\to m$ à mesure
+que $x_k\to x^\star$). $\blacksquare$
+
+(Preuve standard ; cf. Boyd & Vandenberghe, §9.5.3, ou Nocedal & Wright,
+*Numerical Optimization*, th. 3.5.) L'illustration numérique (Newton vs gradient
 sur une fonction convexe : nombre d'itérations pour atteindre $10^{-10}$) est
 dans `simulations/mc_00_optimiseurs.R`. **Le lien central du projet** : dans le
 Module 3, appliqué à la log-vraisemblance, Newton **devient l'IRLS**.
@@ -464,8 +507,12 @@ Correspondance entre équations de ce document et fonctions de
 | (0.20)–(0.21) SGD | `optim_sgd()` | moteur perte-somme (→ MLP) |
 
 Les optimiseurs `optim_*()` prennent la fonction objectif et ses dérivées **en
-argument** : ce sont les moteurs réutilisés par les modules suivants, matérialisant
-le fil « un moteur, plusieurs objectifs ».
+argument** : ils servent de **version canonique commentée** (et de banc d'essai
+pour le Monte Carlo du module). Conformément au parti pris d'auto-suffisance
+(@sec-optim), les modules suivants **réimplémentent** leur propre optimiseur
+spécialisé plutôt que d'importer ces fonctions — le lecteur d'un module n'a donc
+pas à revenir ici pour lire le code, seulement pour retrouver, s'il le souhaite,
+la preuve de convergence correspondante.
 
 ---
 

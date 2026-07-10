@@ -101,7 +101,7 @@ glm_irls <- function(formula, data, family = c("binomial", "poisson"),
     coefficients = beta, vcov = vcov, se = sqrt(diag(vcov)),
     fitted = mu, linear.predictors = eta,
     deviance = dev, null.deviance = null.deviance,
-    loglik = fam$loglik(y, mu), iter = iter, df.residual = n - p, rank = p,
+    loglik = fam$loglik(y, mu), iter = iter, df.residual = n - p, rank = p, n = n,
     family = family, weights = W_last, converged = conv,
     model_matrix = X, response = y, terms = tt
   ), class = "glm_irls")

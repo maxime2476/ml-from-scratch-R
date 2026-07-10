@@ -1,0 +1,243 @@
+---
+title: "Module 4 — Régularisation : ridge et lasso"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive la **régression ridge** (forme fermée, **biais et variance analytiques
+via la SVD**, arbitrage en fonction de $\lambda$) et le **lasso**
+(non-différentiabilité, sous-gradient, **opérateur de soft-thresholding**,
+**coordinate descent**). On donne l'**interprétation bayésienne** (ridge = *a
+priori* gaussien, lasso = *a priori* de Laplace) et on explique **pourquoi
+standardiser** avant de pénaliser.
+
+### Notations {.unnumbered}
+
+- $y = X\beta + \varepsilon$, $\varepsilon\sim(0,\sigma^2 I)$, $X$ **centrée-réduite**
+  (colonnes de moyenne nulle et variance 1 ; l'intercept est traité à part et
+  **non pénalisé**).
+- SVD (Module 0) : $X = UDV^\top$, $D=\operatorname{diag}(d_1\ge\dots\ge d_p>0)$.
+- Coefficients rotés : $\alpha = V^\top\beta$ (base des composantes principales).
+
+## Ridge : forme fermée {#sec-ridge}
+
+Le ridge minimise le critère pénalisé $\ell_2$
+$$
+\hat\beta_\lambda = \arg\min_\beta\ \|y - X\beta\|^2 + \lambda\|\beta\|^2,
+\qquad \lambda \ge 0 .
+\tag{4.1}
+$$
+**Condition de premier ordre** : $-2X^\top(y-X\beta) + 2\lambda\beta = 0$, d'où
+$$
+(X^\top X + \lambda I)\,\hat\beta_\lambda = X^\top y
+\;\Longrightarrow\;
+\boxed{\ \hat\beta_\lambda = (X^\top X + \lambda I)^{-1}X^\top y\ }.
+\tag{4.2}
+$$
+Pour tout $\lambda>0$, $X^\top X+\lambda I\succ 0$ est **toujours inversible**
+(même si $X$ n'est pas de plein rang, ou si $p>n$) : la pénalité **régularise**
+le problème. Le conditionnement s'améliore : $\kappa_2(X^\top X+\lambda I)=
+(d_1^2+\lambda)/(d_p^2+\lambda) \le \kappa_2(X^\top X)$.
+
+## Ridge : biais, variance et arbitrage via la SVD {#sec-ridge-bv}
+
+En injectant $X=UDV^\top$ dans (4.2) :
+$$
+\hat\beta_\lambda = V(D^2+\lambda I)^{-1}D\,U^\top y,
+\qquad
+\hat\alpha_{\lambda,j} = \frac{d_j}{d_j^2+\lambda}\,(U^\top y)_j
+= \underbrace{\frac{d_j^2}{d_j^2+\lambda}}_{\text{facteur de rétrécissement } f_j(\lambda)}\ \hat\alpha_{\mathrm{ols},j}.
+\tag{4.3}
+$$
+Chaque composante principale $j$ est **rétrécie** par $f_j(\lambda)\in(0,1)$ :
+le rétrécissement est **d'autant plus fort que $d_j$ est petit** (directions de
+faible variance). C'est le mécanisme central du ridge.
+
+### Biais et variance en coordonnées rotées {#sec-bv}
+
+Avec $\hat\alpha_{\mathrm{ols},j}\sim(\alpha_j,\ \sigma^2/d_j^2)$ (car
+$\operatorname{Var}(U^\top y)=\sigma^2 I$), (4.3) donne pour chaque composante :
+$$
+\operatorname{Biais}(\hat\alpha_{\lambda,j}) = (f_j-1)\alpha_j
+= -\frac{\lambda}{d_j^2+\lambda}\,\alpha_j,
+\qquad
+\operatorname{Var}(\hat\alpha_{\lambda,j}) = f_j^2\,\frac{\sigma^2}{d_j^2}
+= \frac{\sigma^2 d_j^2}{(d_j^2+\lambda)^2}.
+\tag{4.4}
+$$
+Quand $\lambda\!\uparrow$ : le **biais croît** (en valeur absolue) et la
+**variance décroît**. L'erreur quadratique moyenne (invariante par la rotation
+$V$) se décompose en
+$$
+\operatorname{EQM}(\lambda) = \sum_{j=1}^p\Big[
+\underbrace{\frac{\lambda^2}{(d_j^2+\lambda)^2}\,\alpha_j^2}_{\text{biais}^2}
++ \underbrace{\frac{\sigma^2 d_j^2}{(d_j^2+\lambda)^2}}_{\text{variance}}\Big].
+\tag{4.5}
+$$
+
+> **Proposition 4.1 (existence d'un ridge dominant l'OLS).** Il existe
+> $\lambda>0$ tel que $\operatorname{EQM}(\lambda) < \operatorname{EQM}(0)$.
+
+**Preuve.** Dérivons chaque terme de (4.5) en $\lambda$ :
+$\frac{d}{d\lambda}\big[\frac{\lambda^2\alpha_j^2 + \sigma^2 d_j^2}{(d_j^2+\lambda)^2}\big]
+= \frac{2\lambda\alpha_j^2(d_j^2+\lambda)^2 - (\lambda^2\alpha_j^2+\sigma^2 d_j^2)\cdot 2(d_j^2+\lambda)}{(d_j^2+\lambda)^4}$.
+En $\lambda=0$ le numérateur vaut $-2 d_j^2\cdot\sigma^2 d_j^2 = -2\sigma^2 d_j^4 <
+0$. Donc $\operatorname{EQM}'(0) = \sum_j \frac{-2\sigma^2 d_j^4}{d_j^6} =
+-2\sigma^2\sum_j d_j^{-2} < 0$ : l'EQM **décroît strictement** en partant de
+$\lambda=0$. Par continuité, un petit $\lambda>0$ améliore strictement l'OLS.
+$\blacksquare$
+
+C'est le résultat fondateur (Hoerl-Kennard, Theobald) : **un peu de biais achète
+une grande réduction de variance**, surtout quand des $d_j$ sont petits
+(colinéarité). Le graphe biais²/variance/EQM en fonction de $\lambda$ est produit
+dans `simulations/mc_04_ridge_bv.R`.
+
+## Lasso : sous-gradient et soft-thresholding {#sec-lasso}
+
+Le lasso remplace la pénalité $\ell_2$ par une pénalité $\ell_1$ :
+$$
+\hat\beta_\lambda = \arg\min_\beta\ \tfrac12\|y-X\beta\|^2 + \lambda\|\beta\|_1,
+\qquad \|\beta\|_1=\sum_j|\beta_j|.
+\tag{4.6}
+$$
+La pénalité est **non différentiable** en $\beta_j=0$. On utilise le
+**sous-différentiel** de $|\cdot|$ :
+$$
+\partial|\beta_j| = \begin{cases}\{\operatorname{sign}(\beta_j)\} & \beta_j\neq 0\\ [-1,1] & \beta_j = 0.\end{cases}
+\tag{4.7}
+$$
+
+### Le problème 1-D et son solution {#sec-soft}
+
+Le **coordinate descent** (Module 0, éq. 0.19) fixe toutes les coordonnées sauf
+$\beta_j$. Soit le **résidu partiel** $r^{(j)} = y - \sum_{k\neq j} x_k\beta_k$.
+L'objectif restreint à $\beta_j$ est
+$$
+g(\beta_j) = \tfrac12\|r^{(j)} - x_j\beta_j\|^2 + \lambda|\beta_j|
+= \tfrac12\Big(\|x_j\|^2\beta_j^2 - 2\beta_j\,x_j^\top r^{(j)}\Big) + \lambda|\beta_j| + \text{cte}.
+$$
+La condition d'optimalité $0\in\partial g(\beta_j)$ s'écrit (avec $z_j = x_j^\top
+r^{(j)}$, $v_j=\|x_j\|^2$) :
+$$
+v_j\beta_j - z_j + \lambda\,s = 0,\quad s\in\partial|\beta_j|.
+\tag{4.8}
+$$
+
+> **Proposition 4.2 (soft-thresholding).** La solution de (4.8) est
+> $$
+> \hat\beta_j = \frac{1}{v_j}\,\mathcal S(z_j,\lambda),
+> \qquad
+> \mathcal S(z,\lambda) = \operatorname{sign}(z)\,(|z|-\lambda)_+,
+> \tag{4.9}
+> $$
+> l'opérateur de **soft-thresholding**.
+
+**Preuve (trois cas).**
+- Si $\hat\beta_j > 0$ : $s=1$, (4.8) donne $v_j\hat\beta_j = z_j-\lambda$, cohérent
+  avec $\hat\beta_j>0$ **ssi** $z_j>\lambda$ ; alors $\hat\beta_j=(z_j-\lambda)/v_j$.
+- Si $\hat\beta_j < 0$ : $s=-1$, $v_j\hat\beta_j = z_j+\lambda$, cohérent ssi
+  $z_j<-\lambda$ ; alors $\hat\beta_j=(z_j+\lambda)/v_j$.
+- Si $\hat\beta_j = 0$ : $s\in[-1,1]$ et (4.8) impose $z_j = \lambda s \in
+  [-\lambda,\lambda]$, c.-à-d. $|z_j|\le\lambda$.
+
+Les trois cas se résument par $\hat\beta_j = \mathcal S(z_j,\lambda)/v_j$ : dès
+que la corrélation partielle $|z_j|$ est **sous le seuil** $\lambda$, le
+coefficient est mis **exactement à zéro** — d'où la **sparsité** du lasso (que le
+ridge ne produit jamais). $\blacksquare$
+
+### Algorithme de coordinate descent {#sec-cd}
+
+On répète jusqu'à convergence : pour $j=1,\dots,p$,
+$$
+z_j \leftarrow x_j^\top\Big(y - \sum_{k\neq j} x_k\beta_k\Big),\qquad
+\beta_j \leftarrow \frac{\mathcal S(z_j,\lambda)}{\|x_j\|^2}.
+\tag{4.10}
+$$
+Convergence garantie (objectif convexe = lisse + pénalité **séparable** ;
+Tseng 2001, cf. Module 0 §CD). Avec colonnes standardisées $\|x_j\|^2=n$ (ou $1$
+selon la convention), la mise à jour se simplifie. **Réimplémentation locale**
+(parti pris d'auto-suffisance) : le soft-thresholding est écrit en dur dans la
+boucle, sans importer l'`optim_cd` du Module 0.
+
+## Interprétation bayésienne (MAP) {#sec-bayes}
+
+Sous $y\mid\beta\sim\mathcal N(X\beta,\sigma^2 I)$, l'estimateur du **maximum a
+posteriori** maximise $\log p(\beta\mid y) = \log p(y\mid\beta) + \log p(\beta) +
+\text{cte}$, soit minimise $\tfrac1{2\sigma^2}\|y-X\beta\|^2 - \log p(\beta)$.
+
+- **A priori gaussien** $\beta_j\sim\mathcal N(0,\tau^2)$ : $-\log p(\beta)=
+  \tfrac1{2\tau^2}\|\beta\|^2+\text{cte}$. Le MAP est le **ridge** avec
+  $\lambda=\sigma^2/\tau^2$.
+- **A priori de Laplace** $\beta_j\sim\operatorname{Laplace}(0,b)$ :
+  $-\log p(\beta)=\tfrac1b\|\beta\|_1+\text{cte}$. Le MAP est le **lasso** avec
+  $\lambda=\sigma^2/b$.
+
+Le prior de Laplace, plus **piqué en 0** et à queues plus lourdes, favorise les
+solutions creuses. **Nuance importante** : le lasso est le **mode** a posteriori,
+pas la moyenne ; la moyenne a posteriori sous prior de Laplace n'est **pas**
+creuse (les propriétés de sélection sont propres au MAP). La loi a posteriori
+complète du ridge (conjuguée gaussienne) est dérivée au Module 14.
+
+## Pourquoi standardiser avant de pénaliser {#sec-standard}
+
+Les pénalités $\|\beta\|^2$ et $\|\beta\|_1$ **ne sont pas invariantes
+d'échelle**. Si l'on remplace $x_j$ par $c\,x_j$, le coefficient devient
+$\beta_j/c$ et sa contribution à la pénalité change (en $1/c^2$ pour le ridge,
+$1/c$ pour le lasso) : la force de pénalisation dépendrait alors des **unités**
+de mesure. Standardiser chaque colonne (moyenne 0, variance 1) met tous les
+coefficients sur un **pied d'égalité** ; l'intercept, lui, n'est **pas** pénalisé
+(il capte le niveau moyen de $y$ et se calcule séparément, p.ex. $\hat\beta_0=
+\bar y$ sur données centrées).
+
+## Note de validation : paramétrisation de $\lambda$ {#sec-glmnet}
+
+Les conventions diffèrent :
+
+- **Ce projet** : ridge $\|y-X\beta\|^2+\lambda\|\beta\|^2$ ; lasso
+  $\tfrac12\|y-X\beta\|^2+\lambda\|\beta\|_1$.
+- **`glmnet`** : minimise $\tfrac1{2n}\|y-X\beta\|^2 + \lambda_{\mathrm{glmnet}}
+  \big[\tfrac{1-\alpha}2\|\beta\|^2 + \alpha\|\beta\|_1\big]$, avec
+  standardisation interne et retour des coefficients sur l'échelle d'origine.
+  Pour le lasso ($\alpha=1$), $\lambda_{\mathrm{glmnet}} =
+  \lambda_{\text{projet}}/n$.
+- **`MASS::lm.ridge`** : centre/réduit et paramétrise le ridge autrement.
+
+La validation contre `glmnet` se fera donc en **alignant explicitement les
+$\lambda$** (documenté dans les tests) ; l'accord attendu est à ~$10^{-6}$ (et
+non $10^{-8}$) car `glmnet` utilise un critère de convergence et un chemin de
+$\lambda$ propres.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/04_regularisation.R`](../R/04_regularisation.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (4.2) ridge forme fermée | `ridge_fit(X, y, lambda)` |
+| (4.3)-(4.5) biais/variance via SVD | `ridge_bias_var(X, beta, sigma2, lambda)` |
+| (4.9) soft-thresholding | `soft_threshold(z, lambda)` |
+| (4.10) coordinate descent | `lasso_fit(X, y, lambda)` |
+| standardisation | `standardize()` (interne) |
+
+Validation : `ridge_fit` contre la forme fermée et `MASS::lm.ridge` ; `lasso_fit`
+contre `glmnet` (α = 1) avec $\lambda$ alignés. Monte Carlo : courbes
+biais²/variance/EQM du ridge en fonction de $\lambda$ ; capacité du lasso à
+retrouver le **support** vrai (sparsité).
+
+## Références {.unnumbered}
+
+- Hoerl & Kennard (1970), « Ridge Regression », *Technometrics*.
+- Tibshirani (1996), « Regression Shrinkage and Selection via the Lasso », *JRSS-B*.
+- Friedman, Hastie & Tibshirani (2010), « Regularization Paths… » (`glmnet`), *JSS*.
+- Hastie, Tibshirani, Friedman — *ESL*, §3.4 (ridge, lasso).
+- Boyd & Vandenberghe — *Convex Optimization*, §3–4 (sous-gradient).

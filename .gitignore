@@ -1,0 +1,23 @@
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Quarto
+/.quarto/
+*_files/
+*_cache/
+/rapport/*.html
+/rapport/*.pdf
+/derivations/*.html
+/derivations/*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sorties de simulation
+/simulations/output/
+*.rds

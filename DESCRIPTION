@@ -1,0 +1,33 @@
+Package: mlfromscratch
+Type: Package
+Title: ML from Scratch in R — Déconstruction Mathématique des Modèles d'Apprentissage
+Version: 0.0.0.9000
+Authors@R: person("Maxime", "Gourguechon", email = "maxime.gourguechon76@gmail.com",
+    role = c("aut", "cre"))
+Description: Réimplémentation pédagogique, en R base, des principaux modèles
+    d'apprentissage automatique, adossée à leurs dérivations mathématiques
+    complètes, validée numériquement contre les packages de référence et
+    étudiée par simulation Monte Carlo. Projet de fin d'études en statistique
+    et économétrie. Les implémentations n'utilisent que R base ; les packages
+    de ML ne servent qu'à la validation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Depends:
+    R (>= 4.0.0)
+Suggests:
+    testthat (>= 3.0.0),
+    ggplot2,
+    sandwich,
+    nlme,
+    glmnet,
+    MASS,
+    AER,
+    rpart,
+    randomForest,
+    gbm,
+    mclust,
+    class
+Config/testthat/edition: 3

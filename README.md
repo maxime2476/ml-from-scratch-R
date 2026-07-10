@@ -1,0 +1,155 @@
+# ML from Scratch in R
+
+**Déconstruction mathématique et statistique des modèles d'apprentissage automatique**
+
+Projet de fin d'études (statistique / économétrie). Chaque modèle de *machine
+learning* est réimplémenté en **R base**, à partir de sa dérivation
+mathématique complète, puis validé numériquement contre les packages de
+référence et étudié par simulation Monte Carlo.
+
+## Objectif
+
+L'objectif n'est **pas** de produire du code performant, mais de **démontrer une
+compréhension profonde des fondements** mathématiques, statistiques et
+économétriques des modèles. Chaque implémentation est adossée à :
+
+1. une **dérivation** rédigée depuis les premiers principes (vraisemblance,
+   moindres carrés, conditions d'optimalité) ;
+2. un **code R base** lisible, dont chaque fonction renvoie explicitement à
+   l'équation qu'elle implémente ;
+3. une **validation numérique** contre le package de référence (tolérance
+   cible `1e-8`, ou justification documentée quand elle n'est pas atteignable) ;
+4. une **étude Monte Carlo** avec DGP connu, mesurant biais, variance,
+   couverture des intervalles de confiance et puissance des tests.
+
+## Principes méthodologiques
+
+- **Les mathématiques d'abord.** Aucune ligne de code sans dérivation
+  préalable.
+- **R base pour le cœur des modèles.** Les packages de ML (`glmnet`, `rpart`,
+  `caret`, `tidymodels`, …) servent **uniquement** à la validation, jamais à
+  l'implémentation.
+- **Validation systématique** contre les fonctions de référence.
+- **Approche par simulation** : DGP explicite, paramètres vrais fixés,
+  ≥ 1000 réplications Monte Carlo.
+- **Rigueur inférentielle** : tout estimateur est présenté avec ses propriétés
+  (biais, variance, loi asymptotique) et les hypothèses qui les fondent.
+
+## Structure
+
+```
+ml-from-scratch-R/
+├── README.md                 présentation, table des matières
+├── DESCRIPTION               métadonnées du package R minimal
+├── R/                        implémentations (R base)
+├── derivations/              une dérivation Quarto (.qmd) par module
+├── tests/testthat/           tests de conformité aux packages de référence
+├── simulations/              études Monte Carlo (un script par question)
+└── rapport/                  rapport final Quarto assemblant l'ensemble
+```
+
+Pour chaque module `XX`, quatre livrables produits **dans cet ordre** :
+
+| Livrable | Emplacement | Contenu |
+|----------|-------------|---------|
+| (a) Dérivation | `derivations/XX.qmd` | hypothèses numérotées, dérivation pas à pas, propriétés, encadré « de la math au code » |
+| (b) Implémentation | `R/XX.R` | fonctions R base, docstrings roxygen2 renvoyant aux équations |
+| (c) Tests | `tests/testthat/test-XX.R` | conformité aux packages de référence (`tolerance = 1e-8`) |
+| (d) Monte Carlo | `simulations/mc_XX.R` | DGP, ≥ 1000 réplications, tableaux + graphiques |
+
+## Table des matières (modules)
+
+Les modules sont traités dans l'**ordre de la colonne « # »** (pédagogique),
+qui diffère de la numérotation des fichiers : les modules 13 à 16, ajoutés
+après coup, s'insèrent à leur place logique. Ordre global :
+
+> 0 → 1 → 2 → 3 → 4 → 5 → 6 → **13** → 7 → 8 → 9 → 10 → **14** → 11 → 12 → **15** → **16**
+
+| Ordre | Fichier | Module | Points clés de dérivation | Référence de validation |
+|:-----:|:-------:|--------|---------------------------|-------------------------|
+| 1 | `00` | Algèbre linéaire & optimiseurs | QR (Householder), Cholesky, **SVD** (rang, pseudo-inverse Moore-Penrose) ; κ(XᵀX)=κ(X)² ; **optimiseurs génériques réutilisables** : descente de gradient (conv. O(1/k)), Newton (conv. quadratique), coordinate descent, SGD | `qr`, `chol`, `svd` |
+| 2 | `01` | OLS et inférence | Gauss-Markov (preuve), lois t/F, Frisch-Waugh-Lovell | `lm`, `summary.lm` |
+| 3 | `02` | Hétéroscédasticité & robustesse | sandwich HC0–HC3, Newey-West, WLS/GLS | `sandwich`, `nlme::gls` |
+| 4 | `03` | GLM et IRLS | famille exponentielle, Newton ⇔ IRLS, Wald/LR/score | `glm` |
+| 5 | `04` | Régularisation | ridge (biais/variance via SVD), lasso (soft-thresholding, coordinate descent du M0) | `MASS::lm.ridge`, `glmnet` |
+| 6 | `05` | Variables instrumentales | biais d'endogénéité, 2SLS, instruments faibles | `AER::ivreg` |
+| 7 | `06` | Validation de modèles | biais-variance (preuve), LOOCV via hat matrix, AIC/BIC | — |
+| 8 | `13` | **Théorie de l'apprentissage statistique** | PAC/MRE, Hoeffding (preuve), VC-dim & Sauer-Shelah, complexité de Rademacher, lien avec la régularisation | *illustrations numériques* |
+| 9 | `07` | KNN & fléau de la dimension | estimateur local, concentration des distances | `class::knn` |
+| 10 | `08` | CART | Gini/entropie, cost-complexity pruning | `rpart` |
+| 11 | `09` | Bagging & forêts aléatoires | variance d'estimateurs corrélés, erreur OOB | `randomForest` |
+| 12 | `10` | Gradient boosting | descente de gradient fonctionnelle, Newton boosting | `gbm` |
+| 13 | `14` | **Le regard économétrique sur le ML** | M-estimation unificatrice (sandwich A⁻¹BA⁻¹), lecture bayésienne/MAP, inférence post-sélection cassée | *illustrations numériques* |
+| 14 | `11` | Non supervisé | PCA (2 voies), k-means, EM gaussien | `prcomp`, `mclust` |
+| 15 | `12` | MLP minimal | backpropagation, vérification du gradient (SGD du M0) | — |
+| 16 | `15` | **Interprétabilité post-hoc** | PDP/ICE, valeurs de Shapley (axiomes + preuve), SHAP, forme fermée linéaire | `iml` / `fastshap` |
+| 17 | `16` | **Pont ML ↔ causalité** *(module final)* | résultats potentiels, score orthogonal de Neyman, DML + cross-fitting, forêts causales | `DoubleML`, `grf` |
+
+**Modules purement théoriques (13, 14).** Le livrable « implémentation » est
+remplacé par des illustrations numériques des bornes / des pathologies. Critère
+de passage : dérivations relues et illustrations Monte Carlo cohérentes avec la
+théorie (les bornes tiennent, les taux de rejet/couverture correspondent aux
+prédictions).
+
+## Prérequis
+
+- **R ≥ 4.x**
+- Packages de validation / outillage : `testthat`, `ggplot2`, `quarto`,
+  et les packages de référence par module (`sandwich`, `nlme`, `glmnet`,
+  `MASS`, `AER`, `rpart`, `randomForest`, `gbm`, `mclust`, `class`,
+  et pour les modules ajoutés `fastshap`/`iml`, `DoubleML`, `grf`).
+- **Quarto** pour compiler les dérivations et le rapport.
+
+## Utilisation
+
+```r
+# Charger les implémentations
+for (f in list.files("R", full.names = TRUE)) source(f)
+
+# Lancer les tests de conformité
+testthat::test_dir("tests/testthat")
+
+# Reproduire une étude Monte Carlo
+source("simulations/mc_ols_gauss_markov.R")
+```
+
+Compiler une dérivation :
+
+```sh
+quarto render derivations/01_ols.qmd
+```
+
+## Conventions
+
+- R base pour les calculs ; style lisible pour le reste.
+- Chaque fonction : docstring roxygen2 (`@param`, `@return`, renvoi à
+  l'équation de la dérivation), vérification minimale des entrées.
+- `set.seed()` dans toute simulation.
+- Commits Git atomiques par livrable (ex. `module 01: dérivation OLS`).
+
+## Références
+
+**Fondamentaux (transverses)**
+- Hastie, Tibshirani, Friedman — *The Elements of Statistical Learning* (2ᵉ éd.)
+- James, Witten, Hastie, Tibshirani — *An Introduction to Statistical Learning*
+- Greene — *Econometric Analysis* (modules 1, 2, 5)
+- Boyd & Vandenberghe — *Convex Optimization* (modules 0, 4)
+- Bishop — *Pattern Recognition and Machine Learning* (modules 11, 12)
+
+**Théorie de l'apprentissage (module 13)**
+- Shalev-Shwartz & Ben-David — *Understanding Machine Learning: From Theory to Algorithms* (référence principale, preuves alignées)
+- Mohri, Rostamizadeh & Talwalkar — *Foundations of Machine Learning* (Rademacher)
+
+**Regard économétrique & M-estimation (module 14)**
+- van der Vaart — *Asymptotic Statistics* (M-estimation, ch. 5)
+- Wooldridge — *Econometric Analysis of Cross Section and Panel Data*
+- Berk, Brown, Buja, Zhang, Zhao (2013), « Valid post-selection inference », *Annals of Statistics*
+
+**Interprétabilité (module 15)**
+- Lundberg & Lee (2017), « A Unified Approach to Interpreting Model Predictions », NeurIPS
+- Molnar — *Interpretable Machine Learning* (en ligne, gratuit)
+
+**Causalité (module 16)**
+- Chernozhukov et al. (2018), « Double/debiased machine learning… », *The Econometrics Journal*
+- Wager & Athey (2018), « Estimation and Inference of Heterogeneous Treatment Effects using Random Forests », *JASA*
+- Athey & Imbens (2016), « Recursive partitioning for heterogeneous causal effects », *PNAS*

@@ -1,0 +1,217 @@
+---
+title: "Module 6 — Validation de modèles : biais-variance, CV, AIC/BIC"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On établit la **décomposition biais-variance** de l'erreur quadratique (preuve
+complète), la **validation croisée** K-fold, la **formule fermée du LOOCV** pour
+les modèles linéaires via la matrice chapeau (preuve), l'**optimisme de l'erreur
+d'apprentissage**, et les critères **AIC** (depuis la divergence de
+Kullback-Leibler) et **BIC** (depuis l'approximation de Laplace), en signalant
+honnêtement ce qui est admis.
+
+### Notations {.unnumbered}
+
+- Données d'apprentissage $\mathcal D=\{(x_i,y_i)\}_{i=1}^n$, tirées d'une loi
+  jointe ; $\hat f$ : prédicteur estimé sur $\mathcal D$.
+- Modèle : $y = f(x) + \varepsilon$, $\mathbb E[\varepsilon]=0$,
+  $\operatorname{Var}(\varepsilon)=\sigma^2$, $\varepsilon$ indépendant de $x$.
+- Cas linéaire : $\hat y = Hy$, $H = X(X^\top X)^{-1}X^\top$, $h_{ii}=[H]_{ii}$.
+
+## Décomposition biais-variance {#sec-bv}
+
+Soit un point de test **fixé** $x_0$, de réponse $y_0 = f(x_0)+\varepsilon_0$ avec
+$\varepsilon_0$ indépendant de $\mathcal D$, $\mathbb E[\varepsilon_0]=0$,
+$\operatorname{Var}(\varepsilon_0)=\sigma^2$. L'erreur de prédiction **espérée**
+(sur $\mathcal D$ et $\varepsilon_0$) se décompose ainsi.
+
+> **Théorème 6.1 (biais-variance).**
+> $$
+> \mathbb E\big[(y_0-\hat f(x_0))^2\big]
+> = \underbrace{\sigma^2}_{\text{irréductible}}
+> + \underbrace{\big(f(x_0)-\mathbb E[\hat f(x_0)]\big)^2}_{\text{biais}^2}
+> + \underbrace{\operatorname{Var}(\hat f(x_0))}_{\text{variance}} .
+> \tag{6.1}
+> $$
+
+**Preuve.** Notons $\bar f = \mathbb E_{\mathcal D}[\hat f(x_0)]$. Comme
+$\varepsilon_0\perp\mathcal D$ :
+$$
+\mathbb E[(y_0-\hat f(x_0))^2]
+= \mathbb E[(\varepsilon_0 + f(x_0) - \hat f(x_0))^2]
+= \underbrace{\mathbb E[\varepsilon_0^2]}_{\sigma^2}
++ 2\underbrace{\mathbb E[\varepsilon_0]}_{0}\mathbb E[f(x_0)-\hat f(x_0)]
++ \mathbb E[(f(x_0)-\hat f(x_0))^2].
+$$
+Pour le dernier terme, on insère $\pm\bar f$ :
+$$
+\mathbb E[(f(x_0)-\hat f(x_0))^2]
+= \mathbb E\big[\big((f(x_0)-\bar f) + (\bar f - \hat f(x_0))\big)^2\big].
+$$
+En développant, le double produit est $2(f(x_0)-\bar f)\,\mathbb E[\bar f - \hat
+f(x_0)] = 0$ car $\mathbb E[\hat f(x_0)]=\bar f$. Restent
+$(f(x_0)-\bar f)^2 = \text{biais}^2$ et $\mathbb E[(\hat f(x_0)-\bar f)^2] =
+\operatorname{Var}(\hat f(x_0))$. $\blacksquare$
+
+**Lecture.** L'erreur ne peut descendre sous $\sigma^2$. La **complexité** du
+modèle arbitre biais (baisse quand on complexifie) contre variance (monte) :
+c'est le fondement de tout le module (et le lien avec le ridge du Module 4, qui
+échange biais contre variance).
+
+## Validation croisée {#sec-cv}
+
+### K-fold {#sec-kfold}
+
+On partitionne $\mathcal D$ en $K$ blocs $\mathcal D_1,\dots,\mathcal D_K$. Pour
+chaque $k$, on ajuste $\hat f^{(-k)}$ sur $\mathcal D\setminus\mathcal D_k$ et on
+évalue sur $\mathcal D_k$ :
+$$
+\mathrm{CV}_K = \frac1n\sum_{k=1}^K\sum_{i\in\mathcal D_k}\big(y_i - \hat f^{(-k)}(x_i)\big)^2 .
+\tag{6.2}
+$$
+$\mathrm{CV}_K$ estime (presque) sans biais l'erreur de test **espérée** :
+chaque prédiction est faite sur des données non vues à l'entraînement. $K=n$
+donne le **LOOCV** (variance faible du biais, coût élevé — sauf formule fermée
+ci-dessous). $K=5$ ou $10$ : compromis coût/variance usuel.
+
+### Formule fermée du LOOCV (modèles linéaires) {#sec-loocv}
+
+> **Théorème 6.2 (LOOCV par la hat matrix).** Pour la régression linéaire
+> ($\hat y = Hy$), le résidu leave-one-out vaut
+> $$
+> y_i - \hat y_i^{(-i)} = \frac{y_i - \hat y_i}{1 - h_{ii}},
+> \qquad\text{d'où}\qquad
+> \mathrm{CV}_n = \frac1n\sum_{i=1}^n\Big(\frac{\hat\varepsilon_i}{1-h_{ii}}\Big)^2 .
+> \tag{6.3}
+> $$
+> Un **seul** ajustement suffit (pas $n$).
+
+**Preuve.** Notons $A=X^\top X$, $\hat\varepsilon_i = y_i-\hat y_i$. En retirant
+l'observation $i$ : $X_{(-i)}^\top X_{(-i)} = A - x_i x_i^\top$ et
+$X_{(-i)}^\top y_{(-i)} = X^\top y - x_i y_i$. La formule de **Sherman-Morrison**
+$(A-x_ix_i^\top)^{-1} = A^{-1} + \dfrac{A^{-1}x_i x_i^\top A^{-1}}{1-h_{ii}}$
+(avec $h_{ii}=x_i^\top A^{-1}x_i$) donne
+$$
+\hat\beta^{(-i)} = (A-x_ix_i^\top)^{-1}(X^\top y - x_i y_i)
+= \hat\beta - \frac{A^{-1}x_i\,\hat\varepsilon_i}{1-h_{ii}} .
+$$
+*(Détail du calcul : en distribuant, les termes en $y_i$ et $x_i^\top\hat\beta=
+\hat y_i$ se recombinent en $\hat y_i - y_i = -\hat\varepsilon_i$ au numérateur.)*
+D'où la prédiction laissée-de-côté
+$$
+x_i^\top\hat\beta^{(-i)} = \hat y_i - \frac{h_{ii}\hat\varepsilon_i}{1-h_{ii}},
+\qquad
+y_i - x_i^\top\hat\beta^{(-i)} = \hat\varepsilon_i + \frac{h_{ii}\hat\varepsilon_i}{1-h_{ii}}
+= \frac{\hat\varepsilon_i}{1-h_{ii}} . \qquad\blacksquare
+$$
+
+La **validation croisée généralisée (GCV)** remplace $h_{ii}$ par la moyenne
+$\bar h = \operatorname{tr}(H)/n = p/n$ :
+$\mathrm{GCV} = \frac1n\sum_i \big(\hat\varepsilon_i/(1-p/n)\big)^2$, utile quand
+les $h_{ii}$ sont coûteux ou instables.
+
+## Optimisme de l'erreur d'apprentissage {#sec-optimisme}
+
+L'erreur **d'apprentissage** $\overline{\mathrm{err}} = \frac1n\sum_i
+(y_i-\hat y_i)^2$ **sous-estime** l'erreur de test, car les mêmes données servent
+à ajuster et à évaluer. On définit l'**optimisme** comme l'écart espéré. Pour un
+prédicteur linéaire $\hat y = Hy$ :
+
+> **Proposition 6.3.** L'optimisme moyen vaut
+> $$
+> \omega = \frac2n\sum_{i=1}^n \operatorname{Cov}(\hat y_i, y_i)
+> = \frac{2\sigma^2}{n}\operatorname{tr}(H) = \frac{2\sigma^2 p}{n}.
+> \tag{6.4}
+> $$
+
+**Preuve.** L'identité générale $\mathbb E[\mathrm{Err}_{\text{in}}] =
+\mathbb E[\overline{\mathrm{err}}] + \frac2n\sum_i\operatorname{Cov}(\hat y_i,y_i)$
+(cf. ESL §7.4) se spécialise ici : $\hat y = Hy$ avec $y=f+\varepsilon$, donc
+$\operatorname{Cov}(\hat y_i,y_i)=\operatorname{Cov}((Hy)_i,y_i)=\sigma^2 H_{ii}$
+(les $\varepsilon$ i.i.d.). En sommant, $\sum_i\operatorname{Cov}=\sigma^2
+\operatorname{tr}(H)=\sigma^2 p$. $\blacksquare$
+
+D'où le **$C_p$ de Mallows** : $C_p = \overline{\mathrm{err}} + 2\sigma^2 p/n$,
+qui **corrige** l'optimisme et préfigure l'AIC.
+
+## AIC et BIC {#sec-aic-bic}
+
+### AIC depuis la divergence de Kullback-Leibler {#sec-aic}
+
+On veut le modèle le plus proche de la vraie loi $g$ au sens de la divergence
+$\mathrm{KL}(g\,\|\,f_{\hat\theta}) = \mathbb E_g[\log g] - \mathbb E_g[\log
+f_{\hat\theta}(Y)]$. Minimiser KL revient à **maximiser** l'espérance
+$\mathbb E_g[\log f_{\hat\theta}(Y)]$. Or l'estimer par la log-vraisemblance
+sur les **mêmes** données $\ell(\hat\theta)=\sum_i\log f_{\hat\theta}(y_i)$ est
+**optimiste** : un développement de Taylor à l'ordre 2 autour du vrai $\theta_0$,
+combiné à la normalité asymptotique du MLE, montre que le biais d'optimisme vaut
+$\approx k$ (le nombre de paramètres). D'où l'estimateur corrigé
+$\mathbb E_g[\log f]\approx \ell(\hat\theta) - k$, soit, en multipliant par $-2$,
+$$
+\mathrm{AIC} = -2\,\ell(\hat\theta) + 2k .
+\tag{6.5}
+$$
+*Le développement précis (traces d'information de Fisher se simplifiant en $k$)
+est **admis** ; cf. Akaike (1974) ou ESL §7.5.* Pour la régression gaussienne,
+$\mathrm{AIC} \equiv n\log(\mathrm{RSS}/n) + 2k + \text{cte}$, cohérent avec
+$C_p$.
+
+### BIC depuis l'approximation de Laplace {#sec-bic}
+
+Le BIC vise le modèle le plus **probable a posteriori**, via l'évidence (loi
+marginale) $p(\mathcal D\mid M)=\int p(\mathcal D\mid\theta)\,p(\theta)\,d\theta$.
+L'**approximation de Laplace** développe $\log p(\mathcal D\mid\theta)$ à l'ordre
+2 autour du MLE $\hat\theta$ et intègre la gaussienne résultante :
+$$
+\log p(\mathcal D\mid M) \approx \ell(\hat\theta) - \frac{k}{2}\log n
++ O(1).
+\tag{6.6}
+$$
+*(Le terme $-\frac k2\log n$ provient du déterminant de l'information de Fisher,
+qui croît en $n^k$ ; les termes $O(1)$ — prior, constantes — sont négligés.)* En
+multipliant par $-2$,
+$$
+\mathrm{BIC} = -2\,\ell(\hat\theta) + k\log n .
+\tag{6.7}
+$$
+La pénalité $\log n > 2$ (dès $n\ge 8$) rend le **BIC plus parcimonieux** que
+l'AIC : le BIC est **consistant** pour la sélection de modèle (choisit le vrai
+modèle quand $n\to\infty$), l'AIC est **efficace** en prédiction mais peut
+sur-sélectionner. *Dérivation complète de Laplace admise ; cf. Schwarz (1978).*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/06_validation.R`](../R/06_validation.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (6.1) biais-variance | `bias_variance_mc()` (estimation par simulation) |
+| (6.2) K-fold | `kfold_cv(X, y, K, fit_fun, pred_fun)` |
+| (6.3) LOOCV fermé | `loocv_linear(X, y)` (via leviers) |
+| (6.3) GCV | `gcv_linear(X, y)` |
+| (6.4) optimisme / $C_p$ | `mallows_cp(fit, sigma2)` |
+| (6.5) AIC | `aic(fit)` |
+| (6.7) BIC | `bic(fit)` |
+
+Validation : `loocv_linear` contre le LOOCV **par force brute** ($n$ ajustements)
+à $10^{-8}$ ; `aic`/`bic` contre `AIC()`/`BIC()`. Monte Carlo **obligatoire**
+`mc_cv_fuite_donnees.R` : standardiser **avant** vs **après** le découpage
+train/test, et mesurer le biais optimiste induit par la fuite de données.
+
+## Références {.unnumbered}
+
+- Hastie, Tibshirani, Friedman — *ESL*, ch. 7 (validation, AIC/BIC, biais-variance).
+- Akaike (1974), « A New Look at the Statistical Model Identification », *IEEE TAC*.
+- Schwarz (1978), « Estimating the Dimension of a Model », *Annals of Statistics*.
+- Stone (1974), « Cross-Validatory Choice… », *JRSS-B* ; Craven & Wahba (1979) (GCV).

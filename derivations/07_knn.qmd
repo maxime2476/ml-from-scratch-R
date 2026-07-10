@@ -1,0 +1,142 @@
+---
+title: "Module 7 — K plus proches voisins et fléau de la dimension"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On présente le **KNN** comme **estimateur local** (moyenne/vote sur un voisinage),
+sa décomposition biais-variance, et le **fléau de la dimension** : quand $p$
+croît, les voisinages cessent d'être locaux et surtout les distances
+**se concentrent** — le plus proche et le plus lointain voisin deviennent
+indistinguables. Démonstration numérique dans `simulations/mc_07_knn.R`.
+
+### Notations {.unnumbered}
+
+- Données $(x_i,y_i)_{i=1}^n$, $x_i\in\mathbb R^p$. Distance euclidienne
+  $d(x,x') = \|x-x'\|_2$.
+- $N_k(x)$ : ensemble des indices des $k$ plus proches voisins de $x$.
+
+## Le KNN comme estimateur local {#sec-local}
+
+### Définition {#sec-def}
+
+**Régression** : la prédiction en $x$ est la moyenne des réponses des $k$ voisins,
+$$
+\hat f_k(x) = \frac1k\sum_{i\in N_k(x)} y_i .
+\tag{7.1}
+$$
+**Classification** : vote majoritaire,
+$\hat g_k(x) = \arg\max_{c}\sum_{i\in N_k(x)}\mathbf 1\{y_i = c\}$ ; en binaire,
+$\hat g_k(x)=\mathbf 1\{\hat p_k(x)\ge \tfrac12\}$ avec $\hat p_k(x)=\frac1k
+\sum_{i\in N_k(x)}y_i$.
+
+Le KNN est **non paramétrique** : aucune forme fonctionnelle imposée. Il estime
+$f(x)=\mathbb E[Y\mid X=x]$ par une **moyenne locale**, en supposant $f$
+approximativement constante sur le voisinage.
+
+### Biais-variance et choix de $k$ {#sec-bv}
+
+Sous $y_i = f(x_i)+\varepsilon_i$, $\operatorname{Var}(\varepsilon_i)=\sigma^2$,
+en conditionnant sur les positions des voisins :
+$$
+\operatorname{Var}(\hat f_k(x)) = \frac{\sigma^2}{k},
+\qquad
+\operatorname{Biais}(\hat f_k(x)) = \frac1k\sum_{i\in N_k(x)} f(x_i) - f(x).
+\tag{7.2}
+$$
+- **Petit $k$** (p.ex. $k=1$) : variance élevée ($\sigma^2$), biais faible
+  (voisinage minuscule) — sur-ajustement.
+- **Grand $k$** : variance faible ($\sigma^2/k$), biais élevé (le voisinage
+  s'étend, $f$ y varie) — sous-ajustement.
+
+**Consistance** : $\hat f_k(x)\to f(x)$ si $k\to\infty$ **et** $k/n\to 0$ (voisinage
+riche mais rétrécissant). C'est l'arbitrage biais-variance du Module 6 sous forme
+locale ; $k$ se choisit par validation croisée.
+
+## Le fléau de la dimension {#sec-fleau}
+
+### Les voisinages cessent d'être locaux {#sec-edge}
+
+Pour capturer une **fraction** $r$ des données dans un hypercube-voisinage
+$[0,1]^p$, la **longueur d'arête** nécessaire est
+$$
+e_p(r) = r^{1/p}.
+\tag{7.3}
+$$
+Pour $p=10$ et $r=1\%$ : $e = 0.01^{0.1}\approx 0.63$ — le voisinage couvre 63 %
+de l'étendue de **chaque** coordonnée. Pour $p=100$ : $e\approx 0.955$. Le
+voisinage « local » occupe presque tout l'espace : la localité, sur laquelle
+repose le KNN, **s'évanouit**.
+
+### Concentration des distances {#sec-concentration}
+
+Plus grave : en grande dimension, **toutes les paires de points sont à peu près
+à la même distance**.
+
+> **Proposition 7.1 (concentration des distances au carré).** Soient $X,Y$
+> indépendants à coordonnées i.i.d., $\mu_2=\mathbb E[(X_1-Y_1)^2]$,
+> $s^2=\operatorname{Var}[(X_1-Y_1)^2]$ finis. Alors, pour la distance au carré
+> $D^2=\|X-Y\|^2 = \sum_{j=1}^p (X_j-Y_j)^2$,
+> $$
+> \mathbb E[D^2] = p\,\mu_2,\qquad \operatorname{Var}(D^2) = p\,s^2,\qquad
+> \frac{\sqrt{\operatorname{Var}(D^2)}}{\mathbb E[D^2]} = \frac{s}{\mu_2}\cdot\frac{1}{\sqrt p}\xrightarrow[p\to\infty]{}0 .
+> \tag{7.4}
+> $$
+
+**Preuve.** Les termes $(X_j-Y_j)^2$ sont i.i.d. (coordonnées indépendantes), de
+moyenne $\mu_2$ et variance $s^2$. Par linéarité $\mathbb E[D^2]=p\mu_2$, et par
+indépendance $\operatorname{Var}(D^2)=\sum_j\operatorname{Var}[(X_j-Y_j)^2]=p s^2$.
+Le **coefficient de variation** est donc $\sqrt{p s^2}/(p\mu_2)=(s/\mu_2)/\sqrt p
+\to 0$. $\blacksquare$
+
+**Conséquence** (Beyer et al. 1999). Comme la dispersion **relative** des
+distances tend vers 0, toutes les distances se resserrent autour de $\sqrt{p\mu_2}$.
+Le rapport entre distance maximale et minimale à un point de requête tend vers 1 :
+$$
+\frac{D_{\max} - D_{\min}}{D_{\min}} \xrightarrow[p\to\infty]{\mathbb P} 0 .
+\tag{7.5}
+$$
+Le « plus proche » voisin n'est alors plus significativement plus proche que le
+« plus lointain » : la notion de voisinage perd son sens, et le KNN (comme toute
+méthode fondée sur les distances) se dégrade. La démonstration numérique de
+(7.5) — rapport $\to 1$ à mesure que $p$ croît — est l'illustration centrale du
+module.
+
+### Remèdes (mention) {.unnumbered}
+
+Réduction de dimension (PCA, Module 11), sélection de variables (lasso, Module
+4), métriques apprises, ou hypothèses de **variété** (les données vivent sur un
+sous-espace de faible dimension intrinsèque) atténuent le fléau.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/07_knn.R`](../R/07_knn.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (7.1) régression KNN | `knn_regression(X_train, y_train, X_test, k)` |
+| vote majoritaire | `knn_classify(X_train, y_train, X_test, k)` |
+| (7.2) biais-variance | illustré dans `simulations/mc_07_knn.R` |
+| (7.3) longueur d'arête | `edge_length(r, p)` |
+| (7.4)-(7.5) concentration | `distance_concentration(n, p)` (rapport max/min) |
+
+Validation : `knn_classify` contre `class::knn` (mêmes prédictions ; documenter
+la gestion des égalités de distance/vote). Monte Carlo : biais-variance selon
+$k$ ; concentration des distances et rapport $D_{\max}/D_{\min}\to 1$ selon $p$.
+
+## Références {.unnumbered}
+
+- Hastie, Tibshirani, Friedman — *ESL*, §2.3 (KNN), §2.5 (fléau de la dimension).
+- Beyer, Goldstein, Ramakrishnan & Shaft (1999), « When Is "Nearest Neighbor"
+  Meaningful? », *ICDT*.
+- James, Witten, Hastie, Tibshirani — *ISLR*, §3.5, §4.

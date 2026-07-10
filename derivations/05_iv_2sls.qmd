@@ -1,0 +1,180 @@
+---
+title: "Module 5 — Variables instrumentales et doubles moindres carrés"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On traite l'**endogénéité** : quand $\mathbb E[X^\top\varepsilon]\neq 0$, l'OLS est
+**biaisé et inconsistant**. On calcule ce biais sur un DGP à **variable omise**,
+on pose les **conditions de validité** d'un instrument, on dérive l'estimateur
+**2SLS** matriciel, et on discute le problème des **instruments faibles**
+(illustré par Monte Carlo seulement).
+
+### Notations {.unnumbered}
+
+- Modèle structurel : $y = X\beta + \varepsilon$, $X\in\mathbb R^{n\times k}$
+  (certaines colonnes **endogènes** : corrélées à $\varepsilon$).
+- Instruments : $Z\in\mathbb R^{n\times m}$, $m\ge k$ (**inclut** les régresseurs
+  exogènes, qui sont leurs propres instruments).
+- $P_Z = Z(Z^\top Z)^{-1}Z^\top$ : projecteur sur $\operatorname{Im}Z$.
+- $Q_{AB}=\operatorname{plim}\frac1n A^\top B$ (matrices de moments limites).
+
+## Le biais d'endogénéité de l'OLS {#sec-biais}
+
+De $\hat\beta_{\mathrm{OLS}} = \beta + (X^\top X)^{-1}X^\top\varepsilon$, on a
+$$
+\operatorname{plim}\hat\beta_{\mathrm{OLS}}
+= \beta + Q_{XX}^{-1}\,\operatorname{plim}\tfrac1n X^\top\varepsilon
+= \beta + Q_{XX}^{-1}\,\mathbb E[x_i\varepsilon_i].
+\tag{5.1}
+$$
+Si $\mathbb E[x_i\varepsilon_i]\neq 0$ (endogénéité), l'OLS **ne converge pas**
+vers $\beta$ : il est inconsistant. Le non-biais de Gauss-Markov reposait sur
+(H3) $\mathbb E[\varepsilon\mid X]=0$, ici violée.
+
+### Cas d'école : la variable omise {#sec-omise}
+
+Vrai modèle $y = \beta_0 + \beta_1 x + \gamma w + u$, $\mathbb E[u\mid x,w]=0$,
+mais $w$ **omise** et $\operatorname{Cov}(x,w)\neq 0$. En régressant $y$ sur $x$
+seul, l'erreur composite est $\varepsilon = \gamma w + u$, et
+$\operatorname{Cov}(x,\varepsilon)=\gamma\operatorname{Cov}(x,w)\neq 0$. D'où, par
+(5.1) appliqué au coefficient de $x$ (formule du **biais de variable omise**) :
+$$
+\operatorname{plim}\hat\beta_1^{\mathrm{OLS}}
+= \beta_1 + \gamma\,\frac{\operatorname{Cov}(x,w)}{\operatorname{Var}(x)}.
+\tag{5.2}
+$$
+Le signe du biais est celui de $\gamma\cdot\operatorname{Cov}(x,w)$. Le calcul
+numérique sur DGP connu est fait dans `simulations/mc_05_iv.R`.
+
+## Conditions de validité d'un instrument {#sec-valid}
+
+Un instrument $Z$ est **valide** s'il satisfait :
+
+- **(IV1) Pertinence (relevance).** $\operatorname{Cov}(Z,X)\neq 0$ ; plus
+  précisément $Q_{ZX}=\operatorname{plim}\frac1n Z^\top X$ est de **rang plein**
+  $k$. L'instrument doit « bouger » le régresseur endogène.
+- **(IV2) Exogénéité / exclusion.** $\mathbb E[Z^\top\varepsilon]=0$ : $Z$ n'agit
+  sur $y$ **qu'à travers** $X$, jamais directement ni via une variable omise
+  corrélée à $\varepsilon$.
+- **(IV3) Condition d'ordre.** $m\ge k$ (au moins autant d'instruments que de
+  régresseurs endogènes) ; $m=k$ **juste-identifié**, $m>k$ **sur-identifié**.
+
+(IV2) n'est **pas testable** en général (on ne voit pas $\varepsilon$) : c'est
+une hypothèse d'identification, à défendre par l'argument économique.
+
+## Estimateur IV et 2SLS {#sec-2sls}
+
+### Cas juste-identifié ($m=k$) {#sec-just}
+
+Les conditions de moments $\mathbb E[Z^\top\varepsilon]=0$ donnent l'estimateur
+**IV** en remplaçant l'espérance par sa version empirique
+$Z^\top(y-X\hat\beta)=0$ :
+$$
+\hat\beta_{\mathrm{IV}} = (Z^\top X)^{-1}Z^\top y .
+\tag{5.3}
+$$
+**Consistance** : $\operatorname{plim}\hat\beta_{\mathrm{IV}} = \beta +
+Q_{ZX}^{-1}\operatorname{plim}\frac1n Z^\top\varepsilon = \beta$, sous (IV1)
+($Q_{ZX}$ inversible) et (IV2) ($\mathbb E[Z^\top\varepsilon]=0$).
+
+### Cas sur-identifié ($m>k$) : 2SLS {#sec-over}
+
+Avec $m>k$, $Z^\top X$ n'est plus carré : on ne peut inverser. Le **2SLS**
+projette $X$ sur l'espace des instruments.
+
+**Étape 1.** Régresser chaque colonne de $X$ sur $Z$ :
+$\hat X = Z(Z^\top Z)^{-1}Z^\top X = P_Z X$ (partie de $X$ **expliquée par les
+instruments**, donc purgée de l'endogénéité).
+
+**Étape 2.** Régresser $y$ sur $\hat X$ :
+$$
+\hat\beta_{\mathrm{2SLS}} = (\hat X^\top\hat X)^{-1}\hat X^\top y .
+$$
+Comme $P_Z$ est **symétrique idempotent**, $\hat X^\top\hat X = X^\top P_Z^\top
+P_Z X = X^\top P_Z X$ et $\hat X^\top y = X^\top P_Z y$, d'où la forme fermée
+$$
+\boxed{\ \hat\beta_{\mathrm{2SLS}} = (X^\top P_Z X)^{-1}X^\top P_Z y\ } .
+\tag{5.4}
+$$
+Quand $m=k$, $P_Z$ se simplifie et (5.4) redonne (5.3). Les régresseurs exogènes
+étant leurs propres instruments (colonnes communes à $X$ et $Z$), ils sont
+inchangés par la projection.
+
+### Variance et estimation de $\sigma^2$ {#sec-var}
+
+Sous homoscédasticité $\operatorname{Var}(\varepsilon\mid Z)=\sigma^2 I$,
+$$
+\operatorname{Var}(\hat\beta_{\mathrm{2SLS}}\mid Z) = \sigma^2 (X^\top P_Z X)^{-1},
+\qquad
+\hat\sigma^2 = \frac{\hat\varepsilon^\top\hat\varepsilon}{n-k},
+\quad \hat\varepsilon = y - X\hat\beta_{\mathrm{2SLS}} .
+\tag{5.5}
+$$
+**Point crucial** : les résidus utilisent le **vrai** $X$ (équation
+structurelle), **pas** $\hat X$. Utiliser $\hat X$ sous-estimerait $\sigma^2$ —
+c'est l'erreur classique du « 2SLS à la main » naïf, que la forme fermée (5.4)
+évite.
+
+### Lien avec Frisch-Waugh-Lovell {#sec-fwl}
+
+Le 2SLS du coefficient d'un régresseur endogène $x_2$ (en présence de contrôles
+exogènes $X_1$) équivaut à : résidualiser $y$, $\hat x_2$ et $x_2$ par rapport à
+$X_1$ (projecteur $M_1$, Module 1), puis $\hat\beta_2 = (\hat x_2^\top M_1 x_2)^{-1}
+\hat x_2^\top M_1 y$. C'est **FWL appliqué aux variables instrumentées** — la même
+mécanique de « partialisation » qui reviendra, généralisée, dans le score
+orthogonal de Neyman du Module 16.
+
+## Instruments faibles {#sec-faibles}
+
+Si (IV1) tient à peine — $Q_{ZX}$ **presque** singulière (corrélation
+instrument–régresseur faible) — alors :
+
+1. **Variance explosive** : $(X^\top P_Z X)^{-1}$ est mal conditionnée, les
+   erreurs standards enflent.
+2. **Biais vers l'OLS** : en échantillon fini, $\hat\beta_{\mathrm{2SLS}}$ est
+   biaisé dans la direction de l'OLS (le biais IV $\propto 1/\text{force}$),
+   d'autant plus que les instruments sont faibles et nombreux.
+3. **Amplification des violations d'exogénéité** : une petite corrélation
+   résiduelle $\operatorname{Cov}(Z,\varepsilon)$ est divisée par la force
+   faible $Q_{ZX}$, produisant un grand biais.
+
+**Diagnostic** : la statistique $F$ de la **première étape** (test de nullité
+conjointe des coefficients des instruments exclus). Règle empirique de
+Staiger-Stock : $F<10$ signale des instruments faibles. On **illustre** ces
+phénomènes par Monte Carlo (pas de théorie asymptotique non standard ici ;
+cf. Stock, Wright & Yogo 2002).
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/05_iv_2sls.R`](../R/05_iv_2sls.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (5.3)-(5.4) 2SLS | `tsls_fit(y, X, Z)` (forme fermée $X^\top P_Z X$) |
+| (5.5) variance, $\hat\sigma^2$ | `tsls_fit()` → `vcov`, `sigma2` (résidus sur vrai X) |
+| étape 1 (projection) | interne (`P_Z X` via QR de Z) |
+| $F$ de 1ʳᵉ étape | `first_stage_F(X_endog, Z, exog)` |
+| biais OLS (5.1)-(5.2) | illustré dans `simulations/mc_05_iv.R` |
+
+Validation : coefficients, `vcov`, erreurs standards contre `AER::ivreg` à
+$10^{-8}$. Monte Carlo : biais de l'OLS sous endogénéité vs consistance du 2SLS ;
+dégradation du 2SLS avec des instruments faibles (biais et couverture).
+
+## Références {.unnumbered}
+
+- Greene — *Econometric Analysis*, ch. 8 (variables instrumentales).
+- Wooldridge — *Econometric Analysis of Cross Section and Panel Data*, ch. 5.
+- Staiger & Stock (1997), « Instrumental Variables Regression with Weak
+  Instruments », *Econometrica*.
+- Stock, Wright & Yogo (2002), *J. Business & Economic Statistics* (instruments faibles).

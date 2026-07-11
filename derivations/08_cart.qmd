@@ -1,0 +1,173 @@
+---
+title: "Module 8 — Arbres de décision (CART)"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive les **arbres CART** : mesures d'**impureté** (Gini, entropie, et leur
+lien), **critère de split**, caractère **greedy** et sa **sous-optimalité** (avec
+un contre-exemple), et le **cost-complexity pruning** avec le paramètre $\alpha$.
+Implémentation récursive dans `R/08_cart.R`, validation qualitative contre
+`rpart`.
+
+### Notations {.unnumbered}
+
+- Nœud $t$ contenant $N_t$ observations ; $p_c(t)$ : proportion de la classe $c$
+  dans $t$ (classification) ; $\bar y_t$ : moyenne de $y$ dans $t$ (régression).
+- Un **split** $s=(j,\theta)$ envoie $x$ à gauche si $x_j\le\theta$, à droite sinon,
+  partitionnant $t$ en $t_L, t_R$ de proportions $p_L=N_{t_L}/N_t$, $p_R=N_{t_R}/N_t$.
+
+## Mesures d'impureté {#sec-impurete}
+
+### Classification : Gini et entropie {#sec-gini}
+
+L'**impureté de Gini** et l'**entropie** d'un nœud $t$ (sur $C$ classes) :
+$$
+G(t) = \sum_{c=1}^C p_c(t)\big(1-p_c(t)\big) = 1 - \sum_c p_c(t)^2,
+\qquad
+H(t) = -\sum_{c=1}^C p_c(t)\log p_c(t).
+\tag{8.1}
+$$
+Les deux sont **concaves**, **symétriques**, nulles pour un nœud **pur** ($p_c\in
+\{0,1\}$) et maximales à l'**uniforme** ($p_c=1/C$). Gini a une interprétation :
+probabilité de mal classer un élément étiqueté au hasard selon $p_c(t)$.
+
+### Régression : variance {#sec-var}
+
+Pour la régression, l'impureté est la **variance intra-nœud** :
+$$
+V(t) = \frac1{N_t}\sum_{i\in t}(y_i - \bar y_t)^2 .
+\tag{8.2}
+$$
+
+### Lien Gini–entropie {#sec-lien}
+
+> **Proposition 8.1.** Gini est l'**approximation quadratique** de l'entropie :
+> pour $p_c$ proche de la pureté, $H(t)\approx G(t)$.
+
+**Preuve (esquisse).** Développement de $-\log p_c$ au premier ordre autour de
+$p_c=1$ : $-\log p_c = -\log(1-(1-p_c)) \approx (1-p_c) + O((1-p_c)^2)$. Donc
+$H(t)=\sum_c p_c(-\log p_c)\approx \sum_c p_c(1-p_c) = G(t)$. Les deux mesures
+induisent des splits très proches en pratique ; Gini est légèrement moins coûteuse
+(pas de logarithme) et légèrement plus sensible aux classes dominantes.
+$\blacksquare$
+
+En binaire ($p=p_1$) : $G = 2p(1-p)$ et $H = -p\log p - (1-p)\log(1-p)$, toutes
+deux maximales en $p=\tfrac12$.
+
+## Critère de split {#sec-split}
+
+CART choisit le split qui **maximise la diminution d'impureté** :
+$$
+\Delta I(s,t) = I(t) - \big[p_L\,I(t_L) + p_R\,I(t_R)\big],
+\tag{8.3}
+$$
+où $I$ est $G$, $H$ (classification) ou $V$ (régression). Comme $I(t)$ est fixe
+pour un nœud donné, **maximiser $\Delta I$** revient à **minimiser l'impureté
+pondérée des enfants** $p_L I(t_L)+p_R I(t_R)$. Par concavité de $I$, cette
+quantité est $\le I(t)$ : un split ne peut **jamais augmenter** l'impureté
+(inégalité de Jensen), d'où $\Delta I\ge 0$.
+
+**Recherche du meilleur split.** Pour chaque variable $j$, on trie les valeurs et
+on teste les seuils $\theta$ à mi-chemin entre valeurs consécutives ; on retient
+le couple $(j,\theta)$ de $\Delta I$ maximal. Coût $O(p\,N\log N)$ par nœud.
+L'arbre croît **récursivement** jusqu'à des critères d'arrêt (profondeur max,
+effectif minimal, pureté).
+
+## Caractère greedy et sous-optimalité {#sec-greedy}
+
+CART est **glouton** (*greedy*) : à chaque nœud il choisit le split localement
+optimal, **sans anticipation** (*lookahead*). Trouver l'arbre **globalement**
+optimal est NP-difficile ; le greedy est une heuristique qui peut être
+**sous-optimale**.
+
+> **Contre-exemple (XOR).** Soient $x_1,x_2\in\{0,1\}$ uniformes et $y = x_1
+> \oplus x_2$ (ou exclusif). Aucun split de **profondeur 1** ne réduit
+> l'impureté : couper sur $x_1\le 0.5$ donne deux enfants **chacun 50/50** en $y$
+> (car pour $x_1$ fixé, $y=x_2$ est équilibré), donc $\Delta G = 0$. Idem pour
+> $x_2$. Le greedy « ne voit » aucun gain au premier niveau. Pourtant l'arbre de
+> **profondeur 2** (couper $x_1$, puis $x_2$ dans chaque branche) classe
+> **parfaitement**.
+
+Ce contre-exemple (vérifié numériquement dans `simulations/mc_08_cart.R`) montre
+la myopie du greedy : un gain **nul** à un niveau peut cacher une structure
+parfaitement séparable au niveau suivant. En pratique on l'atténue en laissant
+l'arbre croître (profondeur), puis en **élaguant**.
+
+## Cost-complexity pruning {#sec-pruning}
+
+Un arbre trop profond **sur-ajuste**. Plutôt que d'arrêter tôt (risque de
+myopie, cf. XOR), on **fait croître** un grand arbre $T_0$ puis on l'**élague**.
+
+### Critère coût-complexité {#sec-cc}
+
+Pour un sous-arbre $T\subseteq T_0$ de $|T|$ feuilles, on pénalise la taille :
+$$
+R_\alpha(T) = R(T) + \alpha\,|T|,
+\qquad
+R(T) = \sum_{t\in\text{feuilles}(T)} \frac{N_t}{N}\,I(t),
+\tag{8.4}
+$$
+avec $\alpha\ge 0$ le **coût par feuille**. $\alpha=0$ garde $T_0$ ; $\alpha$
+grand favorise les petits arbres. On cherche, pour chaque $\alpha$, le plus petit
+sous-arbre minimisant $R_\alpha$.
+
+### Weakest-link pruning {#sec-weakest}
+
+> **Proposition 8.2 (lien le plus faible).** Pour un nœud interne $t$ de
+> sous-arbre $T_t$, **effondrer** $T_t$ en une feuille $t$ devient favorable dès
+> que
+> $$
+> \alpha \ge g(t) = \frac{R(t) - R(T_t)}{|T_t| - 1},
+> \tag{8.5}
+> $$
+> où $R(t)$ est l'impureté de $t$ vu comme feuille unique.
+
+**Preuve.** Effondrer $T_t$ en $t$ change $R_\alpha$ de
+$\big(R(t)+\alpha\cdot 1\big) - \big(R(T_t)+\alpha|T_t|\big)$. C'est $\le 0$
+(effondrement avantageux) ssi $R(t)-R(T_t) \le \alpha(|T_t|-1)$, soit
+$\alpha\ge g(t)$. $\blacksquare$
+
+**Algorithme.** On calcule $g(t)$ pour chaque nœud interne et on élague d'abord
+celui de $g(t)$ **minimal** (le « lien le plus faible »). En répétant, on obtient
+une **suite emboîtée** finie $T_0\supset T_1\supset\dots\supset\{\text{racine}\}$
+et les seuils $\alpha_0<\alpha_1<\dots$ correspondants. Le bon $\alpha$ (donc la
+bonne taille) se choisit par **validation croisée** (Module 6). C'est le lien
+direct arbres ↔ biais-variance : $\alpha$ règle la complexité.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/08_cart.R`](../R/08_cart.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (8.1) Gini, entropie | `impurity_gini()`, `impurity_entropy()` |
+| (8.2) variance | `impurity_variance()` |
+| (8.3) meilleur split | `best_split()` |
+| croissance récursive | `cart_fit(formula, data, method, ...)` |
+| prédiction | `predict_cart()` |
+| (8.4)-(8.5) élagage | `cost_complexity_prune()` |
+
+Validation : premiers splits (variable, seuil) contre `rpart` sur données
+simulées. L'égalité **parfaite n'est pas garantie** — `rpart` diffère par la
+gestion des égalités de split, les *surrogate splits* (données manquantes), un
+élagage par défaut (`cp`) et l'échelle du seuil ; on compare donc la
+**structure** (mêmes variables et seuils aux premiers niveaux). Monte Carlo :
+Gini vs entropie (splits quasi identiques), contre-exemple XOR (greedy myope),
+courbe erreur vs profondeur/complexité.
+
+## Références {.unnumbered}
+
+- Breiman, Friedman, Olshen & Stone (1984), *Classification and Regression Trees*.
+- Hastie, Tibshirani, Friedman — *ESL*, §9.2.
+- James, Witten, Hastie, Tibshirani — *ISLR*, §8.1.

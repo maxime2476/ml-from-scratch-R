@@ -1,0 +1,191 @@
+---
+title: "Module 15 — Interprétabilité post-hoc"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive et implémente les principales méthodes d'**interprétabilité post-hoc** :
+**PDP** (dépendance partielle) et son **piège de corrélation**, **ICE** (courbes
+individuelles), les **valeurs de Shapley** (avec **preuve d'unicité** des axiomes)
+et **SHAP** (forme fermée linéaire), l'**importance par permutation**. On termine
+par la mise en garde : ces méthodes expliquent le **modèle**, pas le **phénomène**
+— transition vers la causalité (Module 16). Les modèles à expliquer sont les
+forêts (M9) et le boosting (M10).
+
+### Notations {.unnumbered}
+
+- $f$ : prédicteur ajusté ; $x=(x_1,\dots,x_p)$ un point. $S\subseteq\{1,\dots,p\}$
+  un sous-ensemble de variables, $C=S^c$ son complément. $x_S$ / $x_C$ : les
+  coordonnées correspondantes.
+
+## Dépendance partielle (PDP) {#sec-pdp}
+
+### Définition et estimateur {#sec-pdp-def}
+
+La **fonction de dépendance partielle** de $f$ sur $S$ **marginalise** les autres
+variables selon leur loi **marginale** :
+$$
+f_S(x_S) = \mathbb E_{X_C}\big[f(x_S, X_C)\big] = \int f(x_S, x_C)\,p(x_C)\,dx_C .
+\tag{15.1}
+$$
+Estimateur empirique (on fixe $x_S$ et on moyenne sur les $x_C$ **observés**) :
+$$
+\hat f_S(x_S) = \frac1n\sum_{i=1}^n f\big(x_S,\ x_C^{(i)}\big).
+\tag{15.2}
+$$
+
+### Le piège de la corrélation {#sec-pdp-piege}
+
+> **Proposition 15.1.** Quand $X_S$ et $X_C$ sont **corrélés**, (15.2) évalue $f$
+> en des combinaisons $(x_S, x_C^{(i)})$ **hors du support conjoint**, où $f$
+> **extrapole** — le PDP peut alors être trompeur.
+
+**Justification.** (15.1) intègre selon la marginale $p(x_C)$, **pas** la
+conditionnelle $p(x_C\mid x_S)$. Si $X_S,X_C$ sont dépendants, la marginale place
+de la masse sur des $x_C$ **incompatibles** avec la valeur fixée $x_S$ : le couple
+$(x_S,x_C^{(i)})$ tombe hors du nuage réel des données, et $f$ y prend des valeurs
+non fiables (extrapolation). La quantité « fidèle aux données » serait
+$\mathbb E[f(X)\mid X_S=x_S]=\int f(x_S,x_C)p(x_C\mid x_S)dx_C$, mais elle mélange
+l'effet de $X_S$ avec celui des variables corrélées. Démonstration numérique avec
+deux variables corrélées à $0.9$ dans `simulations/mc_15_interpretabilite.R`.
+
+## Espérance conditionnelle individuelle (ICE) {#sec-ice}
+
+La courbe **ICE** de l'observation $i$ trace $f$ en fonction de $x_S$, **les
+autres coordonnées de $i$ étant fixées** :
+$$
+\text{ICE}_i(x_S) = f\big(x_S,\ x_C^{(i)}\big).
+\tag{15.3}
+$$
+Le PDP est la **moyenne des courbes ICE** : $\hat f_S(x_S)=\frac1n\sum_i
+\text{ICE}_i(x_S)$. Intérêt : en présence d'**interactions**, les courbes ICE ont
+des **formes différentes** selon $i$ ; le PDP, en les moyennant, **masque** cette
+hétérogénéité que l'ICE **révèle** (illustré sur un DGP à interaction).
+
+## Valeurs de Shapley {#sec-shapley}
+
+### Jeu coopératif et valeur de Shapley {#sec-jeu}
+
+Un **jeu coopératif** est $(N,v)$ avec $N=\{1,\dots,p\}$ joueurs et une **fonction
+de valeur** $v:2^N\to\mathbb R$, $v(\varnothing)=0$. La **valeur de Shapley** du
+joueur $j$ répartit $v(N)$ selon la **contribution marginale moyenne** de $j$ sur
+tous les ordres d'arrivée :
+$$
+\phi_j(v) = \sum_{S\subseteq N\setminus\{j\}} \frac{|S|!\,(p-|S|-1)!}{p!}\,\big[v(S\cup\{j\}) - v(S)\big].
+\tag{15.4}
+$$
+
+### Axiomes et unicité {#sec-axiomes}
+
+> **Théorème 15.2 (unicité).** La valeur de Shapley (15.4) est l'**unique**
+> application $\phi$ satisfaisant :
+> **(E) Efficience** $\sum_j\phi_j=v(N)$ ; **(S) Symétrie** ($i,j$
+> interchangeables $\Rightarrow\phi_i=\phi_j$) ; **(N) Joueur nul** ($v(S\cup\{j\})
+> =v(S)\ \forall S \Rightarrow \phi_j=0$) ; **(A) Additivité**
+> $\phi(v+w)=\phi(v)+\phi(w)$.
+
+**Preuve.** *(Existence — admise ici : (15.4) vérifie les 4 axiomes par calcul
+direct.)* *(Unicité.)* Toute fonction de valeur se décompose de manière **unique**
+dans la base des **jeux d'unanimité** $u_T$ ($u_T(S)=1$ si $T\subseteq S$, sinon
+$0$) : $v=\sum_{T\subseteq N} c_T\,u_T$ avec les **dividendes de Harsanyi**
+$c_T=\sum_{S\subseteq T}(-1)^{|T|-|S|}v(S)$. Pour un jeu d'unanimité $\alpha\,u_T$
+($\alpha\in\mathbb R$) : les joueurs hors de $T$ sont **nuls** (axiome N) donc
+$\phi_j=0$ ; les joueurs de $T$ sont **symétriques** (axiome S) donc ont la même
+valeur $\phi$ ; l'**efficience** (E) impose $|T|\phi=\alpha$, d'où $\phi_j=\alpha/
+|T|$ pour $j\in T$. Par **additivité** (A), pour $v=\sum_T c_T u_T$,
+$$
+\phi_j(v) = \sum_{T\ni j} \frac{c_T}{|T|} ,
+$$
+qui est **entièrement déterminé** par $v$ — donc $\phi$ est unique (et coïncide
+avec (15.4)). $\blacksquare$
+
+### Transposition au ML (SHAP) {#sec-shap}
+
+On identifie **joueur = variable**. La **fonction de valeur** en un point $x$
+mesure la prédiction quand seul le sous-ensemble $S$ est « connu ». Deux choix
+pour les variables **absentes** :
+
+- **Interventionnelle (marginale)** : $v(S)=\mathbb E_{X_C}[f(x_S,X_C)]$ — on
+  remplace $x_C$ par des tirages de la marginale (respecte le **modèle**).
+- **Conditionnelle** : $v(S)=\mathbb E[f(X)\mid X_S=x_S]$ — respecte la **variété
+  des données** mais attribue de l'importance à des variables corrélées non
+  utilisées.
+
+Les **valeurs SHAP** $\phi_j$ vérifient alors (efficience) $\sum_j\phi_j = f(x)-
+\mathbb E[f(X)]$ (**exactitude locale**). La complexité est $O(2^p)$ (tous les
+sous-ensembles) : **énumération exacte** pour $p\le 10$, sinon **estimateur par
+permutations** aléatoires.
+
+### Forme fermée linéaire (test de conformité) {#sec-lin}
+
+> **Proposition 15.3.** Pour un modèle **linéaire** $f(x)=\beta_0+\sum_k\beta_k
+> x_k$ et la valeur interventionnelle,
+> $$
+> \phi_j = \beta_j\,\big(x_j - \mathbb E[X_j]\big).
+> \tag{15.5}
+> $$
+
+**Preuve.** La valeur marginale est $v(S)=\beta_0+\sum_{k\in S}\beta_k x_k +
+\sum_{k\notin S}\beta_k\mathbb E[X_k]$. La contribution de $j$ à **tout** $S$ vaut
+$v(S\cup\{j\})-v(S)=\beta_j x_j - \beta_j\mathbb E[X_j]=\beta_j(x_j-\mathbb E[X_j])$,
+**indépendante** de $S$. Comme les poids de (15.4) somment à 1, $\phi_j=\beta_j
+(x_j-\mathbb E[X_j])$. $\blacksquare$
+
+(15.5) sert de **test de conformité** exact de l'implémentation. On vérifie aussi
+l'efficience $\sum_j\phi_j=\beta^\top(x-\mathbb E[X])=f(x)-\mathbb E[f(X)]$.
+
+## Importance par permutation {#sec-permimp}
+
+L'**importance par permutation** de la variable $j$ est l'**augmentation de la
+perte** quand on **permute** $x_j$ (brisant son lien avec $y$) :
+$$
+\mathrm{PI}_j = L\big(f,\ \text{données avec } x_j \text{ permuté}\big) - L\big(f,\ \text{données}\big).
+\tag{15.6}
+$$
+**Même piège que le PDP** sous corrélation : permuter $x_j$ tout en gardant une
+variable corrélée $x_k$ intacte crée des combinaisons hors-support ($f$
+extrapole), et deux variables corrélées se **partagent**/se **masquent**
+mutuellement l'importance.
+
+## Discussion critique {#sec-critique}
+
+Ces méthodes expliquent **comment le modèle utilise ses entrées**, **pas** le
+mécanisme du phénomène. Une importance SHAP élevée signifie « le modèle s'appuie
+sur cette variable », **pas** « cette variable a un effet causal ». Sous
+corrélation ou confusion, l'attribution peut être trompeuse. Comprendre l'**effet
+causal** exige un cadre d'identification (résultats potentiels, hypothèses) —
+c'est l'objet du **Module 16**.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/15_interpretabilite.R`](../R/15_interpretabilite.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (15.2) PDP | `pdp()` |
+| (15.3) ICE | `ice()` |
+| (15.4) Shapley exact | `shapley_exact()` (énumération, $p\le 10$) |
+| Shapley approché | `shapley_permutation()` (Monte Carlo) |
+| (15.5) forme fermée linéaire | test de conformité dans `test-15.R` |
+| (15.6) importance par permutation | `permutation_importance()` |
+
+Validation : (15.5) en exact ; comparaison qualitative à `fastshap`/`iml`. Monte
+Carlo : piège de corrélation du PDP (deux variables corrélées à 0.9) ; ICE vs PDP
+sous interaction ; convergence de l'estimateur par permutations vers le SHAP exact.
+
+## Références {.unnumbered}
+
+- Shapley (1953), « A Value for n-Person Games ».
+- Lundberg & Lee (2017), « A Unified Approach to Interpreting Model Predictions », NeurIPS.
+- Friedman (2001) (PDP) ; Goldstein et al. (2015) (ICE).
+- Molnar — *Interpretable Machine Learning* (en ligne).

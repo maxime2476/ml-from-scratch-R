@@ -1,0 +1,153 @@
+---
+title: "Module 10 — Gradient boosting"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive le **gradient boosting** comme **descente de gradient dans l'espace des
+fonctions** : pseudo-résidus (cas $L_2$ = résidu ; cas log-loss dérivé à la main),
+rôle du **taux d'apprentissage**, et lien avec le **Newton boosting** (approximation
+d'ordre 2, style XGBoost) avec le **poids optimal des feuilles**. Les apprenants
+de base réutilisent les arbres du Module 8.
+
+### Notations {.unnumbered}
+
+- Perte $\ell(y,F)$ ; prédicteur additif $F_M = F_0 + \sum_{m=1}^M \nu\,h_m$, où
+  $h_m$ est un arbre et $\nu\in(0,1]$ le taux d'apprentissage.
+- $g_i = \partial_F\ell(y_i,F)\big|_{F_{m-1}(x_i)}$ (gradient),
+  $h_i = \partial^2_F\ell(y_i,F)\big|_{F_{m-1}(x_i)}$ (hessienne) au point courant.
+
+## Boosting = descente de gradient fonctionnelle {#sec-fgd}
+
+On veut minimiser $L(F)=\sum_{i=1}^n \ell(y_i, F(x_i))$ **sur les fonctions** $F$.
+La descente de gradient (Module 0) dans l'espace fonctionnel procède ainsi : à
+l'étape $m$, la direction de plus forte pente est l'opposé du gradient
+$$
+-g_i = -\,\partial_F\ell(y_i,F)\big|_{F_{m-1}(x_i)} \qquad(\text{pseudo-résidu } r_i).
+\tag{10.1}
+$$
+Comme on ne peut évaluer $-g$ qu'aux points d'apprentissage, on **ajuste un
+apprenant de base** $h_m$ (un arbre) aux pseudo-résidus $r_i$ par moindres carrés,
+pour **généraliser** la direction de descente à tout $x$. Puis on met à jour
+$$
+F_m = F_{m-1} + \nu\,h_m .
+\tag{10.2}
+$$
+Chaque itération est donc une étape de descente de gradient dont le « pas » est
+un arbre. C'est le **gradient boosting** (Friedman 2001).
+
+## Cas $L_2$ : le pseudo-résidu est le résidu {#sec-l2}
+
+Pour $\ell(y,F)=\tfrac12(y-F)^2$ :
+$$
+g_i = \partial_F\ell = -(y_i - F_{m-1}(x_i)),\qquad
+r_i = -g_i = y_i - F_{m-1}(x_i).
+\tag{10.3}
+$$
+Le **pseudo-résidu est exactement le résidu courant**. Le boosting $L_2$ ajuste
+donc, à chaque étape, un arbre aux résidus et l'ajoute — c'est le *least squares
+boosting*. On initialise $F_0=\bar y$.
+
+## Cas log-loss : dériver le pseudo-résidu {#sec-logloss}
+
+Classification binaire $y\in\{0,1\}$, on modélise le **log-odds** $F=\operatorname
+{logit}(p)$, $p=\sigma(F)=1/(1+e^{-F})$. La perte est la log-vraisemblance négative
+(Module 3, éq. 3.4) :
+$$
+\ell(y,F) = \log(1+e^F) - yF .
+$$
+Ses dérivées :
+$$
+g_i = \partial_F\ell = \sigma(F) - y = p_i - y_i,\qquad
+h_i = \partial^2_F\ell = \sigma(F)(1-\sigma(F)) = p_i(1-p_i).
+\tag{10.4}
+$$
+Le **pseudo-résidu** est donc
+$$
+r_i = -g_i = y_i - p_i,\qquad p_i = \sigma(F_{m-1}(x_i)),
+\tag{10.5}
+$$
+la différence entre l'étiquette et la **probabilité prédite** courante. On
+initialise $F_0=\operatorname{logit}(\bar y)$.
+
+## Taux d'apprentissage {#sec-lr}
+
+Le facteur $\nu$ dans (10.2) est le **shrinkage** : il réduit la contribution de
+chaque arbre. Un **petit $\nu$** (p.ex. 0.01–0.1) demande **plus d'arbres** $M$
+mais **régularise** (meilleure généralisation) — c'est un compromis $\nu\leftrightarrow
+M$ analogue au pas de la descente de gradient (Module 0). Empiriquement, réduire
+$\nu$ et augmenter $M$ améliore le test jusqu'à un plateau ; $\nu$ trop grand
+sur-ajuste vite. L'arrêt (nombre d'arbres) se règle par validation / OOB.
+
+## Newton boosting (ordre 2, style XGBoost) {#sec-newton}
+
+Plutôt que le seul gradient, on peut développer la perte à l'**ordre 2** autour
+de $F_{m-1}$. Pour un arbre de structure fixée (feuilles $j$, ensembles d'indices
+$I_j$) et poids de feuille $w_j$ (l'incrément ajouté à $F$), l'objectif approché
+avec régularisation $\ell_2$ sur les poids est
+$$
+\widetilde L(w) = \sum_j\Big[\sum_{i\in I_j}\big(g_i w_j + \tfrac12 h_i w_j^2\big)\Big] + \frac{\lambda}{2}\sum_j w_j^2 .
+\tag{10.6}
+$$
+
+> **Proposition 10.1 (poids optimal des feuilles).** Le minimiseur de (10.6) par
+> feuille est
+> $$
+> w_j^\star = -\,\frac{\sum_{i\in I_j} g_i}{\sum_{i\in I_j} h_i + \lambda}.
+> \tag{10.7}
+> $$
+
+**Preuve.** (10.6) est **séparable** par feuille. Pour la feuille $j$,
+$\phi(w_j)=\big(\sum_{i\in I_j}g_i\big)w_j + \tfrac12\big(\sum_{i\in I_j}h_i+\lambda
+\big)w_j^2$ est quadratique convexe ; $\phi'(w_j)=\sum g_i + (\sum h_i+\lambda)w_j
+=0$ donne (10.7). $\blacksquare$
+
+**Interprétation et cas particuliers.**
+
+- **$L_2$** : $g_i=-(y_i-F)$, $h_i=1$, $\lambda=0$ : $w_j^\star = \frac{\sum_{i\in
+  I_j}(y_i-F)}{|I_j|}$ = **moyenne des résidus** dans la feuille — exactement ce que
+  produit un arbre de régression. Newton et gradient coïncident.
+- **Log-loss** : $g_i=p_i-y_i$, $h_i=p_i(1-p_i)$ : $w_j^\star = \frac{\sum_{i\in I_j}
+  (y_i-p_i)}{\sum_{i\in I_j} p_i(1-p_i) + \lambda}$ — la mise à jour de Newton par
+  feuille (TreeBoost de Friedman ; c'est ce que fait `gbm` pour la Bernoulli). Ici
+  Newton **diffère** du gradient (dont la feuille vaudrait la moyenne des $r_i$).
+
+Le **score de structure** $-\tfrac12\sum_j (\sum_{I_j} g_i)^2/(\sum_{I_j} h_i+\lambda)$
+(valeur optimale de 10.6) sert de critère de split dans XGBoost ; on l'admet ici
+et on conserve les splits par variance sur les pseudo-résidus, en **raffinant les
+poids de feuille** par (10.7).
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/10_boosting.R`](../R/10_boosting.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (10.1)-(10.2) boucle de boosting | `gradient_boost(formula, data, loss, M, nu)` |
+| (10.3) pseudo-résidu $L_2$ | interne (`loss = "l2"`) |
+| (10.5) pseudo-résidu log-loss | interne (`loss = "logloss"`) |
+| (10.7) poids de Newton par feuille | `.refit_leaves_newton()` (option `newton`) |
+| prédiction / trajectoire de perte | `predict_boost()`, `boost_loss_path()` |
+
+Les arbres de base sont des `cart_fit` (Module 8, `method = "anova"`) ajustés aux
+pseudo-résidus. Validation **qualitative** contre `gbm` (mêmes lois de perte,
+trajectoires comparables — l'égalité exacte est exclue : algorithmes de split et
+détails d'implémentation différents). Monte Carlo : décroissance de la perte
+d'entraînement/test selon $M$ et $\nu$ ; log-loss (Newton) vs $L_2$.
+
+## Références {.unnumbered}
+
+- Friedman (2001), « Greedy Function Approximation: A Gradient Boosting Machine »,
+  *Annals of Statistics*.
+- Chen & Guestrin (2016), « XGBoost », *KDD* (Newton boosting, score de structure).
+- Hastie, Tibshirani, Friedman — *ESL*, ch. 10.

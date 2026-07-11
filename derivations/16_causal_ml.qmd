@@ -1,0 +1,176 @@
+---
+title: "Module 16 — Pont ML ↔ causalité : DML et forêts causales"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+Module **final** : il fait converger le projet. On pose le cadre des **résultats
+potentiels**, on montre **pourquoi le ML naïf échoue** pour un paramètre causal,
+on dérive le **score orthogonal de Neyman** pour le modèle partiellement linéaire
+(qui **généralise Frisch-Waugh-Lovell**, Module 1), le **Double/Debiased Machine
+Learning** avec **cross-fitting** (nuisances estimées par les forêts du Module 9
+ou le boosting du Module 10), et les **forêts causales**. Le Monte Carlo central
+compare OLS naïf, lasso naïf et DML.
+
+### Notations {.unnumbered}
+
+- Traitement $D\in\{0,1\}$, covariables $X$, réponse $Y$. Résultats potentiels
+  $Y(1),Y(0)$ ; $Y = D\,Y(1) + (1-D)\,Y(0)$.
+- Propension $m(X)=\mathbb E[D\mid X]=\mathbb P(D=1\mid X)$ ; $\ell(X)=\mathbb E[Y
+  \mid X]$.
+
+## Cadre des résultats potentiels {#sec-po}
+
+L'**effet moyen du traitement** (ATE) et l'effet conditionnel (CATE) :
+$$
+\tau = \mathbb E[Y(1)-Y(0)],\qquad \tau(x)=\mathbb E[Y(1)-Y(0)\mid X=x].
+\tag{16.1}
+$$
+On observe $Y(1)$ **ou** $Y(0)$, jamais les deux (problème fondamental de
+l'inférence causale). Identification sous trois **hypothèses** :
+
+- **(C1) SUTVA / consistance.** Pas d'interférence entre unités ; $Y = Y(D)$.
+- **(C2) Ignorabilité conditionnelle (non-confusion).** $(Y(1),Y(0))\perp D \mid X$ :
+  conditionnellement à $X$, le traitement est « comme aléatoire ».
+- **(C3) Support commun (overlap).** $0 < m(x) < 1$ pour tout $x$ : chaque profil
+  peut recevoir les deux traitements.
+
+Sous (C1)-(C3), l'ATE est **identifié** à partir des données observées :
+$$
+\tau = \mathbb E_X\big[\,\mathbb E[Y\mid D=1,X] - \mathbb E[Y\mid D=0,X]\,\big].
+\tag{16.2}
+$$
+
+## Pourquoi le ML naïf échoue {#sec-naif}
+
+Considérons le **modèle partiellement linéaire** (PLR) :
+$$
+Y = \theta D + g(X) + \varepsilon,\quad \mathbb E[\varepsilon\mid X,D]=0;\qquad
+D = m(X) + v,\quad \mathbb E[v\mid X]=0.
+\tag{16.3}
+$$
+$\theta$ est l'effet causal (sous C1-C3). L'approche **naïve** : estimer $g$ par ML
+(lasso, forêt) et régresser $Y-\hat g(X)$ sur $D$. Problème : $\hat g$ converge
+**lentement** (biais de régularisation, Module 4/14), et **ce biais se transmet à
+$\hat\theta$** car l'erreur de $\hat g$ est corrélée à $D$ via $X$. De même,
+**lasso-iser directement l'équation d'intérêt** rétrécit $\theta$ vers 0 (biais de
+régularisation sur le paramètre structurel — Module 14 §14.4.2). Résultat :
+$\hat\theta$ **biaisé** et à couverture cassée. Démonstration Monte Carlo dans
+`simulations/mc_16_dml.R`.
+
+## Score orthogonal de Neyman {#sec-neyman}
+
+L'idée du **DML** (Chernozhukov et al. 2018) : construire un **moment
+d'estimation insensible au premier ordre** aux erreurs des nuisances. Pour le PLR,
+on **partiale $X$** hors de $Y$ **et** de $D$ (résidualisation, façon Robinson) :
+$$
+\tilde Y = Y - \ell(X),\qquad \tilde D = D - m(X).
+$$
+
+> **Score orthogonal.** $\ \psi(W;\theta,\eta) = \big(Y-\ell(X)-\theta(D-m(X))\big)\,
+> \big(D-m(X)\big)$, avec $\eta=(\ell,m)$. L'estimateur résout $\mathbb E[\psi]=0$ :
+> $$
+> \theta = \frac{\mathbb E[\tilde D\,\tilde Y]}{\mathbb E[\tilde D^2]} .
+> \tag{16.4}
+> $$
+
+**Validité du moment.** Dans le PLR, $\ell(X)=\mathbb E[Y\mid X]=\theta m(X)+g(X)$,
+donc $Y-\ell(X)=\theta(D-m(X))+\varepsilon = \theta\,v+\varepsilon$. Au vrai
+$\theta$, $\psi = \varepsilon\, v$ et $\mathbb E[\psi]=\mathbb E[\varepsilon v]=
+\mathbb E[\mathbb E[\varepsilon\mid X,D]\,v]=0$. $\checkmark$
+
+> **Proposition 16.1 (orthogonalité de Neyman).** Le score $\psi$ est **insensible
+> au premier ordre** aux nuisances : $\partial_\eta\,\mathbb E[\psi]\big|_{\eta_0}=0$.
+
+**Preuve.** *Direction $\ell$* : $\partial_\ell$ dans la direction $\Delta$,
+$\frac{d}{dt}\mathbb E[(Y-\ell-t\Delta-\theta(D-m))(D-m)]|_{0} = \mathbb E[-\Delta(X)
+(D-m)] = -\mathbb E[\Delta(X)\,\mathbb E[v\mid X]] = 0$. *Direction $m$* : en
+perturbant $m\to m+t\Delta$,
+$\frac{d}{dt}\mathbb E[(Y-\ell-\theta(D-m-t\Delta))(D-m-t\Delta)]|_0
+= \mathbb E\big[\theta\Delta(D-m) - (Y-\ell-\theta(D-m))\Delta\big]
+= \mathbb E[\Delta(X)(\theta v - \varepsilon)]
+= \mathbb E[\Delta(X)(\theta\,\mathbb E[v\mid X] - \mathbb E[\varepsilon\mid X])] = 0.$
+$\blacksquare$
+
+**Conséquence.** Les erreurs des nuisances $\hat\ell,\hat m$ n'affectent
+$\hat\theta$ qu'au **second ordre** : même des estimateurs ML à convergence lente
+(taux $o(n^{-1/4})$ suffisant) donnent un $\hat\theta$ **$\sqrt n$-consistant et
+asymptotiquement normal**. C'est ce qui **débiaise** le ML.
+
+### Généralisation de Frisch-Waugh-Lovell {#sec-fwl}
+
+(16.4) **est** FWL (Module 1, éq. 1.10) — mais avec une **résidualisation
+non paramétrique** au lieu d'une projection linéaire. Dans le FWL classique,
+$\ell,m$ sont les **projections linéaires** de $Y,D$ sur $X_1$ ($M_1 Y, M_1 X_2$) ;
+ici ce sont des **fonctions ML quelconques** $\mathbb E[Y\mid X],\mathbb E[D\mid X]$.
+Le DML est donc **FWL rendu robuste** : on boucle explicitement la boucle du
+projet, du Module 1 au Module 16.
+
+### Cross-fitting {#sec-crossfit}
+
+Utiliser les **mêmes** données pour estimer les nuisances **et** le moment
+réintroduit un biais de sur-ajustement (les $\hat\ell,\hat m$ « connaissent »
+l'observation). Le **cross-fitting** l'élimine :
+
+1. partitionner en $K$ blocs ;
+2. pour chaque bloc $k$, estimer $\hat\ell^{(-k)},\hat m^{(-k)}$ sur les **autres**
+   blocs, calculer les résidus $\tilde Y_i,\tilde D_i$ sur le bloc $k$ ;
+3. agréger : $\hat\theta = \big(\sum_i\tilde D_i\tilde Y_i\big)/\big(\sum_i\tilde D_i^2\big)$,
+   avec erreur standard $\widehat{\operatorname{se}} = \hat\sigma_\psi /
+   \big(\sqrt n\,\overline{\tilde D^2}\big)$.
+
+## Forêts causales {#sec-cf}
+
+Pour le **CATE** $\tau(x)$ (effet hétérogène), les **forêts causales** (Wager &
+Athey 2018) adaptent les arbres : les splits **maximisent l'hétérogénéité du
+traitement** (variance des effets estimés entre enfants) au lieu de l'impureté de
+la réponse. Dans le cas simple (un split), le critère favorise la partition
+$\{L,R\}$ maximisant $n_L n_R(\hat\tau_L-\hat\tau_R)^2$ (différence d'effets entre
+branches). Propriété d'**honnêteté** (*honest splitting*) : on sépare
+l'échantillon en un sous-échantillon de **structure** (choisir les splits) et un
+sous-échantillon d'**estimation** (estimer $\hat\tau$ dans les feuilles), ce qui
+**débiaise** les estimations de feuille (comme le cross-fitting débiaise le DML).
+
+**Implémentation simplifiée** (assumée) : on fournit un **T-learner** (deux modèles
+séparés, $\hat\tau(x)=\hat\mu_1(x)-\hat\mu_0(x)$ via les forêts du Module 9) et une
+forêt causale **minimale** (split par hétérogénéité, un niveau d'honnêteté). On
+**signale** les simplifications par rapport à Wager-Athey : pas de sous-échantillonnage
+adaptatif fin, pas de théorie asymptotique de normalité pointue, pas de noyau adaptatif.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/16_causal_ml.R`](../R/16_causal_ml.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (16.4) DML PLR + cross-fitting | `dml_plr(y, d, X, K, nuisance)` |
+| DML sans cross-fitting | `dml_plr(..., crossfit = FALSE)` |
+| T-learner (CATE) | `t_learner(X, y, d)` |
+| forêt causale minimale | `causal_tree()` |
+| (16.2) ATE | vérifié dans le Monte Carlo |
+
+Nuisances via `random_forest_fit` (M9) ou `gradient_boost` (M10). Validation :
+`dml_plr` contre `DoubleML` (R) ; CATE qualitativement contre `grf`. **Monte
+Carlo central du projet** : sur le même DGP ($\theta$ vrai connu, $g$ non
+linéaire), comparer **OLS naïf, lasso naïf, DML sans cross-fitting, DML complet**
+en **biais, RMSE et couverture** — le tableau de synthèse.
+
+## Références {.unnumbered}
+
+- Chernozhukov, Chetverikov, Demirer, Duflo, Hansen, Newey & Robins (2018),
+  « Double/Debiased Machine Learning… », *The Econometrics Journal*.
+- Robinson (1988), « Root-N-Consistent Semiparametric Regression », *Econometrica*.
+- Wager & Athey (2018), « Estimation and Inference of Heterogeneous Treatment
+  Effects using Random Forests », *JASA*.
+- Athey & Imbens (2016), « Recursive Partitioning for Heterogeneous Causal
+  Effects », *PNAS*.

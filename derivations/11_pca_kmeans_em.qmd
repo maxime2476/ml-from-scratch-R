@@ -1,0 +1,206 @@
+---
+title: "Module 11 — Non supervisé : PCA, k-means, EM"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive l'**ACP** par **deux voies indépendantes** (maximisation de variance
+sous contrainte, et approximation de rang faible par SVD — en montrant qu'elles
+coïncident), le **k-means** (minimisation de l'inertie intra-classe, convergence
+de Lloyd), et l'**algorithme EM** pour un **mélange gaussien** (fonction $Q$,
+étape E des responsabilités, étape M en formes fermées), avec le k-means comme
+**cas limite**.
+
+### Notations {.unnumbered}
+
+- $X\in\mathbb R^{n\times p}$ **centrée** (colonnes de moyenne nulle) ; $x_i$ la
+  $i$-ème ligne. $S=\frac1n X^\top X$ : matrice de covariance empirique.
+- SVD (Module 0) : $X=UDV^\top$, valeurs singulières $d_1\ge\dots\ge d_p$.
+
+## ACP, voie 1 : maximisation de variance (Lagrange) {#sec-pca-var}
+
+On cherche la direction unitaire $w$ ($\|w\|=1$) de **variance projetée maximale**.
+La variance des projections $Xw$ est $\frac1n\|Xw\|^2 = w^\top S w$. Problème :
+$$
+\max_{w}\ w^\top S w \quad \text{s.c.}\ \ w^\top w = 1 .
+\tag{11.1}
+$$
+
+**Lagrangien** : $\mathcal L(w,\lambda)=w^\top S w - \lambda(w^\top w - 1)$.
+Condition de premier ordre :
+$$
+\partial_w\mathcal L = 2Sw - 2\lambda w = 0 \;\Longrightarrow\; S w = \lambda w .
+\tag{11.2}
+$$
+$w$ est donc un **vecteur propre** de $S$, $\lambda$ la valeur propre associée, et
+la variance atteinte vaut $w^\top S w = \lambda w^\top w = \lambda$. **Maximiser**
+la variance $\Rightarrow$ choisir la **plus grande** valeur propre : la première
+composante principale est le vecteur propre dominant de $S$. Les suivantes
+maximisent (11.1) **sous contrainte d'orthogonalité** aux précédentes, ce qui
+donne les vecteurs propres suivants (par ordre décroissant de $\lambda$).
+
+## ACP, voie 2 : approximation de rang faible (SVD) {#sec-pca-svd}
+
+On cherche la **meilleure approximation de rang $k$** de $X$ au sens de Frobenius :
+$$
+\min_{\operatorname{rang}(M)\le k}\ \|X - M\|_F^2 .
+\tag{11.3}
+$$
+
+> **Théorème 11.1 (Eckart-Young, admis).** Le minimiseur de (11.3) est la **SVD
+> tronquée** $X_k = U_k D_k V_k^\top$ (les $k$ premières composantes), et l'erreur
+> vaut $\sum_{j>k} d_j^2$.
+
+Les **directions principales** sont donc les **vecteurs singuliers droits** $V$,
+et les **scores** (coordonnées dans la nouvelle base) sont $XV_k = U_k D_k$.
+
+### Coïncidence des deux voies {#sec-coincidence}
+
+> **Proposition 11.2.** Les directions de la voie 1 (vecteurs propres de $S$) sont
+> **identiques** aux directions de la voie 2 (vecteurs singuliers droits de $X$),
+> et $\lambda_j = d_j^2/n$.
+
+**Preuve.** De $X=UDV^\top$, $S=\frac1n X^\top X = \frac1n V D U^\top U D V^\top =
+V\big(\tfrac1n D^2\big)V^\top$. C'est une diagonalisation de $S$ : ses vecteurs
+propres sont les colonnes de $V$ (les vecteurs singuliers droits de $X$) et ses
+valeurs propres sont $\lambda_j = d_j^2/n$. Les deux constructions renvoient donc
+**la même** base principale. $\blacksquare$
+
+La **part de variance expliquée** par la composante $j$ est $\lambda_j/\sum_\ell
+\lambda_\ell = d_j^2/\sum_\ell d_\ell^2$. Numériquement, on calcule l'ACP par la
+SVD de $X$ (plus stable que la diagonalisation de $X^\top X$, cf. Module 0).
+
+## k-means : inertie intra-classe et algorithme de Lloyd {#sec-kmeans}
+
+On partitionne $\{x_1,\dots,x_n\}$ en $K$ classes $C_1,\dots,C_K$ de centres
+$\mu_1,\dots,\mu_K$, en minimisant l'**inertie intra-classe** :
+$$
+W(\{C_k\},\{\mu_k\}) = \sum_{k=1}^K\sum_{i\in C_k}\|x_i - \mu_k\|^2 .
+\tag{11.4}
+$$
+
+**Algorithme de Lloyd** — minimisation alternée :
+
+- **Affectation** ($\mu$ fixés) : chaque point rejoint le centre le plus proche,
+  $c(i)=\arg\min_k\|x_i-\mu_k\|^2$. C'est le minimiseur exact de (11.4) sur les
+  affectations.
+- **Mise à jour** ($C_k$ fixés) : $\partial_{\mu_k}\sum_{i\in C_k}\|x_i-\mu_k\|^2 =
+  -2\sum_{i\in C_k}(x_i-\mu_k)=0 \Rightarrow \mu_k = \frac1{|C_k|}\sum_{i\in C_k}x_i$
+  (la **moyenne** de la classe).
+
+> **Proposition 11.3 (convergence).** Chaque étape **décroît** (au sens large)
+> $W$ ; comme $W\ge 0$ et qu'il n'y a qu'un **nombre fini** de partitions,
+> l'algorithme converge en un nombre fini d'étapes.
+
+**Preuve.** Les deux étapes minimisent $W$ exactement selon leur bloc de variables,
+donc $W$ ne peut qu'décroître. Une suite décroissante minorée de valeurs prises
+dans un ensemble fini (les partitions possibles) est stationnaire après un nombre
+fini d'étapes. $\blacksquare$
+
+**Sous-optimalité.** Lloyd converge vers un **minimum local** dépendant de
+l'initialisation — d'où les redémarrages multiples (`nstart`) ou k-means++.
+
+## EM pour mélange gaussien {#sec-em}
+
+### Modèle {#sec-modele}
+
+$$
+x_i \sim \sum_{k=1}^K \pi_k\,\mathcal N(\mu_k,\Sigma_k),\qquad \sum_k\pi_k=1 .
+$$
+Variable latente $z_i\in\{1,\dots,K\}$ : $\mathbb P(z_i=k)=\pi_k$,
+$x_i\mid z_i=k\sim\mathcal N(\mu_k,\Sigma_k)$. La **log-vraisemblance observée**
+$\ell(\theta)=\sum_i\log\big(\sum_k\pi_k\mathcal N(x_i;\mu_k,\Sigma_k)\big)$ est
+non concave (somme dans le log) — d'où EM.
+
+### Fonction $Q$ et étape E {#sec-estep}
+
+La log-vraisemblance **complète** (si l'on connaissait $z_i$) est
+$\sum_i\sum_k \mathbf 1\{z_i=k\}\big[\log\pi_k + \log\mathcal N(x_i;\mu_k,\Sigma_k)\big]$.
+L'**espérance** conditionnelle sous les paramètres courants $\theta^{(t)}$ donne la
+**fonction $Q$** :
+$$
+Q(\theta\mid\theta^{(t)}) = \sum_{i=1}^n\sum_{k=1}^K \gamma_{ik}\big[\log\pi_k + \log\mathcal N(x_i;\mu_k,\Sigma_k)\big],
+\tag{11.5}
+$$
+où la **responsabilité** $\gamma_{ik}=\mathbb E[\mathbf 1\{z_i=k\}\mid x_i,\theta^{(t)}]
+=\mathbb P(z_i=k\mid x_i)$ se calcule par **Bayes** (étape E) :
+$$
+\gamma_{ik} = \frac{\pi_k^{(t)}\,\mathcal N(x_i;\mu_k^{(t)},\Sigma_k^{(t)})}{\sum_{j=1}^K \pi_j^{(t)}\,\mathcal N(x_i;\mu_j^{(t)},\Sigma_j^{(t)})} .
+\tag{11.6}
+$$
+
+### Étape M : formes fermées {#sec-mstep}
+
+On **maximise** $Q$ en $\theta$. Notons $N_k=\sum_i\gamma_{ik}$.
+
+> **Proposition 11.4 (mises à jour M).**
+> $$
+> \pi_k = \frac{N_k}{n},\qquad
+> \mu_k = \frac1{N_k}\sum_i\gamma_{ik}x_i,\qquad
+> \Sigma_k = \frac1{N_k}\sum_i\gamma_{ik}(x_i-\mu_k)(x_i-\mu_k)^\top .
+> \tag{11.7}
+> $$
+
+**Preuve.** *($\mu_k$)* $\partial_{\mu_k}Q = \sum_i\gamma_{ik}\Sigma_k^{-1}(x_i-\mu_k)
+=0 \Rightarrow \sum_i\gamma_{ik}(x_i-\mu_k)=0 \Rightarrow \mu_k=\frac1{N_k}\sum_i
+\gamma_{ik}x_i$. *($\Sigma_k$)* En dérivant $\sum_i\gamma_{ik}\big[-\tfrac12\log|
+\Sigma_k| - \tfrac12(x_i-\mu_k)^\top\Sigma_k^{-1}(x_i-\mu_k)\big]$ par rapport à
+$\Sigma_k^{-1}$ (identités $\partial_{\Sigma^{-1}}\log|\Sigma^{-1}|=\Sigma$,
+$\partial_{\Sigma^{-1}}(x-\mu)^\top\Sigma^{-1}(x-\mu)=(x-\mu)(x-\mu)^\top$) et en
+annulant, on obtient $\Sigma_k=\frac1{N_k}\sum_i\gamma_{ik}(x_i-\mu_k)(x_i-\mu_k)^\top$.
+*($\pi_k$)* Sous la contrainte $\sum_k\pi_k=1$ (Lagrange, multiplicateur $\nu$) :
+$\partial_{\pi_k}\big[\sum_i\gamma_{ik}\log\pi_k - \nu(\sum_k\pi_k-1)\big]=
+\frac{N_k}{\pi_k}-\nu=0\Rightarrow \pi_k=N_k/\nu$ ; la contrainte donne $\nu=\sum_k
+N_k=n$, d'où $\pi_k=N_k/n$. $\blacksquare$
+
+EM **augmente la log-vraisemblance observée à chaque itération** (propriété
+d'ascension ; l'écart $\ell(\theta)-Q$ est une divergence KL $\ge 0$, admis ; cf.
+Bishop §9.4). On itère E puis M jusqu'à stabilisation de $\ell$.
+
+### k-means comme cas limite {#sec-limite}
+
+Prenons $\Sigma_k=\sigma^2 I$ **commune** et faisons $\sigma^2\to 0$. La
+responsabilité (11.6) devient
+$$
+\gamma_{ik} = \frac{\pi_k\exp\!\big(-\|x_i-\mu_k\|^2/(2\sigma^2)\big)}{\sum_j\pi_j\exp\!\big(-\|x_i-\mu_j\|^2/(2\sigma^2)\big)}
+\xrightarrow[\sigma^2\to 0]{} \mathbf 1\{k = \arg\min_\ell \|x_i-\mu_\ell\|^2\} ,
+$$
+car l'exponentielle **concentre** toute la masse sur le centre le **plus proche**.
+Les responsabilités deviennent des **affectations dures**, et l'étape M
+$\mu_k=\frac1{N_k}\sum\gamma_{ik}x_i$ devient la **moyenne de la classe** : on
+retrouve **exactement le k-means**. L'EM gaussien est donc une version « douce »
+(probabiliste) du k-means.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/11_pca_kmeans_em.R`](../R/11_pca_kmeans_em.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (11.2)/(11.3) ACP par SVD | `pca_fit(X)` |
+| (11.4) inertie, Lloyd | `kmeans_fit(X, K)` |
+| (11.6) étape E | interne à `em_gmm()` |
+| (11.7) étape M | interne à `em_gmm()` |
+| log-vraisemblance | `em_gmm()` → `loglik` |
+
+Validation : `pca_fit` contre `prcomp` (valeurs propres, axes au signe près) ;
+`kmeans_fit` contre `stats::kmeans` (même inertie à init identique) ; `em_gmm`
+contre `mclust` (log-vraisemblance atteinte). Monte Carlo : coïncidence des deux
+voies de l'ACP, k-means comme limite de l'EM ($\sigma^2\to 0$), sensibilité à
+l'initialisation.
+
+## Références {.unnumbered}
+
+- Hastie, Tibshirani, Friedman — *ESL*, §14.3 (clustering), §14.5 (ACP).
+- Bishop — *Pattern Recognition and Machine Learning*, §9.2–9.4 (k-means, EM), §12.1 (ACP).
+- Lloyd (1982) ; Dempster, Laird & Rubin (1977) (EM).

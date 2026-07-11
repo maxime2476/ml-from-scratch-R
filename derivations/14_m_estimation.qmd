@@ -1,0 +1,204 @@
+---
+title: "Module 14 — Le regard économétrique sur le ML : M-estimation et inférence"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On relit les modules précédents sous l'angle économétrique. Trois axes : (i) la
+**M-estimation** comme cadre unificateur, avec la **variance sandwich
+$A^{-1}BA^{-1}$** dérivée par développement de Taylor ; (ii) la **lecture
+bayésienne** (MAP, postérieure du ridge) ; (iii) surtout, **où l'inférence valide
+casse** — inférence post-sélection, biais de régularisation, estimation vs
+prédiction. Module **théorique** : dérivation + illustrations numériques
+(`simulations/mc_14_inference_cassee.R`, helpers `R/14_m_estimation.R`).
+
+## M-estimation : un cadre unificateur {#sec-mest}
+
+### Définition {#sec-def}
+
+Un **M-estimateur** minimise un critère additif, ou de façon équivalente résout
+des **équations d'estimation** :
+$$
+\hat\theta = \arg\min_\theta \frac1n\sum_{i=1}^n m(z_i,\theta)
+\quad\Longleftrightarrow\quad
+\frac1n\sum_{i=1}^n \psi(z_i,\hat\theta) = 0,\quad \psi = \partial_\theta m .
+\tag{14.1}
+$$
+
+**La plupart des estimateurs du projet en sont** :
+
+| Estimateur | $m(z,\theta)$ | $\psi(z,\theta)$ |
+|-----------|---------------|------------------|
+| OLS (M1) | $(y-x^\top\theta)^2$ | $-2x(y-x^\top\theta)$ |
+| MLE / logistique (M3) | $-\log f(z;\theta)$ | $-\,\text{score}$ |
+| Ridge (M4) | $(y-x^\top\theta)^2 + \tfrac{\lambda}{n}\|\theta\|^2$ | $-2x(y-x^\top\theta)+\tfrac{2\lambda}{n}\theta$ |
+| Lasso (M4) | $(y-x^\top\theta)^2 + \tfrac{\lambda}{n}\|\theta\|_1$ | sous-gradient |
+| Boosting (population, M10) | $\ell(y,\theta(x))$ | $\partial_\theta\ell$ |
+
+### Normalité asymptotique et variance sandwich {#sec-sandwich}
+
+> **Théorème 14.1.** Sous conditions de régularité (consistance de $\hat\theta$
+> vers $\theta_0$ solution de $\mathbb E[\psi(z,\theta_0)]=0$, différentiabilité,
+> moments), on a
+> $$
+> \sqrt n\,(\hat\theta - \theta_0) \xrightarrow{d} \mathcal N\!\big(0,\ A^{-1}BA^{-1}\big),
+> \quad
+> A = \mathbb E\big[-\partial_\theta\psi(z,\theta_0)\big],\ \
+> B = \mathbb E\big[\psi(z,\theta_0)\psi(z,\theta_0)^\top\big].
+> \tag{14.2}
+> $$
+
+**Preuve (développement de Taylor des CPO).** Par définition $0 = \frac1n\sum_i
+\psi(z_i,\hat\theta)$. Un développement au premier ordre autour de $\theta_0$ :
+$$
+0 = \frac1n\sum_i\psi(z_i,\theta_0) + \Big[\frac1n\sum_i\partial_\theta\psi(z_i,\bar\theta)\Big](\hat\theta-\theta_0),
+$$
+avec $\bar\theta$ entre $\hat\theta$ et $\theta_0$. En isolant et en multipliant
+par $\sqrt n$ :
+$$
+\sqrt n(\hat\theta-\theta_0) = -\Big[\underbrace{\tfrac1n\sum_i\partial_\theta\psi(z_i,\bar\theta)}_{\xrightarrow{p}\,-A}\Big]^{-1}
+\underbrace{\sqrt n\,\tfrac1n\sum_i\psi(z_i,\theta_0)}_{\xrightarrow{d}\,\mathcal N(0,B)} .
+$$
+Par la loi des grands nombres $\frac1n\sum\partial_\theta\psi\to -A$ et par le TCL
+$\sqrt n\,\overline\psi\to\mathcal N(0,B)$ (car $\mathbb E[\psi(z,\theta_0)]=0$).
+Le théorème de Slutsky donne $\sqrt n(\hat\theta-\theta_0)\to A^{-1}\mathcal N(0,B)
+= \mathcal N(0,A^{-1}BA^{-1})$. $\blacksquare$
+
+### Le sandwich du Module 2 comme cas particulier {#sec-ols-case}
+
+Pour l'OLS, $\psi = x\,\varepsilon$ (à un facteur près), $\varepsilon = y-x^\top
+\theta_0$. Alors
+$$
+A = \mathbb E[xx^\top],\qquad B = \mathbb E[\varepsilon^2 xx^\top],\qquad
+A^{-1}BA^{-1} = (\mathbb E xx^\top)^{-1}\mathbb E[\varepsilon^2 xx^\top](\mathbb E xx^\top)^{-1}.
+$$
+Sa version empirique est **exactement** l'estimateur **HC0** de White (Module 2,
+éq. 2.2) : $(X^\top X)^{-1}\big(\sum_i \hat\varepsilon_i^2 x_ix_i^\top\big)(X^\top
+X)^{-1}$. Sous homoscédasticité $B=\sigma^2 A$ et le sandwich se réduit à
+$\sigma^2(\mathbb E xx^\top)^{-1}$ — la variance classique. **La robustesse du
+Module 2 n'est donc pas un truc ad hoc : c'est le sandwich générique de la
+M-estimation.** (Vérification numérique dans `tests/testthat/test-14.R`.)
+
+## Lecture bayésienne : pénalisation = log-prior {#sec-bayes}
+
+L'estimateur du **maximum a posteriori** (MAP) minimise $-\log p(\theta\mid
+\text{données}) = -\log p(\text{données}\mid\theta) - \log p(\theta)$ : la
+**pénalité est un $-\log$-prior** (Module 4). On approfondit ici la postérieure
+**complète** du ridge.
+
+### Postérieure conjuguée du ridge {#sec-ridge-post}
+
+Modèle gaussien $y\mid\beta\sim\mathcal N(X\beta,\sigma^2 I)$ ($\sigma^2$ connu),
+prior conjugué $\beta\sim\mathcal N(0,\tau^2 I)$. La postérieure est gaussienne :
+
+> **Proposition 14.2.** $\beta\mid y \sim \mathcal N(\mu_{\text{post}},
+> \Sigma_{\text{post}})$ avec
+> $$
+> \Sigma_{\text{post}} = \Big(\frac{X^\top X}{\sigma^2} + \frac{I}{\tau^2}\Big)^{-1}
+> = \sigma^2 (X^\top X + \lambda I)^{-1},\quad
+> \mu_{\text{post}} = \Sigma_{\text{post}}\frac{X^\top y}{\sigma^2}
+> = (X^\top X + \lambda I)^{-1}X^\top y,
+> \tag{14.3}
+> $$
+> avec $\lambda = \sigma^2/\tau^2$.
+
+**Preuve.** $-2\log p(\beta\mid y) = \tfrac1{\sigma^2}\|y-X\beta\|^2 + \tfrac1{\tau^2}
+\|\beta\|^2 + \text{cte}$. C'est une forme **quadratique** en $\beta$ ; en
+complétant le carré, $= (\beta-\mu)^\top\Sigma^{-1}(\beta-\mu) + \text{cte}$ avec
+$\Sigma^{-1} = \tfrac{X^\top X}{\sigma^2}+\tfrac{I}{\tau^2}$ et $\Sigma^{-1}\mu =
+\tfrac{X^\top y}{\sigma^2}$. Une densité $\propto\exp(-\tfrac12(\beta-\mu)^\top
+\Sigma^{-1}(\beta-\mu))$ est celle d'une $\mathcal N(\mu,\Sigma)$. $\blacksquare$
+
+**La moyenne a posteriori est l'estimateur ridge** (Module 4, éq. 4.2), et comme
+la postérieure est gaussienne, **moyenne = mode = MAP**. La variance a posteriori
+$\Sigma_{\text{post}}=\sigma^2(X^\top X+\lambda I)^{-1}$ fournit des **intervalles
+crédibles** valides *dans le cadre bayésien* (β aléatoire). **Attention** : ce
+n'est **pas** la variance d'échantillonnage fréquentiste du ridge, et un IC
+fréquentiste centré sur $\hat\beta_{\text{ridge}}$ **sous-couvre** à cause du biais
+(voir §14.4.2).
+
+**Le lasso, lui**, est le **mode** a posteriori sous prior de Laplace, mais sa
+postérieure n'est pas de Laplace ; la **moyenne** a posteriori n'est **pas creuse**
+et le MAP n'hérite pas de ses propriétés d'optimalité. Sparsité = propriété du
+**mode**, pas de la loi.
+
+## Où l'inférence valide casse {#sec-casse}
+
+### Inférence post-sélection {#sec-postsel}
+
+Après sélection de variables (lasso, *stepwise*), les erreurs standards et
+p-values de l'OLS **naïf** refité sur les variables retenues sont **invalides**.
+
+**Intuition.** La sélection est **aléatoire** et **dépend des données** : on
+retient une variable *parce qu'*elle paraît liée à $y$. Conditionnellement à
+l'événement de sélection $\hat S$, la loi de $\hat\beta_{\hat S}$ n'est **plus**
+la gaussienne habituelle — elle est *tronquée/biaisée par la sélection*. Réutiliser
+les **mêmes** données pour sélectionner **puis** tester revient à « regarder deux
+fois » : le test rejette bien plus souvent que son niveau nominal. Formellement,
+$\mathbb P(\text{rejet}\mid \hat S)\neq \mathbb P(\text{rejet})$ ; la
+distribution de référence (Student) ignore le conditionnement.
+
+> **Démonstration Monte Carlo obligatoire.** Sous $H_0$ (coefficients **nuls**),
+> le taux de rejet à 5 % des $t$-tests OLS **post-lasso** explose au-dessus de
+> 5 % ; l'OLS complet (sans sélection) et le *sample-splitting* (sélection et
+> inférence sur des moitiés disjointes) restent à ~5 %. Voir
+> `simulations/mc_14_inference_cassee.R`.
+
+Correction rigoureuse : *post-selection inference* de Berk et al. (2013),
+*selective inference* (Lee et al.), ou séparation d'échantillon — préfigurant le
+**cross-fitting** du Module 16.
+
+### Biais de régularisation et sous-couverture {#sec-biais}
+
+Les estimateurs pénalisés sont **biaisés** (Module 4) : $\mathbb E[\hat\beta_
+{\text{ridge}}]-\beta = -\lambda(X^\top X+\lambda I)^{-1}\beta \neq 0$. Un IC
+**centré sur un estimateur biaisé** est décalé de $\pm$(biais) et **sous-couvre**
+la vraie valeur : sa probabilité de couverture est $<1-\alpha$ dès que le biais
+est de l'ordre de l'erreur standard. Monte Carlo de couverture : ridge/lasso
+sous-couvrent, l'OLS (sans biais) couvre à ~95 %.
+
+### Estimation vs prédiction {#sec-estim-pred}
+
+Deux objectifs **distincts** :
+
+- **Prédiction** : minimiser $\mathbb E[(y-\hat f(x))^2]$. Le rétrécissement
+  (ridge/lasso) et l'absorption de variables **aident** (biais-variance, M4/M6).
+- **Estimation structurelle** : estimer un paramètre $\theta$ (p.ex. un effet
+  causal) **sans biais**, avec une inférence valide.
+
+Un **bon prédicteur peut être un très mauvais estimateur** : les coefficients
+rétrécis sont biaisés (mauvais pour $\theta$, bons pour la prédiction) ; contrôler
+une variable en l'« absorbant » optimise la prédiction mais peut biaiser l'effet
+d'intérêt. **Régulariser l'équation d'intérêt** (lasso-iser le coefficient de
+traitement) injecte donc un biais de régularisation dans l'estimation causale —
+c'est le problème que le **Module 16** (DML, score orthogonal de Neyman) résout
+en régularisant les **nuisances**, pas le paramètre d'intérêt.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/14_m_estimation.R`](../R/14_m_estimation.R) :
+
+| Résultat | Fonction R |
+|----------|-----------|
+| (14.2) sandwich $A^{-1}BA^{-1}$ | `m_estimation_vcov(psi, A)` |
+| OLS sandwich = HC0 | vérifié dans `test-14.R` |
+| (14.3) postérieure du ridge | `ridge_posterior(X, y, lambda, sigma2)` |
+| §14.4 inférence cassée | `simulations/mc_14_inference_cassee.R` |
+
+## Références {.unnumbered}
+
+- van der Vaart — *Asymptotic Statistics*, ch. 5 (M-estimation).
+- Wooldridge — *Econometric Analysis of Cross Section and Panel Data*, ch. 12.
+- Berk, Brown, Buja, Zhang & Zhao (2013), « Valid Post-Selection Inference »,
+  *Annals of Statistics*.
+- Hastie, Tibshirani, Wainwright — *Statistical Learning with Sparsity*, ch. 6.

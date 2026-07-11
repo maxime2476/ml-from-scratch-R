@@ -37,13 +37,17 @@ impurity_variance <- function(y) mean((y - mean(y))^2)
 #' @param kind pour la classification : "gini" ou "entropy".
 #' @param min_leaf effectif minimal par feuille.
 #' @param classes niveaux de classe (classification).
+#' @param mtry si non NULL, nombre de variables candidates tirées au hasard pour
+#'   ce split (forêt aléatoire, Module 9) ; NULL = toutes les variables (CART).
 #' @return liste `gain`, `var` (indice), `val` (seuil) ; `gain = -Inf` si aucun split.
-best_split <- function(X, y, method, kind = "gini", min_leaf = 1L, classes = NULL) {
+best_split <- function(X, y, method, kind = "gini", min_leaf = 1L, classes = NULL,
+                       mtry = NULL) {
   n <- nrow(X); best <- list(gain = -Inf, var = NA_integer_, val = NA_real_)
+  cols <- if (is.null(mtry)) seq_len(ncol(X)) else sample.int(ncol(X), min(mtry, ncol(X)))
   if (method == "class") {
     yc <- match(y, classes); C <- length(classes)
     tot <- tabulate(yc, C); parent <- .imp_counts(tot, kind)
-    for (j in seq_len(ncol(X))) {
+    for (j in cols) {
       ord <- order(X[, j]); xs <- X[ord, j]; yy <- yc[ord]
       left <- integer(C)
       for (i in seq_len(n - 1L)) {
@@ -58,7 +62,7 @@ best_split <- function(X, y, method, kind = "gini", min_leaf = 1L, classes = NUL
     }
   } else {
     tsum <- sum(y); tsq <- sum(y^2); sse_tot <- tsq - tsum^2 / n
-    for (j in seq_len(ncol(X))) {
+    for (j in cols) {
       ord <- order(X[, j]); xs <- X[ord, j]; ys <- y[ord]
       sl <- 0; sql <- 0
       for (i in seq_len(n - 1L)) {
@@ -91,9 +95,11 @@ best_split <- function(X, y, method, kind = "gini", min_leaf = 1L, classes = NUL
 #' @param min_split effectif minimal pour tenter un split.
 #' @param min_leaf effectif minimal par feuille.
 #' @param min_gain gain d'impureté minimal pour accepter un split.
+#' @param mtry variables candidates par split (forêt aléatoire) ; NULL = toutes.
 #' @return objet `cart` (arbre + métadonnées).
 cart_fit <- function(formula, data, method = c("class", "anova"), kind = "gini",
-                     max_depth = 30L, min_split = 20L, min_leaf = 7L, min_gain = 1e-9) {
+                     max_depth = 30L, min_split = 20L, min_leaf = 7L, min_gain = 1e-9,
+                     mtry = NULL) {
   method <- match.arg(method)
   mf <- model.frame(formula, data)
   y <- model.response(mf)
@@ -118,7 +124,7 @@ cart_fit <- function(formula, data, method = c("class", "anova"), kind = "gini",
     yn <- y[idx]; np <- node_pred(yn); imp <- node_imp(yn)
     leaf <- list(leaf = TRUE, pred = np$pred, prob = np$prob, n = length(idx), impurity = imp)
     if (depth >= max_depth || length(idx) < min_split || imp <= 0) return(leaf)
-    bs <- best_split(X[idx, , drop = FALSE], yn, method, kind, min_leaf, classes)
+    bs <- best_split(X[idx, , drop = FALSE], yn, method, kind, min_leaf, classes, mtry)
     if (!is.finite(bs$gain) || bs$gain <= min_gain) return(leaf)
     go_left <- X[idx, bs$var] <= bs$val
     list(leaf = FALSE, var = vars[bs$var], var_idx = bs$var, val = bs$val,

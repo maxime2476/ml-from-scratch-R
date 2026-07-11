@@ -1,0 +1,149 @@
+---
+title: "Module 9 — Bagging et forêts aléatoires"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive le **bagging** (agrégation bootstrap) et les **forêts aléatoires**. Le
+résultat central est la **variance d'une moyenne de $B$ estimateurs corrélés**,
+$\rho\sigma^2 + \frac{1-\rho}{B}\sigma^2$, qui explique *pourquoi* moyenner réduit
+la variance et *pourquoi* décorréler (sous-échantillonnage des variables) va plus
+loin. On dérive aussi l'erreur **out-of-bag** (proportion $\approx 1/e$ hors
+échantillon). Implémentation par-dessus le `cart_fit` du Module 8.
+
+### Notations {.unnumbered}
+
+- $B$ arbres de base $\hat f_1,\dots,\hat f_B$, chacun ajusté sur un échantillon
+  bootstrap. Prédiction agrégée $\bar f = \frac1B\sum_b \hat f_b$.
+- $\sigma^2$ : variance d'un arbre individuel en un point ; $\rho$ : corrélation
+  entre deux arbres.
+
+## Bagging {#sec-bagging}
+
+### Principe {#sec-principe}
+
+Le **bagging** (Breiman 1996) réduit la variance en moyennant des prédicteurs
+entraînés sur des **rééchantillons bootstrap** :
+
+1. pour $b=1,\dots,B$ : tirer $\mathcal D_b$ par bootstrap ($n$ tirages **avec
+   remise**) de $\mathcal D$, ajuster $\hat f_b$ sur $\mathcal D_b$ ;
+2. agréger : $\bar f(x)=\frac1B\sum_b \hat f_b(x)$ (régression) ou vote
+   majoritaire (classification).
+
+Les arbres profonds ont **faible biais, forte variance** : moyenner conserve le
+biais et **écrase la variance** — d'où l'intérêt de bases à variance élevée.
+
+### Variance d'une moyenne d'estimateurs corrélés {#sec-var}
+
+> **Proposition 9.1.** Si les $\hat f_b(x)$ ont variance $\sigma^2$ et corrélation
+> deux à deux $\rho$, alors
+> $$
+> \operatorname{Var}\!\big(\bar f(x)\big) = \rho\,\sigma^2 + \frac{1-\rho}{B}\,\sigma^2
+> \xrightarrow[B\to\infty]{} \rho\,\sigma^2 .
+> \tag{9.1}
+> $$
+
+**Preuve.** Par bilinéarité de la covariance,
+$$
+\operatorname{Var}\Big(\tfrac1B\sum_{b=1}^B \hat f_b\Big)
+= \frac1{B^2}\Big[\sum_{b}\operatorname{Var}(\hat f_b) + \sum_{b\neq b'}\operatorname{Cov}(\hat f_b,\hat f_{b'})\Big].
+$$
+Il y a $B$ termes de variance ($=\sigma^2$) et $B(B-1)$ termes de covariance
+($=\rho\sigma^2$). Donc
+$$
+\operatorname{Var}(\bar f) = \frac1{B^2}\big[B\sigma^2 + B(B-1)\rho\sigma^2\big]
+= \frac{\sigma^2}{B} + \frac{B-1}{B}\rho\sigma^2
+= \rho\sigma^2 + \frac{1-\rho}{B}\sigma^2 . \qquad\blacksquare
+$$
+
+**Lecture décisive.** Le second terme $\frac{1-\rho}{B}\sigma^2$ s'annule quand
+$B\to\infty$ : ajouter des arbres élimine la part « indépendante » de la variance.
+Mais le premier terme $\rho\sigma^2$ est un **plancher** : moyenner **ne peut pas**
+descendre sous $\rho\sigma^2$. Pour progresser, il faut **réduire $\rho$**.
+
+## Forêts aléatoires : décorréler les arbres {#sec-rf}
+
+Le bagging d'arbres laisse $\rho$ élevé : les arbres se ressemblent car un
+prédicteur fort domine les premiers splits de **tous** les arbres. La **forêt
+aléatoire** (Breiman 2001) ajoute une source d'aléa : à **chaque split**, on ne
+considère qu'un **sous-ensemble aléatoire de $m$ variables** ($m\le p$, paramètre
+`mtry`).
+
+> **Effet sur (9.1).** Restreindre les variables candidates **décorrèle** les
+> arbres : un prédicteur dominant n'est disponible qu'une fraction du temps, donc
+> les arbres explorent des structures différentes → $\rho$ **diminue** → le
+> plancher $\rho\sigma^2$ **baisse**.
+
+**Arbitrage.** Réduire $m$ baisse $\rho$ (bénéfique) mais augmente la variance
+$\sigma^2$ et le biais de chaque arbre (chaque arbre voit moins de variables).
+Valeurs par défaut usuelles : $m=\lfloor\sqrt p\rfloor$ (classification),
+$m=\lfloor p/3\rfloor$ (régression). L'optimum se règle par CV ou erreur OOB. La
+dépendance de $\operatorname{Var}(\bar f)$ en $B$ et $m$ est illustrée dans
+`simulations/mc_09_rf.R`.
+
+## Erreur out-of-bag (OOB) {#sec-oob}
+
+### Proportion hors échantillon {#sec-prop}
+
+> **Proposition 9.2.** La probabilité qu'une observation donnée **n'apparaisse
+> pas** dans un échantillon bootstrap de taille $n$ tend vers $1/e\approx 0.368$.
+
+**Preuve.** À chaque tirage (avec remise, parmi $n$), la probabilité de **ne pas**
+choisir l'observation $i$ est $1-\tfrac1n$. Les $n$ tirages étant indépendants,
+$$
+\mathbb P(i \notin \mathcal D_b) = \Big(1-\frac1n\Big)^n
+\xrightarrow[n\to\infty]{} e^{-1}\approx 0.368,
+$$
+puisque $\big(1-\tfrac1n\big)^n = \exp\!\big(n\log(1-\tfrac1n)\big)$ et
+$n\log(1-\tfrac1n)\to -1$. $\blacksquare$
+
+Chaque arbre laisse donc $\approx 37\%$ des observations **out-of-bag** (non
+utilisées pour l'ajuster).
+
+### Estimateur OOB de l'erreur {#sec-oob-err}
+
+Pour chaque observation $i$, on agrège **uniquement** les arbres pour lesquels $i$
+est OOB :
+$$
+\hat f^{\mathrm{oob}}(x_i) = \frac{1}{|\{b: i\notin\mathcal D_b\}|}\sum_{b:\ i\notin\mathcal D_b}\hat f_b(x_i),
+\tag{9.2}
+$$
+et l'erreur OOB est la moyenne de perte sur ces prédictions. Comme $i$ n'a pas
+servi à ces arbres, $\hat f^{\mathrm{oob}}(x_i)$ est **presque sans biais** pour
+l'erreur de test — une **validation croisée quasi gratuite**, obtenue pendant
+l'entraînement (chaque $i$ est OOB pour $\approx 37\%$ des arbres, ce qui suffit
+pour $B$ grand).
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/09_bagging_rf.R`](../R/09_bagging_rf.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| bootstrap + agrégation | `bagging_fit()`, `predict_forest()` |
+| forêt (mtry par split) | `random_forest_fit(..., mtry)` |
+| (9.2) erreur OOB | `oob_error()` (renvoyée par l'ajustement) |
+| (9.1) variance vs B, mtry | illustré dans `simulations/mc_09_rf.R` |
+
+Les arbres de base réutilisent `cart_fit` (Module 8), avec passage de `mtry` au
+choix des variables candidates par split. Validation : erreur OOB et prédictions
+**qualitativement** contre `randomForest` (l'égalité exacte est impossible :
+aléa des bootstraps et des sous-ensembles de variables, détails d'implémentation).
+Monte Carlo : $\operatorname{Var}(\bar f)$ décroît en $B$ vers le plancher
+$\rho\sigma^2$, et le plancher baisse quand `mtry` diminue.
+
+## Références {.unnumbered}
+
+- Breiman (1996), « Bagging Predictors », *Machine Learning*.
+- Breiman (2001), « Random Forests », *Machine Learning*.
+- Hastie, Tibshirani, Friedman — *ESL*, ch. 15 (forêts), §8.7 (bagging).

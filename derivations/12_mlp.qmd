@@ -1,0 +1,170 @@
+---
+title: "Module 12 — Perceptron multicouche et rétropropagation"
+subtitle: "ML from Scratch in R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Objet {#sec-intro}
+
+On dérive un **perceptron multicouche** à **une couche cachée** : passe avant
+matricielle, **rétropropagation par la règle de la chaîne** (dimensions de chaque
+gradient explicitées), et **descente de gradient stochastique**. La
+**vérification du gradient par différences finies** est le test obligatoire.
+
+### Notations {.unnumbered}
+
+- $X\in\mathbb R^{n\times d_0}$ (lignes = observations), cible $Y\in\mathbb R^{n
+  \times d_2}$.
+- Couche cachée de largeur $d_1$ : poids $W_1\in\mathbb R^{d_0\times d_1}$, biais
+  $b_1\in\mathbb R^{d_1}$, activation $\phi$.
+- Couche de sortie : $W_2\in\mathbb R^{d_1\times d_2}$, $b_2\in\mathbb R^{d_2}$,
+  activation de sortie $g$.
+- $\mathbf 1_n$ : vecteur colonne de uns ; $\odot$ : produit de Hadamard
+  (élément par élément).
+
+## Passe avant (forward) {#sec-forward}
+
+$$
+\begin{aligned}
+Z_1 &= X W_1 + \mathbf 1_n b_1^\top &&(n\times d_1),\\
+A_1 &= \phi(Z_1) &&(n\times d_1),\\
+Z_2 &= A_1 W_2 + \mathbf 1_n b_2^\top &&(n\times d_2),\\
+\hat Y &= g(Z_2) &&(n\times d_2).
+\end{aligned}
+\tag{12.1}
+$$
+La perte moyenne est $L = \frac1n\sum_{i=1}^n \ell(y_i,\hat y_i)$. Deux cas :
+
+- **Régression** : $g=\mathrm{id}$, $\ell(y,\hat y)=\tfrac12\|y-\hat y\|^2$
+  (EQM).
+- **Classification binaire** : $g=\sigma$ (sigmoïde), $\ell$ = entropie croisée
+  $-[y\log\hat y + (1-y)\log(1-\hat y)]$.
+
+## Rétropropagation (backpropagation) {#sec-backprop}
+
+On calcule les gradients $\partial L/\partial W_2,\partial b_2,\partial W_1,
+\partial b_1$ par la **règle de la chaîne**, en propageant le signal d'erreur de
+la sortie vers l'entrée. On note $\delta_2 = \partial L/\partial Z_2$ et
+$\delta_1 = \partial L/\partial Z_1$ (les « erreurs » par couche).
+
+### Erreur de sortie $\delta_2$ {#sec-delta2}
+
+> **Lemme 12.1.** Pour les deux appariements canoniques (identité+EQM,
+> sigmoïde+entropie croisée),
+> $$
+> \delta_2 = \frac1n(\hat Y - Y) \qquad (n\times d_2).
+> \tag{12.2}
+> $$
+
+**Preuve.** *EQM+identité* : $L=\frac1{2n}\sum_i\|z_{2,i}-y_i\|^2$, donc
+$\partial L/\partial Z_2 = \frac1n(Z_2-Y)=\frac1n(\hat Y-Y)$. *Sigmoïde+entropie
+croisée* : pour une composante, $\ell=-y\log\sigma(z)-(1-y)\log(1-\sigma(z))$ ;
+avec $\sigma'=\sigma(1-\sigma)$, $\partial\ell/\partial z = -y(1-\sigma)+(1-y)\sigma
+= \sigma(z)-y = \hat y - y$. En moyennant, $\delta_2=\frac1n(\hat Y-Y)$. C'est la
+**simplification canonique** : le choix « activation de sortie ↔ perte » élimine
+le facteur $g'$. $\blacksquare$
+
+### Gradients de la couche de sortie {#sec-out-grad}
+
+Comme $Z_2 = A_1 W_2 + \mathbf 1_n b_2^\top$, la règle de la chaîne matricielle
+donne
+$$
+\frac{\partial L}{\partial W_2} = A_1^\top\delta_2 \ \ (d_1\times d_2),\qquad
+\frac{\partial L}{\partial b_2} = \delta_2^\top\mathbf 1_n = \sum_{i=1}^n \delta_{2,i}\ \ (d_2).
+\tag{12.3}
+$$
+*(Dimensions : $A_1^\top$ est $d_1\times n$, $\delta_2$ est $n\times d_2$, produit
+$d_1\times d_2$ = forme de $W_2$. ✓)*
+
+### Rétropropagation vers la couche cachée {#sec-hidden-grad}
+
+$L$ dépend de $Z_1$ **via** $A_1$ **via** $Z_2$. La règle de la chaîne :
+$$
+\delta_1 = \frac{\partial L}{\partial Z_1}
+= \underbrace{\big(\delta_2 W_2^\top\big)}_{\partial L/\partial A_1,\ n\times d_1}\ \odot\ \phi'(Z_1)
+\qquad (n\times d_1).
+\tag{12.4}
+$$
+*(Détail : $\partial L/\partial A_1 = \delta_2 W_2^\top$ car $Z_2=A_1W_2$ — $W_2^\top$
+est $d_2\times d_1$, $\delta_2 W_2^\top$ est $n\times d_1$ ; puis $A_1=\phi(Z_1)$
+donne le facteur élément par élément $\phi'(Z_1)$.)* Enfin, comme $Z_1 = XW_1 +
+\mathbf 1_n b_1^\top$,
+$$
+\frac{\partial L}{\partial W_1} = X^\top\delta_1 \ \ (d_0\times d_1),\qquad
+\frac{\partial L}{\partial b_1} = \delta_1^\top\mathbf 1_n\ \ (d_1).
+\tag{12.5}
+$$
+
+### Résumé de l'algorithme {#sec-algo}
+
+> **Passe arrière.** (1) $\delta_2=\frac1n(\hat Y-Y)$ ; (2) $\nabla W_2=A_1^\top
+> \delta_2$, $\nabla b_2=\sum_i\delta_{2,i}$ ; (3) $\delta_1=(\delta_2 W_2^\top)
+> \odot\phi'(Z_1)$ ; (4) $\nabla W_1=X^\top\delta_1$, $\nabla b_1=\sum_i\delta_{1,i}$.
+
+**Dérivées d'activation** : $\tanh'(z)=1-\tanh^2(z)$ ; ReLU$'(z)=\mathbf 1\{z>0\}$ ;
+$\sigma'(z)=\sigma(z)(1-\sigma(z))$.
+
+## Descente de gradient stochastique {#sec-sgd}
+
+On minimise $L$ par **SGD** (Module 0, §0.20, réimplémenté localement) : à chaque
+mini-lot $\mathcal B$, on calcule les gradients sur $\mathcal B$ et on met à jour
+$$
+\theta \leftarrow \theta - \eta\,\nabla_\theta L_{\mathcal B},\qquad \theta\in\{W_1,b_1,W_2,b_2\},
+\tag{12.6}
+$$
+avec $\eta$ le taux d'apprentissage. On balaie les données par **époques**
+(permutation aléatoire à chaque époque). L'**initialisation** des poids est
+aléatoire et de petite échelle (p.ex. $W\sim\mathcal N(0, 1/d_{\text{in}})$) pour
+briser la symétrie tout en gardant les activations dans une zone non saturée.
+
+**Capacité.** Une seule couche cachée suffit à approcher toute fonction continue
+sur un compact (théorème d'approximation universelle, Cybenko 1989 ; **admis**) —
+d'où le choix d'un réseau minimal ici.
+
+## Vérification du gradient (test obligatoire) {#sec-gradcheck}
+
+La rétropropagation est sujette aux erreurs de signe/dimension. On la **vérifie**
+contre le gradient **numérique** par différences finies **centrées** : pour
+chaque paramètre $\theta_k$,
+$$
+\big[\nabla_{\text{num}}L\big]_k = \frac{L(\theta + \varepsilon e_k) - L(\theta - \varepsilon e_k)}{2\varepsilon}
+= \big[\nabla L\big]_k + O(\varepsilon^2).
+\tag{12.7}
+$$
+La différence centrée a une erreur $O(\varepsilon^2)$ (les termes d'ordre 1 se
+compensent, développement de Taylor). Avec $\varepsilon\approx 10^{-6}$, l'**erreur
+relative** $\|\nabla_{\text{bp}}-\nabla_{\text{num}}\|/(\|\nabla_{\text{bp}}\|+
+\|\nabla_{\text{num}}\|)$ doit être $\lesssim 10^{-7}$. C'est le test de
+`tests/testthat/test-12.R`.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+Correspondance avec [`R/12_mlp.R`](../R/12_mlp.R) :
+
+| Équation / résultat | Fonction R |
+|---------------------|-----------|
+| (12.1) passe avant | `mlp_forward()` |
+| (12.2)-(12.5) rétropropagation | `mlp_backward()` |
+| (12.6) SGD, entraînement | `mlp_fit()` |
+| prédiction | `predict_mlp()` |
+| (12.7) gradient numérique | `mlp_numgrad()` (vérification) |
+
+Aucun package de référence : implémentation intégrale *from scratch*. Validation :
+le gradient analytique reproduit le gradient numérique à $\sim10^{-7}$ ; le réseau
+apprend une fonction non linéaire (XOR, régression sinusoïdale). Monte Carlo :
+courbe d'apprentissage (perte vs époques), effet du taux d'apprentissage et de la
+largeur $d_1$.
+
+## Références {.unnumbered}
+
+- Bishop — *Pattern Recognition and Machine Learning*, §5.1–5.3 (réseaux, backprop).
+- Goodfellow, Bengio & Courville — *Deep Learning*, ch. 6.
+- Rumelhart, Hinton & Williams (1986) ; Cybenko (1989).

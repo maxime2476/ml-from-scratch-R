@@ -96,6 +96,21 @@ de passage : dérivations relues et illustrations Monte Carlo cohérentes avec l
 théorie (les bornes tiennent, les taux de rejet/couverture correspondent aux
 prédictions).
 
+### Extensions économétriques (modules 17–21)
+
+| Fichier | Module | Points clés | Réf. de validation |
+|:-------:|--------|-------------|--------------------|
+| `17` | **Bootstrap** | plug-in, variance, IC percentile/basique/**BCa**, pairs/résidus | `boot` |
+| `18` | **GMM** | moments, GMM efficace, test J, **= 2SLS** | `gmm`, `AER` |
+| `19` | **Prédiction conforme** | garantie distribution-libre en échantillon fini | *théorème vérifié* |
+| `20` | **Régression quantile** | perte pinball, IRLS, LAD robuste | `quantreg` |
+| `21` | **Panel / effets fixes** | within = LSDV (FWL), SE groupées | `plm` |
+
+Ces modules **bouclent des arcs** du projet : le bootstrap complète l'inférence
+asymptotique (M1/M2), le GMM unifie IV (M5) et M-estimation (M14), la prédiction
+conforme prolonge la validation (M6/M13), et le panel redonne du Frisch-Waugh-Lovell
+(M1/M16). Le Module 0 s'enrichit des optimiseurs **Nesterov** et **L-BFGS**.
+
 ## Prérequis
 
 - **R ≥ 4.x**

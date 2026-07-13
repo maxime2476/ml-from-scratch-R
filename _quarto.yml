@@ -38,6 +38,13 @@ book:
       chapters:
         - derivations/15_interpretabilite.qmd
         - derivations/16_causal_ml.qmd
+    - part: "Extensions économétriques"
+      chapters:
+        - derivations/17_bootstrap.qmd
+        - derivations/18_gmm.qmd
+        - derivations/19_conformal.qmd
+        - derivations/20_quantile.qmd
+        - derivations/21_panel.qmd
     - part: "Synthèse"
       chapters:
         - rapport/rapport.qmd

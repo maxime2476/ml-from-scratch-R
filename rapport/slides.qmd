@@ -1,0 +1,139 @@
+---
+title: "ML from Scratch in R"
+subtitle: "Déconstruction mathématique et statistique des modèles d'apprentissage"
+author: "Maxime Gourguechon"
+date: today
+lang: fr
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
+    html-math-method: katex
+    incremental: false
+---
+
+## Le projet en une phrase
+
+> Réimplémenter en **R base**, à partir de leurs **dérivations mathématiques
+> complètes**, les principaux modèles d'apprentissage — puis les **valider**
+> contre les packages de référence et les **étudier par simulation Monte Carlo**.
+
+**But** : non la performance, mais la **compréhension profonde** des fondements
+statistiques et économétriques.
+
+- 22 modules · 21 dérivations · ~300 tests au vert · 22 études Monte Carlo
+- Validation à $10^{-8}$ contre `lm`, `glm`, `sandwich`, `glmnet`, `AER`,
+  `randomForest`, `gbm`, `mclust`, `DoubleML`, `grf`, `quantreg`, `plm`, …
+
+## Cinq principes
+
+1. **Les mathématiques d'abord** — aucune ligne de code sans dérivation.
+2. **R base pour le cœur** — les packages ne servent qu'à valider.
+3. **Validation systématique** à $10^{-8}$ (ou divergence documentée).
+4. **Simulation** : DGP connu → biais, variance, couverture, puissance, avec
+   **erreurs Monte Carlo**.
+5. **Auto-suffisance par module** — chacun réimplémente ses briques.
+
+## La carte des modules
+
+| Bloc | Modules |
+|---|---|
+| Fondations | 0 algèbre · 1 OLS · 2 robustesse · 3 GLM · 4 régularisation · 5 IV · 6 validation |
+| Théorie | 13 apprentissage · 14 économétrie |
+| Non linéaire | 7 KNN · 8 CART · 9 forêts · 10 boosting |
+| Non supervisé / réseaux | 11 PCA/k-means/EM · 12 MLP |
+| Post-hoc / causalité | 15 interprétabilité · 16 DML |
+| **Extensions** | 17 bootstrap · 18 GMM · 19 conforme · 20 quantile · 21 panel |
+
+## Un résultat fondateur : Gauss-Markov
+
+**Théorème (M1)** : sous (H1)–(H4), l'OLS est **BLUE**. *Preuve* par
+$\operatorname{Var}(\tilde\beta)-\operatorname{Var}(\hat\beta)=\sigma^2 DD^\top
+\succeq 0$.
+
+Monte Carlo ($n=15$, 5000 rép.) :
+
+| | couverture IC 95 % |
+|---|:---:|
+| Student (correct) | **0.951** ✓ |
+| Normal (naïf) | 0.928 (sous-couvre) |
+
+La théorie exacte se **voit** dans la simulation.
+
+## Trois invariants qui unifient le projet
+
+- **Le sandwich $A^{-1}BA^{-1}$** apparaît *trois fois, identique* : robustesse
+  HC0 (M2) = M-estimation (M14) = variance du DML (M16).
+- **La pénalité est un prior** : ridge = gaussien, lasso = Laplace (M4, M14) ;
+  et contrôle de la complexité de Rademacher (M13).
+- **Frisch-Waugh-Lovell** (M1) → **score orthogonal de Neyman** (M16) → **within
+  panel** (M21) : la même partialisation, du linéaire au ML.
+
+## Où l'inférence casse (M14)
+
+Sous $H_0$ (coefficients nuls), taux de rejet à 5 % :
+
+| Méthode | rejet |
+|---|:---:|
+| **t-test post-lasso naïf** | **24.3 %** |
+| OLS complet | 4.9 % ✓ |
+| Sample-splitting | 4.8 % ✓ |
+
+Réutiliser les données pour **sélectionner puis tester** casse l'inférence.
+→ motive le **cross-fitting** du Module 16.
+
+## Le point culminant : Double ML (M16)
+
+**Score de Neyman** pour $Y=\theta D+g(X)+\varepsilon$ : insensible au premier
+ordre aux nuisances → $\hat\theta$ $\sqrt n$-consistant malgré des nuisances ML.
+
+Tableau de synthèse ($\theta=1$, confusion non linéaire) :
+
+| Méthode | biais | RMSE | couverture |
+|---|:---:|:---:|:---:|
+| OLS naïf | 0.04 | 0.334 | — |
+| Lasso naïf | −0.18 | 0.340 | — |
+| DML sans cross-fit | −0.12 | 0.214 | 0.945 |
+| **DML complet** | **−0.04** | **0.184** | **0.970** |
+
+## Une garantie moderne : prédiction conforme (M19)
+
+**Théorème** : intervalles valides en **échantillon fini, distribution-libre**,
+sous simple **échangeabilité**, autour de **n'importe quel** modèle.
+
+Couverture visée 90 % :
+
+| DGP | conforme | gaussien naïf |
+|---|:---:|:---:|
+| gaussien | 0.90 | 0.89 |
+| queues lourdes | **0.90** | 0.94 (dé-calibré) |
+| mal spécifié | **0.90** | 0.92 (dé-calibré) |
+
+## Reproductibilité et qualité
+
+- **Un compendium reproductible** : `make all`, `renv.lock` (160 packages),
+  livre Quarto (21 dérivations + rapport).
+- **Package** documenté : `NAMESPACE`, 106 pages `man/`, `R CMD check` propre.
+- **Rigueur** : erreurs Monte Carlo systématiques ; convergence $\sqrt n$
+  vérifiée.
+- **CI** : GitHub Actions (Linux+Windows) + couverture `covr` (~97 % noyau).
+
+## Conclusion
+
+Un **tout cohérent**, non une juxtaposition :
+
+- la **QR** du Module 0 résout tous les moindres carrés ;
+- le **sandwich**, le **prior-pénalité**, la **partialisation FWL→Neyman**
+  traversent tout le projet ;
+- chaque estimateur est vu sous **quatre angles** (perte, bayésien,
+  optimisation, inférence).
+
+**Des mathématiques rigoureuses, du code lisible, une validation systématique.**
+
+## Merci {.unnumbered}
+
+Questions ?
+
+Code, dérivations et simulations : dépôt du projet · `make book` pour le livre
+complet.

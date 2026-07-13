@@ -1,0 +1,246 @@
+---
+title: "ML from Scratch in R"
+subtitle: "Déconstruction mathématique et statistique des modèles d'apprentissage automatique — Rapport de synthèse"
+author: "Maxime Gourguechon"
+date: today
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    html-math-method: katex
+    theme: cosmo
+  pdf:
+    toc: true
+    number-sections: true
+    documentclass: scrreprt
+bibliography: false
+---
+
+## Résumé {.unnumbered}
+
+Ce projet réimplémente en **R base**, à partir de leurs **dérivations
+mathématiques complètes**, les principaux modèles d'apprentissage automatique,
+puis les **valide numériquement** contre les packages de référence (tolérance
+cible $10^{-8}$) et les **étudie par simulation Monte Carlo**. Il couvre **17
+modules** — des fondations d'algèbre linéaire au pont ML/causalité — avec pour
+chacun quatre livrables : dérivation (`derivations/`), implémentation (`R/`),
+tests de conformité (`tests/`) et étude Monte Carlo (`simulations/`). L'ensemble
+totalise **~270 tests** au vert et **18 études Monte Carlo**. L'objectif n'est
+pas la performance, mais la **compréhension profonde** des fondements
+statistiques et économétriques.
+
+## Philosophie et méthode {#sec-methode}
+
+Cinq principes gouvernent le projet :
+
+1. **Les mathématiques d'abord** — aucune ligne de code sans dérivation
+   préalable depuis les premiers principes (vraisemblance, moindres carrés,
+   conditions d'optimalité).
+2. **R base pour le cœur** — les packages de ML ne servent qu'à la **validation**.
+3. **Validation systématique** — chaque estimateur reproduit sa référence à
+   $10^{-8}$, ou la divergence est **documentée et expliquée**.
+4. **Approche par simulation** — DGP explicite à paramètres vrais connus, pour
+   mesurer biais, variance, couverture des IC et puissance des tests.
+5. **Auto-suffisance par module** — chaque module réimplémente localement ses
+   briques (optimiseurs notamment) ; le Module 0 reste le lieu unique des
+   preuves de convergence.
+
+Deux modules (**13** et **14**) sont **purement théoriques** : leurs livrables
+sont des preuves et des illustrations numériques des bornes.
+
+## Vue d'ensemble des modules {#sec-vue}
+
+| Ordre | Module | Résultat central | Réf. de validation | Écart max |
+|:-:|---|---|---|:-:|
+| 1 | **0** Algèbre & optimiseurs | $\kappa(X^\top X)=\kappa(X)^2$ ; QR, Cholesky, SVD ; gradient $O(1/k)$, Newton quadratique | `qr`,`chol`,`svd` | ~1e-15 |
+| 2 | **1** OLS & inférence | Gauss-Markov (BLUE), lois $t/F$, Frisch-Waugh-Lovell | `lm`,`summary.lm` | ~1e-14 |
+| 3 | **2** Hétéroscédasticité | sandwich HC0–HC3, WLS/GLS, Newey-West | `sandwich`,`nlme::gls` | ~1e-16 |
+| 4 | **3** GLM / IRLS | Newton ⇔ IRLS, Wald/LR/score | `glm`,`anova.glm` | ~1e-16 |
+| 5 | **4** Régularisation | ridge (biais/variance SVD), lasso (soft-threshold, CD) | `lm.ridge`,`glmnet` | 1e-15 / 1e-10 |
+| 6 | **5** Variables instrumentales | biais d'endogénéité, 2SLS | `AER::ivreg` | ~1e-15 |
+| 7 | **6** Validation | biais-variance, LOOCV fermé (hat matrix), AIC/BIC | LOOCV brute, `AIC`/`BIC` | ~1e-14 |
+| 8 | **13** Théorie de l'apprentissage | PAC, Hoeffding, VC/Sauer-Shelah, Rademacher | *illustrations* | — |
+| 9 | **7** KNN | estimateur local, concentration des distances | `class::knn` | exact |
+| 10 | **8** CART | Gini/entropie, greedy (XOR), cost-complexity | `rpart` (qualitatif) | premiers splits |
+| 11 | **9** Forêts | $\rho\sigma^2+\tfrac{1-\rho}{B}\sigma^2$, OOB $\approx 1/e$ | `randomForest` (qual.) | OOB ~ |
+| 12 | **10** Gradient boosting | descente fonctionnelle, poids de Newton | `gbm` (qualitatif) | traj. corr 0.99 |
+| 13 | **14** Regard économétrique | M-estimation (sandwich $A^{-1}BA^{-1}$), inférence cassée | HC0, `iml`… | ~1e-16 |
+| 14 | **11** Non supervisé | PCA (2 voies), k-means/Lloyd, EM gaussien | `prcomp`,`kmeans`,`mclust` | 0 / exact |
+| 15 | **12** MLP | backpropagation, vérif. gradient | *différences finies* | ~1e-10 |
+| 16 | **15** Interprétabilité | PDP/ICE, Shapley (unicité), SHAP linéaire | `iml` | 2e-16 / corr 1 |
+| 17 | **16** ML ↔ causalité | score de Neyman, DML + cross-fitting | `DoubleML`,`grf` | FWL exact |
+
+## Fondations : moindres carrés et inférence (Modules 0–6) {#sec-fond}
+
+**Module 0** établit que résoudre $R\beta=Q^\top y$ (QR de Householder) est
+numériquement supérieur aux équations normales : la **Proposition 0.1**
+($\kappa(X^\top X)=\kappa(X)^2$) est illustrée par une divergence nette — dès
+$\kappa\approx 10^8$, les équations normales n'ont plus aucun chiffre fiable
+alors que QR/SVD restent exacts. Le module fournit aussi les optimiseurs
+canoniques (gradient, preuve $O(1/k)$ ; Newton, preuve quadratique).
+
+**Module 1** dérive l'OLS et **prouve Gauss-Markov** ; la simulation confirme la
+couverture des IC de Student à $\approx 0.95$ (contre $0.93$ avec le quantile
+normal en petit échantillon) et l'efficacité BLUE (variance d'un estimateur
+alternatif 60–130× celle de l'OLS).
+
+**Module 2** montre que sous hétéroscédasticité l'OLS reste sans biais mais que
+sa variance classique est fausse : la couverture d'un IC classique tombe à
+**0.71** quand le régresseur pilote la variance, et **HC3 la restaure** à 0.95.
+
+**Module 3** dérive l'équivalence **Newton = IRLS** et les trois tests ; le Monte
+Carlo illustre leur équivalence asymptotique mais leur divergence en petit
+échantillon (Wald sous-rejette, LR sur-rejette).
+
+**Module 4** dérive le ridge (**existence d'un $\lambda$ dominant l'OLS**,
+Prop. 4.1) et le lasso (**soft-thresholding** depuis le sous-gradient). La
+simulation valide la décomposition biais²/variance analytique et la
+**récupération du support** par le lasso (98 % à $\lambda$ optimal).
+
+**Module 5** quantifie le biais d'endogénéité : sous confusion, la couverture de
+l'OLS tombe à **0.00** et le 2SLS la restaure ; les **instruments faibles**
+($F<10$) recréent le biais et cassent la couverture.
+
+**Module 6** prouve la **formule fermée du LOOCV** via la hat matrix (un seul
+ajustement) et illustre la **fuite de données** : sélectionner des variables sur
+tout l'échantillon avant la CV fabrique un pseudo-$R^2$ de **+0.47 sur du bruit
+pur** (contre $-0.43$ correctement).
+
+## Théorie de l'apprentissage (Module 13) {#sec-slt}
+
+Premier module théorique : cadre PAC, **preuve complète de l'inégalité de
+Hoeffding** (via le lemme de Hoeffding), **VC-dimension** (calculs explicites,
+Radon pour $\mathbb R^2$), **Sauer-Shelah** par récurrence, et **complexité de
+Rademacher**. Le **pont théorie/pratique** central : borner $\|w\|$ (ridge/lasso,
+Module 4) borne directement la complexité de Rademacher (Prop. 13.12,
+$\hat{\mathfrak R}\le B\rho/\sqrt n$), donc l'écart de généralisation. Les
+illustrations confirment Hoeffding empiriquement et $\mathrm{VC}=3$ pour les
+demi-plans, tout en soulignant honnêtement que ces bornes sont **numériquement
+vides** pour les modèles réels.
+
+## Modèles non linéaires (Modules 7–10) {#sec-nonlin}
+
+**KNN** (M7) : la **concentration des distances** (Prop. 7.1) fait chuter le
+contraste $(D_{\max}-D_{\min})/D_{\min}$ de 59 à 0.15 quand $p$ passe de 2 à 500,
+et la précision du KNN de 0.97 à 0.64 en ajoutant du bruit.
+
+**CART** (M8) : Gini = approximation quadratique de l'entropie (splits identiques
+à 99.5 %) ; le **contre-exemple XOR** démontre la myopie du greedy (0.5 en
+profondeur 1, 1.0 en profondeur 2).
+
+**Forêts** (M9) : la variance d'une moyenne d'arbres corrélés
+$\rho\sigma^2+\tfrac{1-\rho}{B}\sigma^2$ (Prop. 9.1) est validée numériquement, et
+la fraction OOB converge vers $1/e\approx 0.368$.
+
+**Boosting** (M10) : dérivé comme **descente de gradient fonctionnelle** ; le
+**poids de Newton par feuille** (Prop. 10.1) atteint le minimum en 37 arbres
+contre 182 pour le gradient seul ; trajectoire de perte corrélée à 0.99 avec `gbm`.
+
+## Le regard économétrique (Module 14) {#sec-eco}
+
+Second module théorique. La **M-estimation** unifie OLS, MLE, ridge, lasso : leur
+variance sandwich $A^{-1}BA^{-1}$ (dérivée par Taylor des CPO) se réduit au
+**HC0** du Module 2 pour l'OLS (vérifié à $10^{-16}$). La postérieure conjuguée du
+ridge relie pénalisation et prior gaussien. Surtout, le module démontre **où
+l'inférence casse** : sous $H_0$, le t-test **post-lasso naïf rejette à 24.3 %**
+(vs 5 % nominal), tandis que l'OLS complet et le *sample-splitting* restent
+valides — motivant le cross-fitting du Module 16.
+
+## Non supervisé et réseaux (Modules 11–12) {#sec-unsup}
+
+**PCA** (M11) par **deux voies** (Lagrange et SVD) qui **coïncident** (Prop. 11.2,
+écart $9\times10^{-16}$) ; **EM gaussien** dont la log-vraisemblance égale
+exactement celle de `mclust` ; **k-means** comme **limite de l'EM** ($\sigma^2\to
+0$ durcit les responsabilités).
+
+**MLP** (M12) : **rétropropagation dérivée à la main** (dimensions explicitées) et
+**vérifiée par différences finies** — erreur relative $\sim 10^{-10}$, bien sous
+le seuil. La simulation illustre la précision $O(\varepsilon^2)$ du gradient
+numérique et la divergence à taux d'apprentissage trop grand.
+
+## Interprétabilité (Module 15) {#sec-interp}
+
+PDP/ICE et **valeurs de Shapley** (**preuve d'unicité** des axiomes via les jeux
+d'unanimité). La **forme fermée linéaire** $\phi_j=\beta_j(x_j-\mathbb E[X_j])$
+sert de test de conformité exact ($2\times10^{-16}$). Le **piège de corrélation**
+du PDP est démontré : à $\rho=0.9$, **66 %** des points synthétiques du PDP
+tombent hors du support des données (extrapolation). Mise en garde essentielle :
+ces méthodes expliquent le **modèle**, pas le **phénomène** — transition vers la
+causalité.
+
+## Le pont ML ↔ causalité (Module 16) {#sec-causal}
+
+Module final où **converge tout le projet**. Sous les hypothèses de résultats
+potentiels (ignorabilité, overlap), le **score orthogonal de Neyman**
+(Prop. 16.1, insensible au premier ordre aux nuisances) **généralise
+Frisch-Waugh-Lovell** (Module 1) : la résidualisation linéaire y devient
+non paramétrique (forêts, boosting). Le **cross-fitting** débiaise le
+sur-ajustement des nuisances.
+
+**Tableau de synthèse du projet** (effet de traitement $\theta=1$, confusion
+non linéaire, $n=500$, 200 réplications) :
+
+| Méthode | biais | RMSE | couverture |
+|---|:-:|:-:|:-:|
+| OLS naïf | 0.041 | 0.334 | 0.990 |
+| Lasso naïf | −0.175 | 0.340 | — |
+| DML sans cross-fit | −0.124 | 0.214 | 0.945 |
+| **DML complet** | **−0.037** | **0.184** | **0.970** |
+
+Le **DML complet** domine (RMSE minimal, couverture nominale). Le lasso naïf est
+biaisé (rétrécissement du paramètre d'intérêt) ; le cross-fitting corrige le biais
+de sur-ajustement ; l'OLS naïf est instable face à la confusion non linéaire. Le
+DML reproduit `DoubleML` et les forêts causales concordent qualitativement avec
+`grf`.
+
+## Fils conducteurs transversaux {#sec-fils}
+
+Le projet est conçu comme un **tout cohérent**, non une juxtaposition :
+
+- **La QR du Module 0** résout tous les moindres carrés (OLS, WLS, GLS, ridge,
+  IRLS, DML).
+- **Le sandwich** apparaît trois fois, identique : robustesse HC0 (M2) =
+  M-estimation $A^{-1}BA^{-1}$ (M14) = variance du DML (M16).
+- **Frisch-Waugh-Lovell** (M1) se généralise en **score orthogonal de Neyman**
+  (M16) — la boucle du projet.
+- **La régularisation** (M4) est à la fois contrôle de la complexité de Rademacher
+  (M13), source de biais d'inférence (M14) et outil à manier avec précaution en
+  causalité (M16).
+- **Les arbres** (M8) alimentent forêts (M9), boosting (M10) et nuisances DML (M16).
+
+## Honnêteté scientifique {#sec-honnete}
+
+Conformément à la méthode, chaque résultat non prouvé rigoureusement est
+**signalé** : existence de la SVD (M0), théorème fondamental VC (M13),
+symétrisation de Rademacher (M13), propriété d'ascension de l'EM (M11),
+approximation universelle (M12). Les **divergences** avec les packages sont
+documentées : accord qualitatif (non exact) pour les méthodes **stochastiques**
+(forêts, boosting, forêts causales) et paramétrisation explicite pour `glmnet`
+($\lambda_{\mathrm{glmnet}}=\lambda/n$), `NeweyWest` (`prewhite=FALSE`) et
+`anova.glm` (algorithme exact du test de Rao répliqué).
+
+## Reproduction {#sec-repro}
+
+```r
+# Charger toutes les implémentations
+for (f in list.files("R", full.names = TRUE)) source(f)
+# Tests de conformité
+testthat::test_dir("tests/testthat")
+# Une étude Monte Carlo
+source("simulations/mc_16_dml.R")
+```
+
+Les dérivations complètes (preuves pas à pas) sont dans `derivations/*.qmd` ;
+les figures dans `simulations/output/` (générées à l'exécution).
+
+## Références {.unnumbered}
+
+Hastie, Tibshirani & Friedman, *ESL* · James et al., *ISLR* · Greene,
+*Econometric Analysis* · Boyd & Vandenberghe, *Convex Optimization* · Bishop,
+*PRML* · Shalev-Shwartz & Ben-David, *Understanding ML* · Mohri et al.,
+*Foundations of ML* · van der Vaart, *Asymptotic Statistics* · Wooldridge,
+*Econometric Analysis of CS & Panel Data* · Chernozhukov et al. (2018) · Wager &
+Athey (2018) · Lundberg & Lee (2017). *(Références détaillées par module dans
+chaque `derivations/XX.qmd`.)*

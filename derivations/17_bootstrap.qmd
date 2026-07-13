@@ -1,0 +1,112 @@
+---
+title: "Module 17 — Bootstrap"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le **bootstrap** (Efron 1979) approche la loi d'échantillonnage d'un estimateur
+par **rééchantillonnage** des données, sans hypothèse paramétrique. C'est le
+pendant *par simulation* de l'inférence asymptotique (Modules 1, 14). On dérive
+le **principe plug-in**, l'estimateur bootstrap de la variance, les **types
+d'intervalles** (percentile, basique, BCa) et les schémas **pairs/résidus** pour
+la régression.
+
+## Principe plug-in {#sec-plugin}
+
+Un paramètre est une **fonctionnelle** de la loi $F$ : $\theta = T(F)$ (moyenne,
+médiane, coefficient…). L'estimateur plug-in remplace $F$ par la **loi empirique**
+$\hat F_n$ (masse $1/n$ sur chaque $x_i$) : $\hat\theta = T(\hat F_n)$. Le
+**bootstrap** réplique l'échantillonnage en tirant $x_1^*,\dots,x_n^*$ **avec
+remise** de $\hat F_n$, et calcule $\hat\theta^* = T(\hat F_n^*)$. La loi de
+$\hat\theta^*$ (conditionnelle aux données) **imite** celle de $\hat\theta$.
+
+> **Consistance (admise).** Sous conditions de régularité (fonctionnelle
+> Hadamard-différentiable), la loi bootstrap de $\sqrt n(\hat\theta^*-\hat\theta)$
+> converge vers la **même** loi limite que $\sqrt n(\hat\theta-\theta)$ (van der
+> Vaart, ch. 23). Le bootstrap est alors valide au premier ordre, et souvent
+> **au second ordre** (raffinement par rapport à l'approximation normale) pour
+> les quantités pivotales.
+
+## Variance bootstrap : cas de la moyenne {#sec-var}
+
+> **Proposition 17.1.** Pour $\hat\theta=\bar x$, la variance bootstrap **idéale**
+> (sur tous les rééchantillons) vaut
+> $$
+> \operatorname{Var}_*(\bar x^*) = \frac{\hat\sigma^2}{n},\qquad
+> \hat\sigma^2 = \frac1n\sum_{i=1}^n (x_i-\bar x)^2 .
+> \tag{17.1}
+> $$
+
+**Preuve.** Conditionnellement aux données, $x_i^*$ est tiré uniformément parmi
+$\{x_1,\dots,x_n\}$ : $\mathbb E_*[x_i^*]=\bar x$ et $\operatorname{Var}_*(x_i^*)=
+\frac1n\sum_j(x_j-\bar x)^2=\hat\sigma^2$. Les $x_i^*$ étant i.i.d. (conditionnellement),
+$\operatorname{Var}_*(\bar x^*)=\hat\sigma^2/n$. $\blacksquare$
+
+C'est (à $n/(n-1)$ près) l'erreur standard usuelle : le bootstrap **retrouve** la
+formule classique là où elle existe, et la **généralise** là où elle n'existe pas
+(médiane, quantiles, ratios…). En pratique on approche $\operatorname{Var}_*$ par
+$B$ rééchantillons : $\widehat{\operatorname{se}}_{\text{boot}}=\text{sd}(\hat\theta^*_1,
+\dots,\hat\theta^*_B)$.
+
+## Intervalles de confiance {#sec-ci}
+
+Soit $\hat\theta^*_{(\alpha)}$ le quantile $\alpha$ des répliques.
+
+- **Percentile** : $\big[\hat\theta^*_{(\alpha/2)},\ \hat\theta^*_{(1-\alpha/2)}\big]$.
+- **Basique (pivotal)** : en pivotant $\hat\theta^*-\hat\theta$,
+  $\big[2\hat\theta-\hat\theta^*_{(1-\alpha/2)},\ 2\hat\theta-\hat\theta^*_{(\alpha/2)}\big]$.
+- **Normal** : $\hat\theta \pm z_{1-\alpha/2}\,\widehat{\operatorname{se}}_{\text{boot}}$.
+- **BCa** (bias-corrected and accelerated) : corrige le **biais** ($\hat z_0$) et
+  l'**asymétrie** ($\hat a$). On calcule
+  $\hat z_0=\Phi^{-1}\big(\#\{\hat\theta^*_b<\hat\theta\}/B\big)$ et $\hat a$ par
+  jackknife $\hat a=\frac{\sum_i(\bar\theta_{(\cdot)}-\hat\theta_{(i)})^3}
+  {6\{\sum_i(\bar\theta_{(\cdot)}-\hat\theta_{(i)})^2\}^{3/2}}$, puis les quantiles
+  ajustés $\alpha_1,\alpha_2$ :
+  $$
+  \alpha_j = \Phi\!\Big(\hat z_0 + \frac{\hat z_0 + z_{(j)}}{1-\hat a(\hat z_0+z_{(j)})}\Big),
+  \tag{17.2}
+  $$
+  et l'IC $\big[\hat\theta^*_{(\alpha_1)},\hat\theta^*_{(\alpha_2)}\big]$. **BCa**
+  est *transformation-invariant* et exact au second ordre — le meilleur pour les
+  lois asymétriques.
+
+## Bootstrap en régression {#sec-reg}
+
+Deux schémas pour $y=X\beta+\varepsilon$ :
+
+- **Pairs (rééchantillonner les lignes)** : tirer avec remise des couples
+  $(x_i,y_i)$. **Robuste à l'hétéroscédasticité** (ne suppose pas les erreurs
+  i.i.d.) — analogue bootstrap du sandwich (Module 2).
+- **Résidus** : refixer $X$, rééchantillonner les résidus $\hat\varepsilon_i$ et
+  reconstruire $y_i^*=x_i^\top\hat\beta+\hat\varepsilon^*_i$. Suppose les erreurs
+  **i.i.d.** (homoscédasticité) mais plus efficace si c'est vrai.
+
+## Quand le bootstrap échoue {#sec-fail}
+
+Le bootstrap peut être **inconsistant** : paramètres au **bord** ($\max$ d'une
+loi uniforme), variance infinie (lois à queues lourdes, $\alpha$-stable),
+dépendance non prise en compte (séries temporelles → *block bootstrap*), et
+statistiques non lisses sans correction. On le signale par honnêteté.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/17_bootstrap.R`) |
+|---|---|
+| (17.1) rééchantillonnage + se | `bootstrap(data, stat_fn, R)` |
+| percentile / basique / normal | `boot_ci(..., type)` |
+| (17.2) BCa | `boot_ci(..., type = "bca")` |
+| pairs / résidus | `boot_lm(formula, data, method)` |
+
+Validation : `boot_ci` contre `boot::boot.ci` (percentile, basique, BCa).
+Monte Carlo : couverture des IC bootstrap vs asymptotique sur données **asymétriques**
+(BCa restaure la couverture).
+
+## Références {.unnumbered}
+
+- Efron & Tibshirani — *An Introduction to the Bootstrap*.
+- Davison & Hinkley — *Bootstrap Methods and their Application*.
+- van der Vaart — *Asymptotic Statistics*, ch. 23.

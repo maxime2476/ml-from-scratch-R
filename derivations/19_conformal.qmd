@@ -1,0 +1,92 @@
+---
+title: "Module 19 — Prédiction conforme"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+La **prédiction conforme** (Vovk et al. 2005) construit des **intervalles de
+prédiction** avec une **garantie de couverture en échantillon fini,
+distribution-libre**, autour de **n'importe quel** modèle. Elle ne suppose que
+l'**échangeabilité** des données — pas de normalité, pas de bonne spécification.
+C'est le complément moderne de la validation (Module 6) et de la théorie de
+l'apprentissage (Module 13).
+
+## Conformal par découpage (split conformal) {#sec-split}
+
+On découpe les données en un **échantillon d'entraînement** $\mathcal D_{\text{tr}}$
+et un **échantillon de calibration** $\mathcal D_{\text{cal}}$ ($n$ points).
+
+1. Ajuster $\hat\mu$ sur $\mathcal D_{\text{tr}}$.
+2. Calculer les **scores de non-conformité** sur la calibration, p.ex.
+   $s_i = |y_i - \hat\mu(x_i)|$, $i=1,\dots,n$.
+3. Pour un nouveau $x$, l'intervalle est
+   $$
+   C(x) = \big[\hat\mu(x) - \hat q,\ \hat\mu(x) + \hat q\big],\qquad
+   \hat q = s_{(\lceil (1-\alpha)(n+1)\rceil)},
+   \tag{19.1}
+   $$
+   le $\big\lceil(1-\alpha)(n+1)\big\rceil$-ème plus petit score de calibration
+   (avec la convention $\hat q=+\infty$ si $\lceil(1-\alpha)(n+1)\rceil>n$).
+
+## Garantie de couverture {#sec-cover}
+
+> **Théorème 19.1 (couverture, distribution-libre).** Si $(x_i,y_i)_{i=1}^{n}$ et
+> $(x_{n+1},y_{n+1})$ sont **échangeables**, alors l'intervalle (19.1) vérifie
+> $$
+> \mathbb P\big(y_{n+1}\in C(x_{n+1})\big) \ge 1-\alpha,
+> $$
+> et si les scores sont p.s. distincts, $\le 1-\alpha + \frac1{n+1}$.
+
+**Preuve.** Soit $s_{n+1}=|y_{n+1}-\hat\mu(x_{n+1})|$ le score du point test.
+Conditionnellement à $\mathcal D_{\text{tr}}$ (qui fixe $\hat\mu$), les scores
+$s_1,\dots,s_n,s_{n+1}$ sont **échangeables** (fonction identique de données
+échangeables). Le **rang** de $s_{n+1}$ parmi les $n+1$ scores est donc **uniforme**
+sur $\{1,\dots,n+1\}$. Posons $k=\lceil(1-\alpha)(n+1)\rceil$. Alors
+$$
+\mathbb P\big(s_{n+1}\le s_{(k)}\big) = \mathbb P\big(\text{rang}(s_{n+1})\le k\big)
+= \frac{k}{n+1} \ge \frac{(1-\alpha)(n+1)}{n+1} = 1-\alpha,
+$$
+la dernière égalité venant de $k\ge(1-\alpha)(n+1)$. Or $y_{n+1}\in C(x_{n+1})
+\Leftrightarrow s_{n+1}\le \hat q = s_{(k)}$. Sous distinction des scores, $k/(n+1)
+\le 1-\alpha+\frac1{n+1}$, d'où la borne supérieure. $\blacksquare$
+
+**Remarquable :** la garantie ne dépend **ni de la loi $F$, ni de la qualité du
+modèle** $\hat\mu$. Un mauvais modèle donne des intervalles **larges** mais
+**toujours valides** ; un bon modèle donne des intervalles **serrés** et valides.
+La couverture est **marginale** (moyennée sur $x$), pas conditionnelle.
+
+## Variantes {#sec-variantes}
+
+- **Full conformal** : réajuste le modèle pour chaque valeur candidate de
+  $y_{n+1}$ — garantie identique sans découpage, mais **coût prohibitif** (on ne
+  l'implémente pas).
+- **Score normalisé (localement adaptatif)** : $s_i=|y_i-\hat\mu(x_i)|/\hat\sigma(x_i)$
+  avec $\hat\sigma$ un estimateur de dispersion locale, donnant des intervalles de
+  **largeur variable** (plus serrés là où le modèle est sûr).
+- **CQR (conformalized quantile regression)** : scores fondés sur des quantiles
+  conditionnels (Module 20) — intervalles adaptatifs à garantie conforme.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/19_conformal.R`) |
+|---|---|
+| (19.1) split conformal | `conformal_split(...)` |
+| quantile conforme | `conformal_quantile(scores, alpha)` |
+| score normalisé | `conformal_split(..., normalize = TRUE)` |
+
+Validation : la **garantie du Théorème 19.1** est vérifiée par Monte Carlo — la
+couverture reste $\ge 1-\alpha$ (et $\le 1-\alpha+1/(n+1)$) **quel que soit** le
+DGP (gaussien, à queues lourdes, hétéroscédastique, modèle mal spécifié) et
+**quel que soit** le modèle de base (OLS, forêt aléatoire), là où l'intervalle
+gaussien naïf échoue.
+
+## Références {.unnumbered}
+
+- Vovk, Gammerman & Shafer — *Algorithmic Learning in a Random World*.
+- Lei, G'Sell, Rinaldo, Tibshirani & Wasserman (2018), « Distribution-Free
+  Predictive Inference for Regression », *JASA*.
+- Angelopoulos & Bates (2023), « Conformal Prediction: A Gentle Introduction ».

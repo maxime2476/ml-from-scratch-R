@@ -1,0 +1,61 @@
+---
+title: "Benchmark — from scratch vs packages de référence"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, number-sections: true}
+---
+
+Le code complet est dans
+[`simulations/benchmark_scratch_vs_ref.R`](../simulations/benchmark_scratch_vs_ref.R)
+(`Rscript simulations/benchmark_scratch_vs_ref.R`). Trois axes : précision,
+vitesse, stabilité numérique.
+
+## Précision — écart maximal des coefficients
+
+Les implémentations from-scratch reproduisent les références à la **tolérance
+machine** ($n=500$) :
+
+| Comparaison | écart max des coefficients |
+|---|---:|
+| OLS (M1) vs `stats::lm` | $1{,}3\times10^{-15}$ |
+| GLM logistique (M3, IRLS) vs `stats::glm` | $1{,}4\times10^{-15}$ |
+| 2SLS (M5) vs `AER::ivreg` | $3{,}3\times10^{-15}$ |
+
+Il ne s'agit donc pas d'approximations : ce sont **les mêmes estimateurs**, au
+bruit d'arrondi près.
+
+## Vitesse — temps médian
+
+![Vitesse from scratch vs référence](../simulations/output/benchmark_speed.png)
+
+Les fonctions de référence (`lm`, `glm`, `ivreg`) s'appuient sur **LAPACK
+compilé** ; le code base-R vectorisé est plus lent (facteur ~10–40×). C'est le
+**prix assumé de la transparence** : chaque étape est lisible et dérivée, non
+déléguée à une boîte noire. Pour les tailles de ce projet (Monte Carlo compris),
+le surcoût reste sans conséquence pratique.
+
+## Stabilité numérique — QR vs équations normales
+
+Test décisif : la **matrice de Läuchli**
+$X=\begin{psmallmatrix}1&1&1\\ \varepsilon&0&0\\ 0&\varepsilon&0\\ 0&0&\varepsilon\end{psmallmatrix}$
+avec $\varepsilon=10^{-6}$ (conditionnement $\sim10^{6}$). Former $X^\top X$
+(**équations normales**) **carre** le conditionnement ($\sim10^{12}$) et détruit
+la moitié des chiffres significatifs ; la factorisation **QR** travaille sur $X$
+directement.
+
+| Méthode | erreur sur $\hat\beta$ |
+|---|---:|
+| QR (`solve_ls_qr`, M0) | $4{,}4\times10^{-16}$ |
+| Équations normales (Cholesky) | $3{,}0\times10^{-4}$ |
+| `lm` (référence, QR) | $8{,}9\times10^{-16}$ |
+
+Les équations normales perdent **douze ordres de grandeur** de précision ; QR —
+comme `lm` — reste exact. C'est la justification concrète du choix, systématique
+dans tout le projet, de résoudre les moindres carrés par **QR** (Module 0) plutôt
+que par $(X^\top X)^{-1}X^\top y$.
+
+## Bilan
+
+Le code from-scratch est **exact** (précision machine), **numériquement sain**
+(QR partout) et **suffisamment rapide**. La lenteur relative face à LAPACK est le
+contrepoint attendu d'un code écrit pour être **compris**, pas seulement exécuté.

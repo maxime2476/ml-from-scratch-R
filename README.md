@@ -111,6 +111,30 @@ asymptotique (M1/M2), le GMM unifie IV (M5) et M-estimation (M14), la prédictio
 conforme prolonge la validation (M6/M13), et le panel redonne du Frisch-Waugh-Lovell
 (M1/M16). Le Module 0 s'enrichit des optimiseurs **Nesterov** et **L-BFGS**.
 
+### Inférence en haute dimension (modules 22–23)
+
+| Fichier | Module | Points clés | Réf. de validation |
+|:-------:|--------|-------------|--------------------|
+| `22` | **Lasso débiaisé** | projection Zhang-Zhang, score orthogonal nodewise, scaled lasso pour σ, IC valides quand *p > n* | `hdm`, couverture MC |
+| `23` | **Analyse de sensibilité (OVB)** | biais de variable omise (Cinelli-Hazlett), R² partiel, **robustness value**, estimation ajustée | `sensemakr` (à 1e-6) |
+
+Le Module 22 **répare** l'inférence post-sélection cassée du Module 14 ; le
+Module 23 **quantifie** la fragilité des hypothèses d'identification des Modules
+15–16 et 22 (aucune hypothèse remplaçant la randomisation).
+
+### Applications, études et outils
+
+- **`applications/lalonde.R`** — la boîte à outils causale (OLS, IPW, DML, lasso
+  débiaisé, sensibilité) confrontée au **benchmark expérimental NSW** (~1794 \$).
+  Reproduit la leçon de LaLonde : sur données observationnelles, la réponse
+  dépend de la méthode et du recouvrement.
+- **`simulations/study_crossfitting.R`** — mini-étude méthodologique : *le
+  cross-fitting est-il nécessaire en DML ?* (biais, couverture avec/sans).
+- **`simulations/benchmark_scratch_vs_ref.R`** — from-scratch vs `lm`/`glm`/
+  `ivreg` : précision (1e-15), vitesse, stabilité (QR vs équations normales).
+- **`shiny-app/`** — laboratoire interactif (biais-variance, chemins de
+  régularisation, orthogonalisation DML) : `shiny::runApp("shiny-app")`.
+
 ## Prérequis
 
 - **R ≥ 4.x**

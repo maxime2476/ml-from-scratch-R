@@ -465,6 +465,42 @@ convergence (en espérance) au prix d'une vitesse plus lente. L'arbitrage
 **biais du pas ↔ variance du gradient** est illustré numériquement dans le
 Monte Carlo. Le SGD est le **moteur du MLP** (Module 12).
 
+### Gradient accéléré de Nesterov {#sec-nesterov}
+
+La descente de gradient est en $O(1/k)$ (Th. 0.6). En ajoutant un terme
+d'**inertie** (extrapolation), Nesterov (1983) atteint $O(1/k^2)$ — l'**optimum**
+pour une méthode du premier ordre (borne inférieure d'information). L'itération :
+$$
+x_{k+1} = y_k - t\,\nabla f(y_k),\qquad
+y_{k+1} = x_{k+1} + \frac{\lambda_k-1}{\lambda_{k+1}}(x_{k+1}-x_k),
+\tag{0.22}
+$$
+avec $\lambda_{k+1}=(1+\sqrt{1+4\lambda_k^2})/2$. Sur une fonction **fortement**
+convexe, ce schéma « convexe » **oscille** ; le **restart adaptatif**
+(O'Donoghue-Candès : réinitialiser $\lambda\!\leftarrow\!1$ dès que
+$\nabla f(y_k)^\top(x_{k+1}-x_k)>0$, c.-à-d. quand on avance contre le gradient)
+rétablit une convergence linéaire rapide.
+
+### L-BFGS (quasi-Newton à mémoire limitée) {#sec-lbfgs}
+
+Newton (0.17) converge quadratiquement mais coûte $O(d^3)$ (résolution avec la
+hessienne). Les méthodes **quasi-Newton** approchent $[\nabla^2 f]^{-1}$ à partir
+des différences de gradients successives, sans jamais former de matrice
+$d\times d$. **L-BFGS** ne garde que les $m$ derniers couples $(s_k,y_k)=
+(x_{k+1}-x_k,\ \nabla f_{k+1}-\nabla f_k)$ et calcule la direction $d=-H_k\nabla f$
+par la **récursion à deux boucles** ($O(md)$ par itération) :
+$$
+\text{(boucle 1)}\ q\leftarrow \nabla f,\ \alpha_i=\rho_i s_i^\top q,\ q\leftarrow q-\alpha_i y_i;\quad
+r\leftarrow \gamma\,q;\quad
+\text{(boucle 2)}\ \beta=\rho_i y_i^\top r,\ r\leftarrow r+s_i(\alpha_i-\beta),
+$$
+avec $\rho_i=1/(y_i^\top s_i)$ et $\gamma=s_k^\top y_k/(y_k^\top y_k)$. Une
+**recherche linéaire de Wolfe** assure les conditions de courbure (donc
+$y_k^\top s_k>0$, positivité de l'approximation). Convergence **super-linéaire**,
+coût par itération linéaire en $d$ — le solveur de choix en grande dimension
+lisse. Comparaison de taux (gradient vs Nesterov vs L-BFGS vs Newton) dans
+`simulations/mc_00_optimiseurs.R`.
+
 ---
 
 ## Encadré — quel solveur pour quel problème {#sec-choix}

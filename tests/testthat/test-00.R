@@ -129,3 +129,29 @@ test_that("optim_sgd approche la solution OLS", {
                   epochs = 400, seed = 1)
   expect_equal(sg$par, b_lm, tolerance = 1e-2)  # stochastique : tolérance lâche
 })
+
+test_that("optim_nesterov et optim_lbfgs minimisent une quadratique SPD", {
+  set.seed(21)
+  A <- crossprod(matrix(rnorm(64), 8)) + diag(8)
+  b <- rnorm(8); xstar <- as.numeric(solve(A, b))
+  f <- function(x) 0.5 * sum(x * (A %*% x)) - sum(b * x)
+  grad <- function(x) as.numeric(A %*% x - b)
+  L <- max(eigen(A, only.values = TRUE)$values)
+  ne <- optim_nesterov(grad, rep(0, 8), step = 1 / L, max_iter = 1e5, tol = 1e-12)
+  lb <- optim_lbfgs(grad, rep(0, 8), f = f, m = 10, max_iter = 200, tol = 1e-10)
+  expect_equal(ne$par, xstar, tolerance = 1e-6)
+  expect_equal(lb$par, xstar, tolerance = 1e-6)
+})
+
+test_that("Nesterov et L-BFGS convergent en MOINS d'itérations que le gradient", {
+  set.seed(22); d <- 25
+  M <- matrix(rnorm(d * d), d); A <- crossprod(M) + diag(d)   # mal conditionné
+  b <- rnorm(d); f <- function(x) 0.5 * sum(x * (A %*% x)) - sum(b * x)
+  grad <- function(x) as.numeric(A %*% x - b)
+  L <- max(eigen(A, only.values = TRUE)$values); tol <- 1e-9
+  gd <- optim_gd(grad, rep(0, d), step = 1 / L, max_iter = 1e5, tol = tol)
+  ne <- optim_nesterov(grad, rep(0, d), step = 1 / L, max_iter = 1e5, tol = tol)
+  lb <- optim_lbfgs(grad, rep(0, d), f = f, m = 10, max_iter = 1000, tol = 1e-8)
+  expect_lt(ne$iter, gd$iter)                        # accélération de Nesterov
+  expect_lt(lb$iter, gd$iter)                        # quasi-Newton plus rapide
+})

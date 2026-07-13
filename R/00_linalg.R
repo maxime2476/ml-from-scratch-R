@@ -348,3 +348,94 @@ optim_sgd <- function(grad_i, x0, n, batch = 1L, step = NULL, step_fun = NULL,
   }
   list(par = x, updates = t)
 }
+
+#' Gradient accéléré de Nesterov
+#'
+#' Ajoute un terme d'inertie (« momentum ») à la descente de gradient : pour f
+#' convexe L-lisse et pas \eqn{t=1/L}, la vitesse passe de \eqn{O(1/k)}
+#' (gradient) à \eqn{O(1/k^2)} — l'accélération optimale au premier ordre
+#' (Nesterov 1983).
+#'
+#' @param grad fonction gradient `grad(x)`.
+#' @param x0 point initial.
+#' @param step pas \eqn{t=1/L}.
+#' @param max_iter itérations maximales.
+#' @param tol seuil d'arrêt sur \eqn{\|x_{k+1}-x_k\|}.
+#' @param f (optionnel) fonction objectif.
+#' @return liste : `par`, `iter`, `grad_norm`, `value`.
+#' @export
+optim_nesterov <- function(grad, x0, step, max_iter = 1e4L, tol = 1e-8, f = NULL) {
+  x <- x0; y <- x0; lam <- 1; k <- 0L
+  for (k in seq_len(max_iter)) {
+    g <- grad(y)
+    x_new <- y - step * g
+    # restart adaptatif (O'Donoghue-Candès) : si l'on avance CONTRE le gradient,
+    # réinitialiser l'inertie -> évite l'oscillation en régime fortement convexe.
+    if (sum(g * (x_new - x)) > 0) lam <- 1
+    lam_new <- (1 + sqrt(1 + 4 * lam^2)) / 2
+    y <- x_new + ((lam - 1) / lam_new) * (x_new - x)      # extrapolation d'inertie
+    if (sqrt(sum((x_new - x)^2)) < tol) { x <- x_new; break }
+    x <- x_new; lam <- lam_new
+  }
+  list(par = x, iter = k, grad_norm = sqrt(sum(grad(x)^2)),
+       value = if (!is.null(f)) f(x) else NA_real_)
+}
+
+# Recherche linéaire de Wolfe (faible) par bissection : renvoie un pas alpha
+# satisfaisant Armijo (c1) et la condition de courbure (c2).
+.wolfe_ls <- function(f, grad, x, d, g0, fx, c1 = 1e-4, c2 = 0.4, max_ls = 50L) {
+  slope0 <- sum(g0 * d); alpha <- 1; alo <- 0; ahi <- Inf
+  for (it in seq_len(max_ls)) {
+    if (f(x + alpha * d) > fx + c1 * alpha * slope0) {          # Armijo violé
+      ahi <- alpha; alpha <- (alo + ahi) / 2
+    } else if (sum(grad(x + alpha * d) * d) < c2 * slope0) {    # courbure violée
+      alo <- alpha; alpha <- if (is.finite(ahi)) (alo + ahi) / 2 else 2 * alpha
+    } else return(alpha)
+  }
+  alpha
+}
+
+#' L-BFGS (quasi-Newton à mémoire limitée)
+#'
+#' Approxime l'inverse de la hessienne à partir des \eqn{m} derniers couples
+#' \eqn{(s_k,y_k)} par la **récursion à deux boucles**, sans stocker de matrice
+#' \eqn{d\times d}. Recherche linéaire d'Armijo (rétrogression) si `f` est fourni.
+#' Convergence super-linéaire, coût par itération \eqn{O(md)}.
+#'
+#' @param grad fonction gradient `grad(x)`.
+#' @param x0 point initial.
+#' @param f fonction objectif (pour la recherche linéaire ; recommandé).
+#' @param m taille de mémoire (défaut 10).
+#' @param max_iter itérations maximales.
+#' @param tol seuil sur la norme du gradient.
+#' @return liste : `par`, `iter`, `grad_norm`, `value`.
+#' @export
+optim_lbfgs <- function(grad, x0, f = NULL, m = 10L, max_iter = 200L, tol = 1e-8) {
+  x <- x0; g <- grad(x); S <- list(); Y <- list(); k <- 0L
+  for (k in seq_len(max_iter)) {
+    if (sqrt(sum(g^2)) < tol) break
+    # --- récursion à deux boucles : d = -H_k g ---
+    q <- g; ns <- length(S); alphas <- numeric(ns); rho <- numeric(ns)
+    for (i in rev(seq_len(ns))) {
+      rho[i] <- 1 / sum(Y[[i]] * S[[i]]); alphas[i] <- rho[i] * sum(S[[i]] * q)
+      q <- q - alphas[i] * Y[[i]]
+    }
+    gamma <- if (ns > 0) sum(S[[ns]] * Y[[ns]]) / sum(Y[[ns]] * Y[[ns]]) else 1
+    r <- gamma * q
+    for (i in seq_len(ns)) {
+      beta <- rho[i] * sum(Y[[i]] * r); r <- r + S[[i]] * (alphas[i] - beta)
+    }
+    d <- -r
+    # --- recherche linéaire de Wolfe (si f fourni), sinon pas unité ---
+    alpha <- if (!is.null(f)) .wolfe_ls(f, grad, x, d, g, f(x)) else 1
+    x_new <- x + alpha * d; g_new <- grad(x_new)
+    s <- x_new - x; yv <- g_new - g
+    if (sum(yv * s) > 1e-10) {                              # courbure positive
+      S <- c(S, list(s)); Y <- c(Y, list(yv))
+      if (length(S) > m) { S <- S[-1]; Y <- Y[-1] }
+    }
+    x <- x_new; g <- g_new
+  }
+  list(par = x, iter = k, grad_norm = sqrt(sum(g^2)),
+       value = if (!is.null(f)) f(x) else NA_real_)
+}

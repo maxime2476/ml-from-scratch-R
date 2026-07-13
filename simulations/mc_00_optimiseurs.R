@@ -38,24 +38,52 @@ trace_newton <- function(x0, K) {
   for (k in seq_len(K)) { x <- x - solve(A, grad(x)); gap[k] <- fval(x) - fstar }
   data.frame(iter = seq_len(K), gap = pmax(gap, 1e-16), methode = "Newton")
 }
+trace_nesterov <- function(x0, step, K) {   # gradient accéléré + restart (éq. 0.22)
+  x <- x0; y <- x0; lam <- 1; gap <- numeric(K)
+  for (k in seq_len(K)) {
+    g <- grad(y); x_new <- y - step * g
+    if (sum(g * (x_new - x)) > 0) lam <- 1
+    lam_new <- (1 + sqrt(1 + 4 * lam^2)) / 2
+    y <- x_new + ((lam - 1) / lam_new) * (x_new - x)
+    x <- x_new; lam <- lam_new; gap[k] <- fval(x) - fstar
+  }
+  data.frame(iter = seq_len(K), gap = pmax(gap, 1e-16), methode = "Nesterov (accéléré)")
+}
+trace_lbfgs <- function(x0, K) {            # L-BFGS instrumenté (mémoire m=10)
+  x <- x0; g <- grad(x); S <- list(); Y <- list(); gap <- numeric(K)
+  for (k in seq_len(K)) {
+    q <- g; ns <- length(S); al <- numeric(ns); rho <- numeric(ns)
+    for (i in rev(seq_len(ns))) { rho[i] <- 1/sum(Y[[i]]*S[[i]]); al[i] <- rho[i]*sum(S[[i]]*q); q <- q - al[i]*Y[[i]] }
+    gam <- if (ns > 0) sum(S[[ns]]*Y[[ns]])/sum(Y[[ns]]*Y[[ns]]) else 1; r <- gam*q
+    for (i in seq_len(ns)) { be <- rho[i]*sum(Y[[i]]*r); r <- r + S[[i]]*(al[i]-be) }
+    d <- -r; slope <- sum(g*d); a <- 1; fx <- fval(x)
+    while (fval(x + a*d) > fx + 1e-4*a*slope && a > 1e-12) a <- a/2
+    xn <- x + a*d; gn <- grad(xn); s <- xn-x; yv <- gn-g
+    if (sum(yv*s) > 1e-10) { S <- c(S,list(s)); Y <- c(Y,list(yv)); if(length(S)>10){S<-S[-1];Y<-Y[-1]} }
+    x <- xn; g <- gn; gap[k] <- fval(x) - fstar
+  }
+  data.frame(iter = seq_len(K), gap = pmax(gap, 1e-16), methode = "L-BFGS (quasi-Newton)")
+}
 
 x0 <- rep(5, d)
 K <- 60
-trA <- rbind(trace_gd(x0, 1 / Lc, K), trace_newton(x0, K))
+trA <- rbind(trace_gd(x0, 1 / Lc, K), trace_nesterov(x0, 1 / Lc, K),
+             trace_lbfgs(x0, K), trace_newton(x0, K))
 
-cat("=== (A) Itérations pour atteindre f_k - f* < 1e-10 ===\n")
+cat(sprintf("=== (A) Après K=%d itérations : écart f_K - f* et it. pour < 1e-10 ===\n", K))
 for (m in unique(trA$methode)) {
   sub <- trA[trA$methode == m, ]
   hit <- which(sub$gap < 1e-10)[1]
-  cat(sprintf("  %-18s : %s itérations\n", m, if (is.na(hit)) ">K" else hit))
+  cat(sprintf("  %-22s : gap %.2e  (< 1e-10 en %s it.)\n",
+              m, tail(sub$gap, 1), if (is.na(hit)) paste0(">", K) else hit))
 }
 cat("Conditionnement kappa(A) =", round(Lc / min(eigen(A, only.values = TRUE)$values), 1), "\n")
 
 pA <- ggplot(trA, aes(iter, gap, colour = methode)) +
   geom_line(linewidth = 0.9) + geom_point(size = 1.3) +
   scale_y_log10() +
-  labs(title = "Convergence : gradient vs Newton (quadratique fortement convexe)",
-       subtitle = "Gradient linéaire (droite en échelle log) ; Newton quadratique (chute brutale)",
+  labs(title = "Convergence : gradient vs Nesterov vs L-BFGS vs Newton",
+       subtitle = "Gradient O(1/k) ; Nesterov accéléré ; L-BFGS quasi-Newton ; Newton quadratique",
        x = "itération k", y = expression(f(x[k]) - f^"*"), colour = "Méthode") +
   theme_minimal(base_size = 12)
 ggsave(file.path(out_dir, "mc_00_optim_convergence.png"), pA,

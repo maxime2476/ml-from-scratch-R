@@ -1,0 +1,94 @@
+---
+title: "Module 21 — Données de panel et effets fixes"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Avec des données de **panel** (mêmes unités $i$ observées aux dates $t$), on peut
+**éliminer** l'hétérogénéité inobservée $\alpha_i$ — même **corrélée** aux
+régresseurs — par la transformation **within**. On dérive l'estimateur à **effets
+fixes**, sa lecture comme **Frisch-Waugh-Lovell** (Module 1), et les **erreurs
+standards groupées** (*clustered*). C'est le staple économétrique de
+l'identification par variation intra-unité.
+
+## Modèle et biais de l'OLS groupé {#sec-modele}
+
+$$
+y_{it} = x_{it}^\top\beta + \alpha_i + \varepsilon_{it},\qquad i=1,\dots,N,\ t=1,\dots,T,
+\tag{21.1}
+$$
+$\alpha_i$ : **effet fixe** d'unité (inobservé). Si $\alpha_i$ est **corrélé** à
+$x_{it}$ (p.ex. « capacité » corrélée à l'éducation), l'**OLS groupé** (ignorant
+$\alpha_i$) est **biaisé** : $\alpha_i$ est une variable omise (Module 5). Sous
+**exogénéité stricte** $\mathbb E[\varepsilon_{it}\mid x_{i1},\dots,x_{iT},\alpha_i]=0$,
+on peut néanmoins identifier $\beta$.
+
+## Estimateur within (effets fixes) {#sec-within}
+
+On **centre par unité** : $\bar y_i=\frac1T\sum_t y_{it}$, idem $\bar x_i$. La
+transformation within soustrait la moyenne d'unité :
+$$
+\underbrace{y_{it}-\bar y_i}_{\tilde y_{it}} = (x_{it}-\bar x_i)^\top\beta + (\alpha_i-\alpha_i) + (\varepsilon_{it}-\bar\varepsilon_i),
+$$
+et **l'effet fixe disparaît** ($\alpha_i-\bar\alpha_i=0$). L'estimateur within est
+l'OLS sur données centrées :
+$$
+\hat\beta_{\mathrm{FE}} = \Big(\sum_{i,t}\tilde x_{it}\tilde x_{it}^\top\Big)^{-1}\sum_{i,t}\tilde x_{it}\tilde y_{it}.
+\tag{21.2}
+$$
+
+### C'est Frisch-Waugh-Lovell {#sec-fwl}
+
+> **Proposition 21.1.** $\hat\beta_{\mathrm{FE}}$ **égale** le coefficient de $x$
+> dans l'OLS **LSDV** (least squares dummy variables) $y_{it}=x_{it}^\top\beta +
+> \sum_i \alpha_i d_i + \varepsilon_{it}$ (une indicatrice $d_i$ par unité).
+
+**Preuve.** Par FWL (Module 1, éq. 1.10), le coefficient de $x$ dans la régression
+complète $[X\ D]$ ($D$ = matrice des indicatrices d'unité) égale celui de la
+régression de $M_D y$ sur $M_D X$, où $M_D=I-D(D^\top D)^{-1}D^\top$ est le
+projecteur résidualisant par rapport à $D$. Or $M_D$ **soustrait la moyenne
+d'unité** ($D(D^\top D)^{-1}D^\top y$ a pour composante $it$ la moyenne
+$\bar y_i$). Donc $M_D y=\tilde y$, $M_D X=\tilde X$, et le coefficient FWL est
+exactement (21.2). $\blacksquare$
+
+Le within est donc **FWL appliqué aux indicatrices d'unité** — encore la
+mécanique de partialisation (Modules 1, 16). On perd $N$ degrés de liberté (les
+$\alpha_i$) ; la variance corrige : $\text{df}=NT-N-k$.
+
+## Erreurs standards groupées (clustered) {#sec-cluster}
+
+Les $\varepsilon_{it}$ sont typiquement **corrélés au sein d'une unité** (dans le
+temps). La variance sandwich (Module 2) avec **viande groupée** par unité :
+$$
+\widehat{\operatorname{Var}}_{\text{cl}}(\hat\beta) = (\tilde X^\top\tilde X)^{-1}
+\Big(\sum_{i=1}^N \tilde X_i^\top\hat{\tilde\varepsilon}_i\hat{\tilde\varepsilon}_i^\top\tilde X_i\Big)
+(\tilde X^\top\tilde X)^{-1},
+\tag{21.3}
+$$
+où $\tilde X_i$, $\hat{\tilde\varepsilon}_i$ regroupent les observations de l'unité
+$i$. Ignorer la corrélation intra-unité (SE classiques) **sous-estime** fortement
+la variance : les SE groupées sont indispensables.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/21_panel.R`) |
+|---|---|
+| (21.2) within (effets fixes) | `fe_within(formula, data, id)` |
+| (21.3) SE groupées | sortie `vcov_cluster` |
+| Prop. 21.1 = LSDV | vérifié dans `test-21.R` |
+
+Validation : `fe_within` contre `plm::plm(model="within")` et contre l'OLS LSDV
+(`lm(y ~ x + factor(id))`) — coefficients exacts ; SE groupées contre
+`sandwich::vcovCL`. Monte Carlo : biais de l'OLS groupé sous $\alpha_i$ corrélé,
+corrigé par les effets fixes ; sous-couverture des SE classiques restaurée par le
+*clustering*.
+
+## Références {.unnumbered}
+
+- Wooldridge — *Econometric Analysis of CS & Panel Data*, ch. 10.
+- Cameron & Miller (2015), « A Practitioner's Guide to Cluster-Robust Inference ».
+- Baltagi — *Econometric Analysis of Panel Data*.

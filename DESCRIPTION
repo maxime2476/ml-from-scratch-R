@@ -40,6 +40,8 @@ Suggests:
     boot,
     gmm,
     quantreg,
-    plm
+    plm,
+    hdm,
+    sensemakr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0

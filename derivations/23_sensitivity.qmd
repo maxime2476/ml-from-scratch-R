@@ -1,0 +1,112 @@
+---
+title: "Module 23 — Analyse de sensibilité à la confusion inobservée"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Les Modules 15–16 et 22 estiment des effets de traitement **sous l'hypothèse
+d'absence de confusion inobservée** (*unconfoundedness*). Cette hypothèse est
+**invérifiable**. Plutôt que de la supposer vraie, ce module la **quantifie** :
+quelle force devrait avoir un confondeur caché pour renverser la conclusion ?
+On suit le cadre du **biais de variable omise (OVB)** de Cinelli & Hazlett
+(2020), qui n'exige **aucune** hypothèse sur la distribution du confondeur, mais
+seulement deux **R² partiels**.
+
+## Le biais de variable omise revisité {#sec-ovb}
+
+Soit la régression *courte* (celle qu'on peut estimer) et *longue* (avec le
+confondeur inobservé $Z$) :
+$$
+Y = \hat\tau\,D + X\beta + \hat\varepsilon, \qquad
+Y = \tau\,D + X\beta + \gamma Z + \varepsilon .
+$$
+Par Frisch-Waugh-Lovell (M1), le biais s'écrit
+$\hat\tau-\tau=\gamma\,\hat\delta$ où $\hat\delta$ est le coefficient de $Z$
+régressé sur $D$ (résidualisés de $X$). Cinelli-Hazlett **reparamètrent** ce biais
+non pas par $(\gamma,\hat\delta)$ — non identifiés — mais par deux **R² partiels**
+bornés dans $[0,1]$, donc **interprétables** :
+
+- $R^2_{D\sim Z\mid X}$ : part de la variance **résiduelle du traitement**
+  expliquée par $Z$ (force confondeur→traitement) ;
+- $R^2_{Y\sim Z\mid X,D}$ : part de la variance **résiduelle du résultat**
+  expliquée par $Z$ (force confondeur→résultat).
+
+> **Proposition 23.1 (borne du biais).** Le biais absolu maximal induit par un
+> confondeur de forces $(R^2_{D\sim Z\mid X},R^2_{Y\sim Z\mid X,D})$ est
+> $$
+> |\widehat{\mathrm{biais}}| = \operatorname{se}(\hat\tau)\sqrt{\mathrm{df}}\;
+> \underbrace{\sqrt{\frac{R^2_{Y\sim Z\mid X,D}\,R^2_{D\sim Z\mid X}}{1-R^2_{D\sim Z\mid X}}}}_{\text{facteur de biais } BF}.
+> \tag{23.1}
+> $$
+
+**Idée.** Le biais $\gamma\hat\delta$ se réécrit via les corrélations partielles
+$f_{Y\sim Z}=\sqrt{R^2_{Y\sim Z}/(1-R^2_{Y\sim Z})}$ et
+$f_{D\sim Z}=\sqrt{R^2_{D\sim Z}/(1-R^2_{D\sim Z})}$ ; en passant à l'échelle de
+l'erreur standard $\operatorname{se}(\hat\tau)=\hat\sigma/(\|\tilde D\|)$ on
+obtient (23.1). *(Détails : Cinelli-Hazlett 2020, §3–4.)* $\blacksquare$
+
+L'estimation et l'erreur standard **ajustées** sont alors
+$$
+\hat\tau^{\mathrm{adj}} = \operatorname{sign}(\hat\tau)\bigl(|\hat\tau|-|\widehat{\mathrm{biais}}|\bigr),\quad
+\operatorname{se}^{\mathrm{adj}} = \operatorname{se}(\hat\tau)\sqrt{\frac{1-R^2_{Y\sim Z\mid X,D}}{1-R^2_{D\sim Z\mid X}}}\sqrt{\tfrac{\mathrm{df}}{\mathrm{df}-1}}.
+\tag{23.2}
+$$
+
+## Deux résumés sans hypothèse {#sec-summaries}
+
+**R² partiel de l'effet** — la « force propre » du traitement :
+$$
+R^2_{Y\sim D\mid X} = \frac{t_{\hat\tau}^2}{t_{\hat\tau}^2+\mathrm{df}} .
+\tag{23.3}
+$$
+
+**Robustness value** $RV_q$ — la force **minimale commune**
+($R^2_{D\sim Z}=R^2_{Y\sim Z}=RV_q$) qu'un confondeur devrait atteindre pour
+réduire l'effet de $q\times100\%$. En résolvant (23.1) avec biais
+$=q|\hat\tau|$ :
+
+> **Proposition 23.2 (robustness value).** Avec $f_q = q\,|t_{\hat\tau}|/\sqrt{\mathrm{df}}$,
+> $$
+> RV_q = \tfrac12\Bigl(\sqrt{f_q^4+4f_q^2}-f_q^2\Bigr)\in[0,1].
+> \tag{23.4}
+> $$
+> Interprétation : **tout** confondeur plus faible que $RV_q$ sur **les deux**
+> dimensions ne peut pas réduire l'effet de plus de $q\times100\%$. La version
+> **significative** $RV_{q,\alpha}$ remplace $f_q$ par $f_q-f_{\alpha,\mathrm{df}-1}$
+> (seuil du $t$), et vaut $0$ si l'effet est déjà non significatif.
+
+$RV_q$ proche de 1 = conclusion **robuste** (il faudrait un confondeur expliquant
+presque toute la variance résiduelle) ; proche de 0 = **fragile**.
+
+## Étalonnage (*benchmarking*) {#sec-bench}
+
+On ne connaît pas la force de $Z$, mais on peut la **borner par comparaison** aux
+covariables **observées** : « un confondeur aussi fort que $X_1$ » fixe
+$(R^2_{D\sim Z},R^2_{Y\sim Z})$ aux R² partiels observés de $X_1$, éventuellement
+multipliés par $k_D,k_Y$. On reporte alors $\hat\tau^{\mathrm{adj}}$ (23.2) :
+l'effet survit-il à un confondeur « $k$ fois $X_1$ » ?
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/23_sensitivity.R`) |
+|---|---|
+| (23.3) R² partiel | `partial_r2(t, df)` |
+| (23.4) robustness value | `robustness_value(t, df, q, alpha)` |
+| (23.1)-(23.2) estimation ajustée | `adjusted_estimate(estimate, se, df, r2dz, r2yz)` |
+| résumé d'un effet OLS | `sensitivity_ols(fit, treatment)` |
+
+Validation : R² partiel, $RV_q$, $RV_{q,\alpha}$, estimation et erreur standard
+ajustées **identiques** à `sensemakr` (Cinelli-Hazlett) à $10^{-6}$. Monte Carlo :
+sous confusion **connue**, l'estimation ajustée récupère le vrai effet et $RV_q$
+décroît quand le confondeur se renforce.
+
+## Références {.unnumbered}
+
+- Cinelli & Hazlett (2020), « Making sense of sensitivity: extending omitted
+  variable bias », *JRSS-B* 82(1), 39–67.
+- Frisch & Waugh (1933) ; Lovell (1963) — FWL (Module 1).
+- Package `sensemakr` (référence de validation).

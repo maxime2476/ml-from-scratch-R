@@ -1,0 +1,96 @@
+---
+title: "Module 22 — Lasso débiaisé et inférence en haute dimension"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le Module 14 a montré que le t-test **post-lasso naïf** est **invalide** (rejet à
+24 % sous $H_0$). Ce module en donne la **réparation** : le **lasso débiaisé**
+(désparsifié) produit des intervalles de confiance **valides**, coordonnée par
+coordonnée, **même quand $p>n$**. C'est le pendant « inférence » du Module 4, et
+la version « un pas » de l'orthogonalisation de Neyman (Module 16) pour le modèle
+linéaire creux.
+
+## Le biais du lasso {#sec-biais}
+
+Le lasso $\hat\beta$ (Module 4) rétrécit les coefficients : il est **biaisé** et
+sa loi n'est pas gaussienne (mode d'un prior de Laplace, M14). Réutiliser
+$\hat\beta$ pour tester est invalide. L'idée du **débiaisage** : ajouter une
+**correction d'un pas** qui annule le biais de rétrécissement au premier ordre.
+
+## Estimateur débiaisé (projection de faible dimension) {#sec-debias}
+
+Pour la coordonnée $j$, on **partiale les autres covariables hors de $x_j$** par
+un lasso *nodewise* : $\hat\gamma_j=\arg\min\frac1{2n}\|x_j-X_{-j}\gamma\|^2+
+\lambda_j\|\gamma\|_1$, de résidu $\hat\tau_j = x_j - X_{-j}\hat\gamma_j$. Le
+**score** $\hat\tau_j$ est (approximativement) orthogonal aux autres covariables.
+L'estimateur débiaisé (Zhang-Zhang 2014) est
+$$
+\hat\beta^{d}_j = \hat\beta_j + \frac{\hat\tau_j^\top(y - X\hat\beta)}{\hat\tau_j^\top x_j}.
+\tag{22.1}
+$$
+C'est **exactement** une régression résidu-sur-résidu (FWL, M1 ; Neyman, M16) : on
+régresse le résidu $y-X\hat\beta$ sur le résidu $\hat\tau_j$. Le lasso principal
+sert à contrôler les nuisances $\beta_{-j}$, le lasso nodewise à construire le
+score orthogonal.
+
+### Normalité asymptotique {#sec-asy}
+
+> **Théorème 22.1 (esquisse).** Sous parcimonie $s\log p/\sqrt n\to 0$ et
+> conditions de valeur propre restreinte,
+> $$
+> \sqrt n\,(\hat\beta^d_j - \beta_j) = \underbrace{W_j}_{\to\mathcal N(0,\sigma^2\Omega_{jj})} + \underbrace{\Delta_j}_{o_p(1)},
+> $$
+> d'où des IC asymptotiquement valides pour **chaque** coordonnée, même si $p>n$.
+
+**Idée.** En injectant $y=X\beta+\varepsilon$ dans (22.1) :
+$$
+\hat\beta^d_j - \beta_j = \frac{\hat\tau_j^\top\varepsilon}{\hat\tau_j^\top x_j}
++ \sum_{k\neq j}\frac{\hat\tau_j^\top x_k}{\hat\tau_j^\top x_j}(\beta_k-\hat\beta_k).
+$$
+Le premier terme, une fois normalisé, est **asymptotiquement gaussien** (TCL sur
+$\hat\tau_j^\top\varepsilon$). Le second (le **biais**) est majoré par
+$\max_k|\hat\tau_j^\top x_k|/|\hat\tau_j^\top x_j|\cdot\|\beta-\hat\beta\|_1$ ; le
+lasso nodewise rend le numérateur $O(\lambda_j)$ et la parcimonie borne
+$\|\beta-\hat\beta\|_1=O(s\sqrt{\log p/n})$, d'où un biais $o_p(n^{-1/2})$ —
+**négligeable**. *(Détails : van de Geer et al. 2014.)* $\blacksquare$
+
+### Variance et estimation de $\sigma$ {#sec-var}
+
+$$
+\widehat{\operatorname{se}}(\hat\beta^d_j) = \hat\sigma\,\frac{\|\hat\tau_j\|}{|\hat\tau_j^\top x_j|},
+\qquad \hat\beta^d_j \pm z_{1-\alpha/2}\,\widehat{\operatorname{se}}(\hat\beta^d_j).
+\tag{22.2}
+$$
+$\hat\sigma$ (bruit) est estimé par le **scaled lasso** (Sun-Zhang 2012) : on
+itère $\lambda\propto\hat\sigma\sqrt{2n\log p}$ et $\hat\sigma=\|y-X\hat\beta\|/
+\sqrt{n-\hat s}$ jusqu'à stabilisation — ainsi $\lambda$ se cale sur le **bruit**
+et non sur $\operatorname{sd}(y)$.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/22_debiased_lasso.R`) |
+|---|---|
+| (22.1) estimateur débiaisé | `debiased_lasso(X, y, targets)` |
+| lasso nodewise (score) | interne (réutilise `lasso_fit`, M4) |
+| (22.2) se, IC | sorties `se`, `lower`, `upper` |
+| scaled lasso ($\hat\sigma$) | interne |
+
+Validation : **couverture Monte Carlo** $\approx 0.95$ pour les coefficients
+actifs ET nuls, même en $p>n$ — là où le t-test post-lasso naïf échoue (M14) ;
+estimations ponctuelles comparées à `hdm::rlassoEffects` (méthode de
+double-sélection, valide elle aussi ; nos IC sont un peu plus **conservateurs**,
+projection Zhang-Zhang vs double-sélection). Monte Carlo : couverture débiaisée
+vs naïve.
+
+## Références {.unnumbered}
+
+- Zhang & Zhang (2014), « Confidence intervals for low dimensional parameters in
+  high dimensional linear models », *JRSS-B*.
+- van de Geer, Bühlmann, Ritov & Dezeure (2014), *Annals of Statistics*.
+- Sun & Zhang (2012), « Scaled sparse linear regression », *Biometrika*.
+- Chernozhukov, Hansen & Spindler (2015) (`hdm`, double-sélection).

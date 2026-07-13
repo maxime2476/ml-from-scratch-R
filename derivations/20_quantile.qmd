@@ -1,0 +1,86 @@
+---
+title: "Module 20 — Régression quantile"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+La **régression quantile** (Koenker & Bassett 1978) modélise les **quantiles
+conditionnels** $Q_\tau(y\mid x)=x^\top\beta(\tau)$, et non la seule moyenne
+(OLS, M1). Elle révèle l'effet des régresseurs **le long de la distribution** (pas
+seulement en son centre), est **robuste aux valeurs aberrantes** (cas médian), et
+se prête à la **prédiction conforme adaptative** (Module 19).
+
+## La fonction de perte « check » {#sec-check}
+
+Le $\tau$-quantile s'obtient en minimisant la **perte pinball** (asymétrique) :
+$$
+\rho_\tau(u) = u\big(\tau - \mathbf 1\{u<0\}\big) =
+\begin{cases}\tau\,u & u\ge 0\\ (\tau-1)\,u & u<0,\end{cases}
+\qquad
+\hat\beta(\tau)=\arg\min_\beta \sum_{i=1}^n \rho_\tau\big(y_i-x_i^\top\beta\big).
+\tag{20.1}
+$$
+Pour $\tau=\tfrac12$, $\rho_{1/2}(u)=\tfrac12|u|$ : la régression médiane = **LAD**
+(moindres écarts absolus), robuste.
+
+### Le quantile minimise la perte pinball {#sec-pop}
+
+> **Proposition 20.1.** Pour une v.a. $Y$, $\theta^\star=\arg\min_\theta
+> \mathbb E[\rho_\tau(Y-\theta)]$ est le **$\tau$-quantile** de $Y$.
+
+**Preuve.** $\mathbb E[\rho_\tau(Y-\theta)] = \tau\int_\theta^\infty (y-\theta)dF(y)
++ (\tau-1)\int_{-\infty}^\theta (y-\theta)dF(y)$. En dérivant sous l'intégrale
+(règle de Leibniz, les termes de bord s'annulent car l'intégrande y est nul) :
+$$
+\frac{d}{d\theta}\mathbb E[\rho_\tau(Y-\theta)] = -\tau\big(1-F(\theta)\big) + (1-\tau)F(\theta)
+= F(\theta) - \tau .
+$$
+La CPO $F(\theta^\star)=\tau$ caractérise le $\tau$-quantile. La fonction est
+convexe (somme de convexes), donc c'est bien le minimum. $\blacksquare$
+
+## Optimisation par IRLS {#sec-irls}
+
+La perte (20.1) est **convexe, non lisse** : sa minimisation est un **programme
+linéaire** (Koenker-Bassett), résolu exactement par le simplexe (`quantreg`).
+*From scratch*, on utilise un **IRLS par majoration** (Hunter & Lange 2000) :
+puisque $\rho_\tau(u)=a(u)\,|u|$ avec $a(u)=\tau$ si $u\ge 0$, $1-\tau$ sinon, et
+$|u|\approx u^2/\max(|u|,\epsilon)$, on itère des **moindres carrés pondérés** :
+$$
+w_i^{(t)} = \frac{a\big(r_i^{(t)}\big)}{\max\big(|r_i^{(t)}|,\ \epsilon\big)},\qquad
+\beta^{(t+1)} = \big(X^\top W^{(t)} X\big)^{-1}X^\top W^{(t)} y,
+\tag{20.2}
+$$
+$r_i^{(t)}=y_i-x_i^\top\beta^{(t)}$. Chaque étape majore l'objectif (MM), donc le
+décroît ; l'algorithme converge vers le minimiseur (à $\epsilon$ près). On
+réutilise la QR pondérée du Module 0.
+
+## Inférence {#sec-inf}
+
+La loi asymptotique de $\hat\beta(\tau)$ est **sandwich** :
+$\sqrt n(\hat\beta(\tau)-\beta(\tau))\to\mathcal N(0, \tau(1-\tau)\,D_1^{-1}D_0 D_1^{-1})$
+avec $D_0=\mathbb E[xx^\top]$ et $D_1=\mathbb E[f_{Y\mid X}(Q_\tau)\,xx^\top]$
+(densité conditionnelle au quantile). On peut aussi l'obtenir par **bootstrap
+pairs** (Module 17) — plus robuste et plus simple.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/20_quantile.R`) |
+|---|---|
+| (20.1) perte pinball | `pinball_loss(u, tau)` |
+| (20.2) estimateur IRLS | `qreg_fit(formula, data, tau)` |
+| inférence bootstrap | via `boot_lm` (M17) |
+
+Validation : `qreg_fit` contre `quantreg::rq` (coefficients à ~$10^{-4}$, l'IRLS
+approchant la solution LP). Monte Carlo : sous hétéroscédasticité, les pentes des
+quantiles $\tau=0.1,0.5,0.9$ **diffèrent** (éventail que l'OLS manque) ; robustesse
+de la régression médiane aux valeurs aberrantes.
+
+## Références {.unnumbered}
+
+- Koenker & Bassett (1978), « Regression Quantiles », *Econometrica*.
+- Koenker — *Quantile Regression* (2005).
+- Hunter & Lange (2000), « Quantile Regression via an MM Algorithm », *JCGS*.

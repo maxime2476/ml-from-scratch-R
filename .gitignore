@@ -21,3 +21,8 @@ Thumbs.db
 # Sorties de simulation
 /simulations/output/
 *.rds
+
+# Artefacts de build package
+*.Rcheck/
+*.tar.gz
+/_book/

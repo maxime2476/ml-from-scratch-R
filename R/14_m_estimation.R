@@ -13,6 +13,7 @@
 #' @param psi matrice n x p des valeurs de la fonction d'estimation \eqn{\psi_i}.
 #' @param A matrice p x p, \eqn{\hat A} (p.ex. \eqn{X^\top X/n} pour l'OLS).
 #' @return la matrice de variance sandwich p x p de \eqn{\hat\theta}.
+#' @export
 m_estimation_vcov <- function(psi, A) {
   psi <- as.matrix(psi); n <- nrow(psi)
   B <- crossprod(psi) / n                 # (1/n) sum psi psi'
@@ -25,6 +26,7 @@ m_estimation_vcov <- function(psi, A) {
 #' @param X matrice de design n x p (constante incluse).
 #' @param resid résidus \eqn{\hat\varepsilon_i}.
 #' @return matrice n x p des \eqn{\psi_i = x_i \hat\varepsilon_i}.
+#' @export
 ols_psi <- function(X, resid) as.matrix(X) * resid
 
 #' Postérieure conjuguée du ridge (Prop. 14.2)
@@ -38,6 +40,7 @@ ols_psi <- function(X, resid) as.matrix(X) * resid
 #' @param lambda pénalité ridge \eqn{\lambda=\sigma^2/\tau^2}.
 #' @param sigma2 variance du bruit (connue).
 #' @return liste : `mean` (= estimateur ridge), `cov` (\eqn{\Sigma_{\text{post}}}).
+#' @export
 ridge_posterior <- function(X, y, lambda, sigma2) {
   X <- as.matrix(X); y <- as.numeric(y); p <- ncol(X)
   Sigma_post <- sigma2 * solve(crossprod(X) + lambda * diag(p))

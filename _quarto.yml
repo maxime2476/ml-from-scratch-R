@@ -1,0 +1,59 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "ML from Scratch in R"
+  subtitle: "Déconstruction mathématique et statistique des modèles d'apprentissage automatique"
+  author: "Maxime Gourguechon"
+  date: today
+  chapters:
+    - index.qmd
+    - part: "Fondations : moindres carrés et inférence"
+      chapters:
+        - derivations/00_linalg.qmd
+        - derivations/01_ols.qmd
+        - derivations/02_gls_robust.qmd
+        - derivations/03_glm_irls.qmd
+        - derivations/04_regularisation.qmd
+        - derivations/05_iv_2sls.qmd
+        - derivations/06_validation.qmd
+    - part: "Théorie de l'apprentissage"
+      chapters:
+        - derivations/13_slt.qmd
+    - part: "Modèles non linéaires"
+      chapters:
+        - derivations/07_knn.qmd
+        - derivations/08_cart.qmd
+        - derivations/09_bagging_rf.qmd
+        - derivations/10_boosting.qmd
+    - part: "Le regard économétrique"
+      chapters:
+        - derivations/14_m_estimation.qmd
+    - part: "Non supervisé et réseaux"
+      chapters:
+        - derivations/11_pca_kmeans_em.qmd
+        - derivations/12_mlp.qmd
+    - part: "Post-hoc et causalité"
+      chapters:
+        - derivations/15_interpretabilite.qmd
+        - derivations/16_causal_ml.qmd
+    - part: "Synthèse"
+      chapters:
+        - rapport/rapport.qmd
+        - rapport/appendix_synthese.qmd
+  reader-mode: true
+  repo-url: https://github.com/mgourguechon/ml-from-scratch-R
+  search: true
+
+lang: fr
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    documentclass: scrbook
+    number-sections: true

@@ -34,6 +34,7 @@
 #' @param seed graine.
 #' @param ... passé aux modèles de nuisance (p.ex. B pour la forêt).
 #' @return liste : `theta`, `se`, `ci`, `Ytil`, `Dtil`.
+#' @export
 dml_plr <- function(y, d, X, K = 5L, nuisance = "forest", crossfit = TRUE,
                     seed = NULL, ...) {
   y <- as.numeric(y); d <- as.numeric(d); X <- as.data.frame(X); n <- length(y)
@@ -69,6 +70,7 @@ dml_plr <- function(y, d, X, K = 5L, nuisance = "forest", crossfit = TRUE,
 #' @param newX covariables où prédire le CATE (défaut : X).
 #' @param B nombre d'arbres.
 #' @return vecteur des CATE estimés en newX.
+#' @export
 t_learner <- function(X, y, d, newX = X, B = 200L) {
   X <- as.data.frame(X); newX <- as.data.frame(newX)
   mu1 <- .fit_predict("forest", X[d == 1, , drop = FALSE], y[d == 1], newX, B = B)
@@ -89,6 +91,7 @@ t_learner <- function(X, y, d, newX = X, B = 200L) {
 #' @param min_leaf effectif minimal (par groupe de traitement) par feuille.
 #' @param seed graine (partage honnête).
 #' @return objet `causal_tree`.
+#' @export
 causal_tree <- function(X, y, d, max_depth = 3L, min_leaf = 10L, seed = NULL) {
   X <- as.matrix(X); y <- as.numeric(y); d <- as.numeric(d); n <- nrow(X)
   if (!is.null(seed)) set.seed(seed)
@@ -137,8 +140,10 @@ causal_tree <- function(X, y, d, max_depth = 3L, min_leaf = 10L, seed = NULL) {
 }
 
 #' Prédiction du CATE par un arbre causal
-#' @param object objet `causal_tree`. @param newdata covariables.
+#' @param object objet `causal_tree`.
+#' @param newdata covariables où prédire le CATE.
 #' @return vecteur des CATE prédits.
+#' @export
 predict_causal_tree <- function(object, newdata) {
   X <- as.matrix(newdata)
   descend <- function(node, xrow) {

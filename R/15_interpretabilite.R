@@ -12,6 +12,7 @@
 #' @param grid grille de valeurs (sinon régulière sur l'étendue observée).
 #' @param grid_size taille de grille par défaut.
 #' @return data.frame `grid`, `pdp`.
+#' @export
 pdp <- function(predict_fn, X, feature, grid = NULL, grid_size = 25L) {
   vals <- X[[feature]]
   if (is.null(grid)) grid <- seq(min(vals), max(vals), length.out = grid_size)
@@ -29,6 +30,7 @@ pdp <- function(predict_fn, X, feature, grid = NULL, grid_size = 25L) {
 #' @param grid grille (sinon régulière).
 #' @param grid_size taille par défaut.
 #' @return liste : `grid`, `ice` (n x |grid|), `pdp` (moyenne des courbes).
+#' @export
 ice <- function(predict_fn, X, feature, grid = NULL, grid_size = 25L) {
   vals <- X[[feature]]
   if (is.null(grid)) grid <- seq(min(vals), max(vals), length.out = grid_size)
@@ -45,7 +47,8 @@ ice <- function(predict_fn, X, feature, grid = NULL, grid_size = 25L) {
 #' @param predict_fn fonction `data.frame -> numeric`.
 #' @param x data.frame d'une ligne (le point à expliquer).
 #' @param X_ref data.frame de référence (distribution des variables absentes).
-#' @return vecteur nommé des valeurs SHAP (somme = f(x) - E[f(X_ref)]).
+#' @return vecteur nommé des valeurs SHAP (somme `= f(x) - E[f(X_ref)]`).
+#' @export
 shapley_exact <- function(predict_fn, x, X_ref) {
   features <- colnames(X_ref); p <- length(features)
   if (p > 12) stop("shapley_exact : p trop grand (utiliser shapley_permutation).")
@@ -83,6 +86,7 @@ shapley_exact <- function(predict_fn, x, X_ref) {
 #' @param n_samples nombre de tirages.
 #' @param seed graine.
 #' @return vecteur nommé des valeurs SHAP estimées.
+#' @export
 shapley_permutation <- function(predict_fn, x, X_ref, n_samples = 2000L, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
   features <- colnames(X_ref); p <- length(features); m <- nrow(X_ref)
@@ -113,6 +117,7 @@ shapley_permutation <- function(predict_fn, x, X_ref, n_samples = 2000L, seed = 
 #' @param n_repeat répétitions de la permutation (moyennées).
 #' @param seed graine.
 #' @return vecteur nommé des importances.
+#' @export
 permutation_importance <- function(predict_fn, X, y,
                                    loss = function(yh, y) mean((yh - y)^2),
                                    n_repeat = 10L, seed = NULL) {

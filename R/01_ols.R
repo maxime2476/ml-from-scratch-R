@@ -20,6 +20,7 @@
 #' @return objet de classe `ols` : `coefficients`, `vcov`, `sigma2`,
 #'   `df.residual`, `fitted`, `residuals`, `hat`, `rss`, `tss`, `rank`, `n`,
 #'   `p`, `has_intercept`, `terms`, `xlevels`.
+#' @export
 ols_fit <- function(formula, data) {
   mf <- model.frame(formula, data)
   tt <- attr(mf, "terms")
@@ -68,6 +69,7 @@ ols_fit <- function(formula, data) {
 #' @param object objet `ols`.
 #' @return liste : `coefficients` (data.frame estimate/se/t/p_value), `r2`,
 #'   `adj_r2`, `sigma`, `fstatistic` (value, numdf, dendf, p_value).
+#' @export
 ols_summary <- function(object) {
   b  <- object$coefficients
   se <- sqrt(diag(object$vcov))
@@ -97,6 +99,7 @@ ols_summary <- function(object) {
 #' @param object objet `ols`.
 #' @param level niveau de confiance (défaut 0.95).
 #' @return matrice à deux colonnes (bornes inf/sup).
+#' @export
 ols_confint <- function(object, level = 0.95) {
   b  <- object$coefficients
   se <- sqrt(diag(object$vcov))
@@ -113,6 +116,7 @@ ols_confint <- function(object, level = 0.95) {
 #' @param R matrice q x p des restrictions (rang q).
 #' @param r vecteur cible (longueur q ; défaut zéro).
 #' @return liste : `F`, `q`, `df.residual`, `p_value`.
+#' @export
 ols_ftest <- function(object, R, r = rep(0, nrow(R))) {
   R <- as.matrix(R)
   if (ncol(R) != object$p) stop("R doit avoir p colonnes.")
@@ -134,6 +138,7 @@ ols_ftest <- function(object, R, r = rep(0, nrow(R))) {
 #' @param X1 bloc à partialiser (matrice n x p1).
 #' @param X2 bloc d'intérêt (matrice n x p2).
 #' @return le vecteur \eqn{\hat\beta_2}.
+#' @export
 fwl_beta2 <- function(y, X1, X2) {
   X1 <- as.matrix(X1); X2 <- as.matrix(X2); y <- as.numeric(y)
   # Résidualisation par MCO sur X1 (via QR du Module 0)

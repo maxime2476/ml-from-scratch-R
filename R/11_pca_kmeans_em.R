@@ -14,6 +14,7 @@
 #' @param scale réduire les colonnes (défaut FALSE).
 #' @return liste : `sdev`, `rotation` (p x p), `scores` (n x p), `var_explained`,
 #'   `center`, `scale`.
+#' @export
 pca_fit <- function(X, center = TRUE, scale = FALSE) {
   X <- as.matrix(X); n <- nrow(X)
   ctr <- if (center) colMeans(X) else rep(0, ncol(X))
@@ -40,6 +41,7 @@ pca_fit <- function(X, center = TRUE, scale = FALSE) {
 #' @param nstart nombre de redémarrages aléatoires (si centers non fourni).
 #' @param seed graine.
 #' @return liste : `cluster`, `centers`, `withinss`, `tot_withinss`, `iter`.
+#' @export
 kmeans_fit <- function(X, K, centers = NULL, max_iter = 100L, nstart = 1L, seed = NULL) {
   X <- as.matrix(X); n <- nrow(X)
   if (!is.null(seed)) set.seed(seed)
@@ -90,6 +92,7 @@ kmeans_fit <- function(X, K, centers = NULL, max_iter = 100L, nstart = 1L, seed 
 #' @param mu liste (ou matrice K x p) des moyennes.
 #' @param Sigma liste des K covariances.
 #' @return la log-vraisemblance observée.
+#' @export
 gmm_loglik <- function(X, pi, mu, Sigma) {
   X <- as.matrix(X); K <- length(pi)
   if (is.matrix(mu)) mu <- lapply(seq_len(K), function(k) mu[k, ])
@@ -110,6 +113,7 @@ gmm_loglik <- function(X, pi, mu, Sigma) {
 #' @param seed graine (initialisation k-means).
 #' @return liste : `pi`, `mu` (K x p), `Sigma` (liste), `gamma` (responsabilités),
 #'   `loglik`, `iter`, `cluster`.
+#' @export
 em_gmm <- function(X, K, max_iter = 200L, tol = 1e-8, reg = 1e-6, seed = NULL) {
   X <- as.matrix(X); n <- nrow(X); p <- ncol(X)
   km <- kmeans_fit(X, K, seed = seed, nstart = 5L)

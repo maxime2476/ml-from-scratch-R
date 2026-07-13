@@ -18,6 +18,7 @@
 #' @param X matrice n x d0.
 #' @param activation activation de la couche cachée ("tanh", "relu", "sigmoid").
 #' @return liste `Z1, A1, Z2`.
+#' @export
 mlp_forward <- function(params, X, activation) {
   Z1 <- sweep(X %*% params$W1, 2, params$b1, "+")
   A1 <- .act(Z1, activation)
@@ -31,6 +32,7 @@ mlp_forward <- function(params, X, activation) {
 #' @param Y cible.
 #' @param loss "mse" (régression) ou "logloss" (classification binaire).
 #' @return la perte moyenne.
+#' @export
 mlp_loss <- function(Yhat, Y, loss) {
   n <- nrow(Y)
   if (loss == "mse") sum((Yhat - Y)^2) / (2 * n)
@@ -45,6 +47,7 @@ mlp_loss <- function(Yhat, Y, loss) {
 #' @param activation activation cachée.
 #' @param loss "mse" ou "logloss".
 #' @return liste des gradients `W1, b1, W2, b2`.
+#' @export
 mlp_backward <- function(params, X, Y, activation, loss) {
   n <- nrow(X)
   cache <- mlp_forward(params, X, activation)
@@ -70,6 +73,7 @@ mlp_backward <- function(params, X, Y, activation, loss) {
 #' @param batch taille de mini-lot.
 #' @param seed graine (initialisation + mélange).
 #' @return objet `mlp` : `params`, `activation`, `loss`, `loss_hist`, `d`.
+#' @export
 mlp_fit <- function(X, y, hidden = 8L, activation = "tanh",
                     loss = c("mse", "logloss"), epochs = 200L, lr = 0.05,
                     batch = 32L, seed = NULL) {
@@ -102,6 +106,7 @@ mlp_fit <- function(X, y, hidden = 8L, activation = "tanh",
 #' @param newdata matrice des prédicteurs.
 #' @param type "response" (valeur/probabilité) ou "class" (0/1, log-loss).
 #' @return vecteur/matrice de prédictions.
+#' @export
 predict_mlp <- function(model, newdata, type = c("response", "class")) {
   type <- match.arg(type)
   Z2 <- mlp_forward(model$params, as.matrix(newdata), model$activation)$Z2
@@ -120,6 +125,7 @@ predict_mlp <- function(model, newdata, type = c("response", "class")) {
 #' @param loss "mse" ou "logloss".
 #' @param eps pas de différence finie.
 #' @return liste des gradients numériques (même structure que `params`).
+#' @export
 mlp_numgrad <- function(params, X, Y, activation, loss, eps = 1e-6) {
   Lf <- function(p) mlp_loss(.output(mlp_forward(p, X, activation)$Z2, loss), Y, loss)
   out <- params

@@ -27,13 +27,14 @@
 #'
 #' @param formula formule (prédicteurs numériques).
 #' @param data data.frame.
-#' @param loss "l2" (régression) ou "logloss" (classification binaire y in {0,1}).
+#' @param loss "l2" (régression) ou "logloss" (classification binaire `y in {0,1}`).
 #' @param M nombre d'arbres.
 #' @param nu taux d'apprentissage (shrinkage) dans (0,1].
 #' @param max_depth,min_split,min_leaf hyperparamètres des arbres de base.
 #' @param lambda régularisation L2 des poids de feuille (éq. 10.7).
 #' @param newton raffiner les feuilles par le pas de Newton (défaut TRUE).
 #' @return objet `boost`.
+#' @export
 gradient_boost <- function(formula, data, loss = c("l2", "logloss"), M = 100L,
                            nu = 0.1, max_depth = 3L, min_split = 10L, min_leaf = 5L,
                            lambda = 0, newton = TRUE) {
@@ -72,6 +73,7 @@ gradient_boost <- function(formula, data, loss = c("l2", "logloss"), M = 100L,
 #'   (0/1, log-loss uniquement).
 #' @param n_trees nombre d'arbres à utiliser (défaut : tous).
 #' @return vecteur de prédictions.
+#' @export
 predict_boost <- function(object, newdata, type = c("response", "link", "class"),
                           n_trees = object$M) {
   type <- match.arg(type)
@@ -89,6 +91,7 @@ predict_boost <- function(object, newdata, type = c("response", "link", "class")
 #' @param data data.frame des prédicteurs.
 #' @param y réponse correspondante.
 #' @return vecteur de perte (moyenne de \eqn{\ell}) après m arbres, m = 1..M.
+#' @export
 boost_loss_path <- function(object, data, y) {
   y <- as.numeric(y); n <- nrow(data)
   F <- rep(object$F0, n); losses <- numeric(object$M)

@@ -8,11 +8,12 @@
 #' Borne de Hoeffding bilatérale (éq. 13.2)
 #'
 #' \eqn{\mathbb P(|\hat R_n - R|\ge \varepsilon)\le 2e^{-2n\varepsilon^2}} pour une
-#' perte dans [0,1].
+#' perte dans `[0,1]`.
 #'
 #' @param n taille d'échantillon.
 #' @param eps écart \eqn{\varepsilon}.
 #' @return la borne supérieure de probabilité.
+#' @export
 hoeffding_bound <- function(n, eps) pmin(1, 2 * exp(-2 * n * eps^2))
 
 #' Complexité de Rademacher empirique d'une classe linéaire à norme bornée
@@ -25,6 +26,7 @@ hoeffding_bound <- function(n, eps) pmin(1, 2 * exp(-2 * n * eps^2))
 #' @param n_draws nombre de tirages de sigma.
 #' @param seed graine.
 #' @return l'estimation de la complexité de Rademacher empirique.
+#' @export
 empirical_rademacher_linear <- function(X, B = 1, n_draws = 2000L, seed = NULL) {
   X <- as.matrix(X); n <- nrow(X)
   if (!is.null(seed)) set.seed(seed)
@@ -43,6 +45,7 @@ empirical_rademacher_linear <- function(X, B = 1, n_draws = 2000L, seed = NULL) 
 #' @param X matrice n x d des points.
 #' @param B rayon de la boule (défaut 1).
 #' @return la borne \eqn{B\rho/\sqrt n}.
+#' @export
 rademacher_linear_bound <- function(X, B = 1) {
   X <- as.matrix(X)
   rho <- max(sqrt(rowSums(X^2)))
@@ -75,6 +78,7 @@ rademacher_linear_bound <- function(X, B = 1) {
 #' @param y étiquettes dans \{-1, +1\} (longueur n).
 #' @param tol seuil de distance pour déclarer 0 hors de l'enveloppe.
 #' @return TRUE si \{(x_i, y_i)\} est linéairement séparable (avec biais).
+#' @export
 is_separable <- function(X, y, tol = 1e-6) {
   Xa <- cbind(as.matrix(X), 1)                    # augmentation (biais)
   V <- t(Xa * y)                                   # colonnes : y_i * aug(x_i)
@@ -88,6 +92,7 @@ is_separable <- function(X, y, tol = 1e-6) {
 #'
 #' @param X matrice m x d des points.
 #' @return TRUE si l'ensemble est pulvérisé par les hyperplans de R^d.
+#' @export
 shatters_hyperplane <- function(X) {
   X <- as.matrix(X); m <- nrow(X)
   labelings <- expand.grid(rep(list(c(-1, 1)), m))

@@ -12,6 +12,7 @@
 #' @param X matrice de design (constante incluse).
 #' @param y réponse.
 #' @return liste : `cv` (erreur LOOCV moyenne), `loo_resid`, `h` (leviers).
+#' @export
 loocv_linear <- function(X, y) {
   X <- as.matrix(X); y <- as.numeric(y); p <- ncol(X)
   fit <- solve_ls_qr(X, y)
@@ -28,6 +29,7 @@ loocv_linear <- function(X, y) {
 #' @param X matrice de design (constante incluse).
 #' @param y réponse.
 #' @return liste : `gcv`.
+#' @export
 gcv_linear <- function(X, y) {
   X <- as.matrix(X); y <- as.numeric(y); n <- nrow(X); p <- ncol(X)
   fit <- solve_ls_qr(X, y)
@@ -43,6 +45,7 @@ gcv_linear <- function(X, y) {
 #' @param pred_fun fonction `(modèle, Xte) -> prédictions` (défaut : OLS).
 #' @param seed graine pour le tirage des blocs.
 #' @return liste : `cv`, `se`, `fold_errors`, `folds`.
+#' @export
 kfold_cv <- function(X, y, K = 10L,
                      fit_fun = function(Xtr, ytr) solve_ls_qr(Xtr, ytr)$coefficients,
                      pred_fun = function(beta, Xte) as.numeric(Xte %*% beta),
@@ -66,6 +69,7 @@ kfold_cv <- function(X, y, K = 10L,
 #' @param fit objet `ols` (Module 1).
 #' @param sigma2 estimation de la variance du bruit (p.ex. d'un modèle riche).
 #' @return la valeur du Cp (échelle erreur quadratique moyenne).
+#' @export
 mallows_cp <- function(fit, sigma2) {
   mean(fit$residuals^2) + 2 * sigma2 * fit$p / fit$n
 }
@@ -76,6 +80,7 @@ mallows_cp <- function(fit, sigma2) {
 #' @param rss somme des carrés des résidus.
 #' @param n taille d'échantillon.
 #' @return la log-vraisemblance maximisée.
+#' @export
 gaussian_loglik <- function(rss, n) -0.5 * n * (log(2 * pi) + log(rss / n) + 1)
 
 #' AIC et BIC d'un modèle ajusté (éq. 6.5, 6.7)
@@ -85,6 +90,7 @@ gaussian_loglik <- function(rss, n) -0.5 * n * (log(2 * pi) + log(rss / n) + 1)
 #'
 #' @param fit objet `ols` ou `glm_irls`.
 #' @return liste : `aic`, `bic`, `loglik`, `k`, `n`.
+#' @export
 info_criteria <- function(fit) {
   if (inherits(fit, "glm_irls")) {
     ll <- fit[["loglik"]]; k <- fit[["rank"]]; n <- fit[["n"]]
@@ -107,6 +113,7 @@ info_criteria <- function(fit) {
 #' @param sigma2 variance du bruit (partie irréductible).
 #' @param R nombre de réplications.
 #' @return liste : `irreducible`, `bias2`, `variance`, `mse_pred`, `total`.
+#' @export
 bias_variance_mc <- function(gen_y, fit_pred, f0, sigma2, R = 5000L) {
   preds <- numeric(R)
   for (r in seq_len(R)) preds[r] <- fit_pred(gen_y())

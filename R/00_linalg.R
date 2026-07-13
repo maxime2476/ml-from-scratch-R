@@ -19,6 +19,7 @@
 #' @param L matrice triangulaire inférieure (n x n), diagonale non nulle.
 #' @param b vecteur second membre (longueur n).
 #' @return le vecteur solution x.
+#' @export
 forward_substitution <- function(L, b) {
   n <- length(b)
   if (nrow(L) != n || ncol(L) != n) stop("Dimensions L/b incompatibles.")
@@ -39,6 +40,7 @@ forward_substitution <- function(L, b) {
 #' @param U matrice triangulaire supérieure (n x n), diagonale non nulle.
 #' @param b vecteur second membre (longueur n).
 #' @return le vecteur solution x.
+#' @export
 back_substitution <- function(U, b) {
   n <- length(b)
   if (nrow(U) != n || ncol(U) != n) stop("Dimensions U/b incompatibles.")
@@ -60,6 +62,7 @@ back_substitution <- function(U, b) {
 #'
 #' @param x vecteur non nul.
 #' @return le vecteur v (même longueur que x) ; le vecteur nul si x est nul.
+#' @export
 householder_vector <- function(x) {
   nx <- sqrt(sum(x^2))
   if (nx == 0) return(rep(0, length(x)))
@@ -78,6 +81,7 @@ householder_vector <- function(x) {
 #'
 #' @param X matrice n x p, \eqn{n \ge p}.
 #' @return liste `Q` (n x n orthogonale), `R` (n x p triangulaire supérieure).
+#' @export
 qr_householder <- function(X) {
   X <- as.matrix(X)
   n <- nrow(X); p <- ncol(X)
@@ -110,6 +114,7 @@ qr_householder <- function(X) {
 #' @param y vecteur réponse (longueur n).
 #' @return liste : `coefficients`, `fitted`, `residuals`, `rss`, `R` (\eqn{R_1}),
 #'   `Qty` (\eqn{Q^T y}).
+#' @export
 solve_ls_qr <- function(X, y) {
   X <- as.matrix(X); y <- as.numeric(y)
   n <- nrow(X); p <- ncol(X)
@@ -137,6 +142,7 @@ solve_ls_qr <- function(X, y) {
 #'
 #' @param A matrice carrée symétrique définie positive.
 #' @return le facteur `L` (triangulaire inférieur).
+#' @export
 chol_crout <- function(A) {
   A <- as.matrix(A)
   p <- nrow(A)
@@ -163,6 +169,7 @@ chol_crout <- function(A) {
 #' @param X matrice de design n x p, de plein rang colonne.
 #' @param y vecteur réponse (longueur n).
 #' @return liste : `coefficients`, `fitted`, `residuals`, `rss`, `L`.
+#' @export
 solve_ls_chol <- function(X, y) {
   X <- as.matrix(X); y <- as.numeric(y)
   if (length(y) != nrow(X)) stop("length(y) doit valoir nrow(X).")
@@ -189,6 +196,7 @@ solve_ls_chol <- function(X, y) {
 #' @param tol seuil de rang ; par défaut \eqn{\max(n,p)\,\varepsilon\,\sigma_1}.
 #' @return liste : `d` (valeurs singulières), `rank`, `kappa`, `pinv`
 #'   (pseudo-inverse p x n), `u`, `v`, `tol`.
+#' @export
 svd_tools <- function(X, tol = NULL) {
   X <- as.matrix(X)
   sv <- svd(X)
@@ -213,6 +221,7 @@ svd_tools <- function(X, tol = NULL) {
 #' @param X matrice de design n x p (rang quelconque).
 #' @param y vecteur réponse (longueur n).
 #' @return liste : `coefficients`, `fitted`, `residuals`, `rss`, `rank`, `kappa`.
+#' @export
 solve_ls_svd <- function(X, y) {
   X <- as.matrix(X); y <- as.numeric(y)
   if (length(y) != nrow(X)) stop("length(y) doit valoir nrow(X).")
@@ -237,6 +246,7 @@ solve_ls_svd <- function(X, y) {
 #' @param tol seuil d'arrêt sur \eqn{\|x_{k+1}-x_k\|}.
 #' @param f (optionnel) fonction objectif, pour renvoyer la valeur finale.
 #' @return liste : `par`, `iter`, `grad_norm`, `value`.
+#' @export
 optim_gd <- function(grad, x0, step, max_iter = 1e4L, tol = 1e-8, f = NULL) {
   x <- x0
   k <- 0L
@@ -263,6 +273,7 @@ optim_gd <- function(grad, x0, step, max_iter = 1e4L, tol = 1e-8, f = NULL) {
 #' @param tol seuil d'arrêt sur \eqn{\|x_{k+1}-x_k\|}.
 #' @param f (optionnel) fonction objectif.
 #' @return liste : `par`, `iter`, `grad_norm`, `value`.
+#' @export
 optim_newton <- function(grad, hess, x0, max_iter = 100L, tol = 1e-10, f = NULL) {
   x <- x0
   k <- 0L
@@ -290,6 +301,7 @@ optim_newton <- function(grad, hess, x0, max_iter = 100L, tol = 1e-10, f = NULL)
 #' @param tol seuil d'arrêt sur la variation d'un balayage.
 #' @param f (optionnel) fonction objectif.
 #' @return liste : `par`, `sweeps`, `value`.
+#' @export
 optim_cd <- function(argmin_coord, x0, max_sweep = 1000L, tol = 1e-9, f = NULL) {
   x <- x0; d <- length(x)
   s <- 0L
@@ -318,6 +330,7 @@ optim_cd <- function(argmin_coord, x0, max_sweep = 1000L, tol = 1e-9, f = NULL) 
 #' @param epochs nombre de passages sur l'échantillon.
 #' @param seed (optionnel) graine pour la permutation des indices.
 #' @return liste : `par`, `updates`.
+#' @export
 optim_sgd <- function(grad_i, x0, n, batch = 1L, step = NULL, step_fun = NULL,
                       epochs = 50L, seed = NULL) {
   if (is.null(step) && is.null(step_fun)) stop("Fournir step ou step_fun.")

@@ -13,6 +13,7 @@
 #'
 #' @param x vecteur des R valeurs simulées.
 #' @return l'erreur Monte Carlo de leur moyenne.
+#' @export
 mc_se <- function(x) sd(x) / sqrt(length(x))
 
 #' Résumé d'une étude de simulation : biais, RMSE, variance, avec erreurs MC
@@ -21,6 +22,7 @@ mc_se <- function(x) sd(x) / sqrt(length(x))
 #' @param truth valeur vraie \eqn{\theta}.
 #' @return liste : `R`, `mean`, `bias` (+ `bias_se`), `rmse` (+ `rmse_se`),
 #'   `variance`, `empirical_se`.
+#' @export
 mc_summary <- function(estimates, truth) {
   R <- length(estimates)
   bias <- mean(estimates) - truth
@@ -42,6 +44,7 @@ mc_summary <- function(estimates, truth) {
 #' @param nominal niveau nominal (défaut 0.95).
 #' @return liste : `coverage`, `se`, `ci` (IC de la couverture), `R`, `nominal`,
 #'   `nominal_ok` (TRUE si l'IC contient le niveau nominal).
+#' @export
 coverage_mc <- function(covered, nominal = 0.95) {
   R <- length(covered); p <- mean(covered)
   se <- sqrt(p * (1 - p) / R)
@@ -55,6 +58,7 @@ coverage_mc <- function(covered, nominal = 0.95) {
 #' @param rejected vecteur logique des rejets.
 #' @param nominal niveau nominal du test (défaut 0.05, pour la taille).
 #' @return liste : `rate`, `se`, `ci`, `R`, `nominal_ok`.
+#' @export
 reject_mc <- function(rejected, nominal = 0.05) {
   R <- length(rejected); p <- mean(rejected)
   se <- sqrt(p * (1 - p) / R)
@@ -79,6 +83,7 @@ reject_mc <- function(rejected, nominal = 0.05) {
 #' @param seed graine.
 #' @return data.frame : `n`, `bias`, `bias_se`, `rmse`, `rmse_se`,
 #'   `sqrtn_bias`, `sqrtn_sd`.
+#' @export
 convergence_study <- function(sim_fn, ns, R, truth, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
   do.call(rbind, lapply(ns, function(n) {
@@ -98,4 +103,5 @@ convergence_study <- function(sim_fn, ns, R, truth, seed = NULL) {
 #'
 #' @param conv data.frame issu de `convergence_study`.
 #' @return la pente estimée (idéalement ~ -0.5).
+#' @export
 rmse_rate <- function(conv) unname(coef(lm(log(rmse) ~ log(n), data = conv))[2])

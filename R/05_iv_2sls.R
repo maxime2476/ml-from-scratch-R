@@ -20,6 +20,7 @@
 #'   régresseurs exogènes, plus les instruments exclus).
 #' @return liste : `coefficients`, `vcov`, `se`, `sigma2`, `df.residual`,
 #'   `fitted`, `residuals`, `Xhat`.
+#' @export
 tsls_fit <- function(y, X, Z) {
   X <- as.matrix(X); Z <- as.matrix(Z); y <- as.numeric(y)
   n <- nrow(X); k <- ncol(X)
@@ -58,6 +59,7 @@ tsls_fit <- function(y, X, Z) {
 #' @param Z matrice des instruments (constante + exogènes + instruments exclus).
 #' @param excluded indices des colonnes de Z correspondant aux instruments exclus.
 #' @return liste : `F`, `df1`, `df2`, `p_value`.
+#' @export
 first_stage_F <- function(x_endog, Z, excluded) {
   Z <- as.matrix(Z); x <- as.numeric(x_endog)
   n <- nrow(Z); m <- ncol(Z); q <- length(excluded)

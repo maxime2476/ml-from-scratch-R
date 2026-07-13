@@ -21,6 +21,7 @@
 #' @param max_depth,min_split,min_leaf hyperparamètres des arbres de base.
 #' @param seed graine.
 #' @return objet `forest` : `trees`, `oob_idx`, `oob_error`, `oob_pred`, méta.
+#' @export
 bagging_fit <- function(formula, data, method = c("class", "anova"), B = 100L,
                         mtry = NULL, max_depth = 30L, min_split = 5L, min_leaf = 1L,
                         seed = NULL) {
@@ -70,7 +71,9 @@ bagging_fit <- function(formula, data, method = c("class", "anova"), B = 100L,
 #' Forêt aléatoire (alias de bagging_fit avec mtry actif)
 #'
 #' @inheritParams bagging_fit
+#' @param ... arguments supplémentaires transmis à `bagging_fit`.
 #' @return objet `forest`.
+#' @export
 random_forest_fit <- function(formula, data, method = c("class", "anova"), B = 100L,
                               mtry = NULL, ...) {
   bagging_fit(formula, data, method = match.arg(method), B = B, mtry = mtry, ...)
@@ -83,6 +86,7 @@ random_forest_fit <- function(formula, data, method = c("class", "anova"), B = 1
 #' @param object objet `forest`.
 #' @param newdata data.frame des prédicteurs.
 #' @return vecteur de prédictions.
+#' @export
 predict_forest <- function(object, newdata) {
   m <- nrow(newdata); B <- object$B
   P <- matrix(NA_character_, m, B)

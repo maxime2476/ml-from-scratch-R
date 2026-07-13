@@ -8,14 +8,17 @@
 
 #' Impureté de Gini d'un vecteur d'étiquettes (éq. 8.1)
 #' @param y étiquettes (facteur/vecteur). @return \eqn{1-\sum_c p_c^2}.
+#' @export
 impurity_gini <- function(y) { p <- prop.table(table(y)); 1 - sum(p^2) }
 
 #' Entropie d'un vecteur d'étiquettes (éq. 8.1)
 #' @param y étiquettes. @return \eqn{-\sum_c p_c\log p_c}.
+#' @export
 impurity_entropy <- function(y) { p <- prop.table(table(y)); p <- p[p > 0]; -sum(p * log(p)) }
 
 #' Impureté de variance (régression, éq. 8.2)
 #' @param y réponse numérique. @return variance de population intra-nœud.
+#' @export
 impurity_variance <- function(y) mean((y - mean(y))^2)
 
 .imp_counts <- function(cnt, kind) {
@@ -40,6 +43,7 @@ impurity_variance <- function(y) mean((y - mean(y))^2)
 #' @param mtry si non NULL, nombre de variables candidates tirées au hasard pour
 #'   ce split (forêt aléatoire, Module 9) ; NULL = toutes les variables (CART).
 #' @return liste `gain`, `var` (indice), `val` (seuil) ; `gain = -Inf` si aucun split.
+#' @export
 best_split <- function(X, y, method, kind = "gini", min_leaf = 1L, classes = NULL,
                        mtry = NULL) {
   n <- nrow(X); best <- list(gain = -Inf, var = NA_integer_, val = NA_real_)
@@ -97,6 +101,7 @@ best_split <- function(X, y, method, kind = "gini", min_leaf = 1L, classes = NUL
 #' @param min_gain gain d'impureté minimal pour accepter un split.
 #' @param mtry variables candidates par split (forêt aléatoire) ; NULL = toutes.
 #' @return objet `cart` (arbre + métadonnées).
+#' @export
 cart_fit <- function(formula, data, method = c("class", "anova"), kind = "gini",
                      max_depth = 30L, min_split = 20L, min_leaf = 7L, min_gain = 1e-9,
                      mtry = NULL) {
@@ -142,6 +147,7 @@ cart_fit <- function(formula, data, method = c("class", "anova"), kind = "gini",
 #' @param object objet `cart`.
 #' @param newdata data.frame contenant les prédicteurs.
 #' @return vecteur de prédictions (classes pour "class", moyennes pour "anova").
+#' @export
 predict_cart <- function(object, newdata) {
   X <- as.matrix(newdata[, object$vars, drop = FALSE]); storage.mode(X) <- "double"
   descend <- function(node, xrow) {
@@ -160,6 +166,7 @@ predict_cart <- function(object, newdata) {
 #' @param object objet `cart`.
 #' @param alpha coût par feuille \eqn{\alpha \ge 0}.
 #' @return objet `cart` élagué.
+#' @export
 cost_complexity_prune <- function(object, alpha) {
   N <- object$N
   prune <- function(node) {
@@ -183,6 +190,7 @@ cost_complexity_prune <- function(object, alpha) {
 
 #' Nombre de feuilles d'un arbre CART
 #' @param object objet `cart`. @return nombre de feuilles.
+#' @export
 n_leaves <- function(object) {
   count <- function(node) if (node$leaf) 1L else count(node$left) + count(node$right)
   count(object$tree)

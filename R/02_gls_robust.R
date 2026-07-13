@@ -13,6 +13,7 @@
 #' @param fit objet `ols`.
 #' @param meat matrice p x p (la viande \eqn{X^T \Omega X} estimée).
 #' @return matrice de variance p x p.
+#' @export
 sandwich_vcov <- function(fit, meat) {
   bread <- fit$XtXinv
   V <- bread %*% meat %*% bread
@@ -28,6 +29,7 @@ sandwich_vcov <- function(fit, meat) {
 #' @param fit objet `ols`.
 #' @param type "HC0", "HC1", "HC2" ou "HC3".
 #' @return matrice de variance p x p (compatible `sandwich::vcovHC`).
+#' @export
 vcov_hc <- function(fit, type = c("HC3", "HC0", "HC1", "HC2")) {
   type <- match.arg(type)
   X <- fit$model_matrix
@@ -52,6 +54,7 @@ vcov_hc <- function(fit, type = c("HC3", "HC0", "HC1", "HC2")) {
 #' @param fit objet `ols`.
 #' @param vcov matrice de variance (p.ex. sortie de `vcov_hc`).
 #' @return data.frame estimate/se/t/p_value.
+#' @export
 coeftest_hc <- function(fit, vcov = vcov_hc(fit, "HC3")) {
   b  <- fit$coefficients
   se <- sqrt(diag(vcov))
@@ -70,6 +73,7 @@ coeftest_hc <- function(fit, vcov = vcov_hc(fit, "HC3")) {
 #' @param fit objet `ols`.
 #' @param lag nombre de retards L.
 #' @return matrice de variance p x p.
+#' @export
 vcov_nw <- function(fit, lag) {
   X <- fit$model_matrix
   e <- fit$residuals
@@ -93,6 +97,7 @@ vcov_nw <- function(fit, lag) {
 #' @param data data.frame.
 #' @param weights vecteur de poids \eqn{w_i = 1/\sigma_i^2} (longueur n).
 #' @return objet de classe `wls` (mêmes champs qu'`ols`).
+#' @export
 wls_fit <- function(formula, data, weights) {
   mf <- model.frame(formula, data)
   tt <- attr(mf, "terms")
@@ -133,6 +138,7 @@ wls_fit <- function(formula, data, weights) {
 #' @param Omega matrice n x n SPD (structure de covariance des erreurs, à un
 #'   facteur d'échelle sigma^2 près).
 #' @return objet de classe `gls_fit` (mêmes champs qu'`ols`).
+#' @export
 gls_fit <- function(formula, data, Omega) {
   mf <- model.frame(formula, data)
   tt <- attr(mf, "terms")

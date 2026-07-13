@@ -14,13 +14,13 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
 Depends:
     R (>= 4.0.0)
 Suggests:
     testthat (>= 3.0.0),
     ggplot2,
     sandwich,
+    lmtest,
     nlme,
     glmnet,
     MASS,
@@ -29,5 +29,13 @@ Suggests:
     randomForest,
     gbm,
     mclust,
-    class
+    class,
+    quadprog,
+    iml,
+    DoubleML,
+    grf,
+    ranger,
+    mlr3,
+    mlr3learners
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

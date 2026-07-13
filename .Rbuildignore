@@ -1,0 +1,16 @@
+^simulations$
+^derivations$
+^rapport$
+^_book$
+^_quarto\.yml$
+^index\.qmd$
+^Makefile$
+^run_all\.R$
+^\.github$
+^renv$
+^renv\.lock$
+^\.Rprofile$
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.md$
+^LICENSE$

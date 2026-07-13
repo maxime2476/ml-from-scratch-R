@@ -28,6 +28,7 @@
 #' @param intercept inclure un intercept non pénalisé (défaut TRUE).
 #' @return liste : `coefficients` (avec intercept si demandé), `beta` (pentes),
 #'   `intercept`, `lambda`, `fitted`.
+#' @export
 ridge_fit <- function(X, y, lambda, standardize = TRUE, intercept = TRUE) {
   X <- as.matrix(X); y <- as.numeric(y); n <- nrow(X); p <- ncol(X)
   st <- .standardize(X, center = intercept, scale = standardize)
@@ -56,6 +57,7 @@ ridge_fit <- function(X, y, lambda, standardize = TRUE, intercept = TRUE) {
 #' @param sigma2 variance des erreurs.
 #' @param lambda pénalité.
 #' @return liste : `bias2`, `variance`, `mse` (totaux), et vecteurs par composante.
+#' @export
 ridge_bias_var <- function(X, beta_true, sigma2, lambda) {
   sv <- svd(X)
   d <- sv$d
@@ -75,6 +77,7 @@ ridge_bias_var <- function(X, beta_true, sigma2, lambda) {
 #' @param z scalaire ou vecteur.
 #' @param lambda seuil (>= 0).
 #' @return la (les) valeur(s) seuillée(s).
+#' @export
 soft_threshold <- function(z, lambda) sign(z) * pmax(abs(z) - lambda, 0)
 
 #' Lasso par coordinate descent (éq. 4.10)
@@ -91,6 +94,7 @@ soft_threshold <- function(z, lambda) sign(z) * pmax(abs(z) - lambda, 0)
 #' @param maxit balayages maximaux.
 #' @param tol tolérance d'arrêt (variation max des coefficients).
 #' @return liste : `coefficients`, `beta`, `intercept`, `lambda`, `iter`, `fitted`.
+#' @export
 lasso_fit <- function(X, y, lambda, standardize = TRUE, intercept = TRUE,
                       maxit = 1e4L, tol = 1e-9) {
   X <- as.matrix(X); y <- as.numeric(y); n <- nrow(X); p <- ncol(X)

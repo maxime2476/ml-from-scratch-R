@@ -1,0 +1,20 @@
+# Préface {.unnumbered}
+
+Ce livre rassemble les **dérivations mathématiques** du projet *ML from Scratch
+in R* : la déconstruction, depuis les premiers principes, des principaux modèles
+d'apprentissage automatique, chacun réimplémenté en R base, validé numériquement
+contre les packages de référence et étudié par simulation Monte Carlo.
+
+Chaque chapitre correspond à un module et suit la même trame : hypothèses
+numérotées, dérivation pas à pas, propriétés statistiques, et un encadré « de la
+math au code » reliant chaque équation à la fonction R qui l'implémente.
+
+- **Code, tests et simulations** : dossiers `R/`, `tests/`, `simulations/`.
+- **Reproduction** : `make all` (ou `Rscript run_all.R`).
+- **Synthèse** : le rapport final et la « pierre de Rosette » des estimateurs
+  concluent l'ouvrage.
+
+::: {.callout-note}
+Les preuves admises sont explicitement signalées et référencées ; les divergences
+avec les packages de référence sont documentées et expliquées.
+:::

@@ -54,6 +54,7 @@
 #' @return objet `glm_irls` : `coefficients`, `vcov`, `se`, `fitted`,
 #'   `linear.predictors`, `deviance`, `null.deviance`, `loglik`, `iter`,
 #'   `df.residual`, `rank`, `family`, `weights`, `model_matrix`, `response`.
+#' @export
 glm_irls <- function(formula, data, family = c("binomial", "poisson"),
                      maxit = 25L, epsilon = 1e-8) {
   family <- match.arg(family)
@@ -113,6 +114,7 @@ glm_irls <- function(formula, data, family = c("binomial", "poisson"),
 #' @param R matrice q x p des restrictions.
 #' @param r vecteur cible (défaut zéro).
 #' @return liste : `statistic`, `df`, `p_value`.
+#' @export
 wald_test <- function(fit, R, r = rep(0, nrow(R))) {
   R <- as.matrix(R)
   Rb_r <- as.numeric(R %*% fit$coefficients - r)
@@ -129,6 +131,7 @@ wald_test <- function(fit, R, r = rep(0, nrow(R))) {
 #' @param fit_full objet `glm_irls` du modèle complet.
 #' @param fit_reduced objet `glm_irls` du modèle réduit (emboîté).
 #' @return liste : `statistic`, `df`, `p_value`.
+#' @export
 lr_test <- function(fit_full, fit_reduced) {
   stat <- fit_reduced$deviance - fit_full$deviance
   df <- fit_full$rank - fit_reduced$rank
@@ -147,6 +150,7 @@ lr_test <- function(fit_full, fit_reduced) {
 #' @param fit_full objet `glm_irls` du modèle complet (fournit le design X).
 #' @param fit_reduced objet `glm_irls` du modèle réduit (emboîté).
 #' @return liste : `statistic`, `df`, `p_value`.
+#' @export
 score_test <- function(fit_full, fit_reduced) {
   fam <- .get_family(fit_full$family)
   X <- fit_full$model_matrix

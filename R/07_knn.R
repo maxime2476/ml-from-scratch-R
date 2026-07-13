@@ -16,6 +16,7 @@
 #' @param X_test matrice m x p de test.
 #' @param k nombre de voisins.
 #' @return vecteur des m prédictions.
+#' @export
 knn_regression <- function(X_train, y_train, X_test, k) {
   Xtr <- as.matrix(X_train); Xte <- as.matrix(X_test)
   if (k > nrow(Xtr)) stop("k > nombre d'observations d'apprentissage.")
@@ -36,6 +37,7 @@ knn_regression <- function(X_train, y_train, X_test, k) {
 #' @param X_test matrice m x p de test.
 #' @param k nombre de voisins.
 #' @return facteur des m classes prédites (mêmes niveaux que y_train).
+#' @export
 knn_classify <- function(X_train, y_train, X_test, k) {
   Xtr <- as.matrix(X_train); Xte <- as.matrix(X_test)
   y <- as.factor(y_train); lev <- levels(y)
@@ -55,6 +57,7 @@ knn_classify <- function(X_train, y_train, X_test, k) {
 #' @param r fraction des données à capturer (dans (0,1]).
 #' @param p dimension.
 #' @return la longueur d'arête nécessaire.
+#' @export
 edge_length <- function(r, p) r^(1 / p)
 
 #' Concentration des distances (éq. 7.4-7.5)
@@ -66,10 +69,11 @@ edge_length <- function(r, p) r^(1 / p)
 #'
 #' @param n nombre de points.
 #' @param p dimension.
-#' @param gen générateur de points (défaut : uniforme sur [0,1]^p).
+#' @param gen générateur de points (défaut : uniforme sur `[0,1]^p`).
 #' @param seed graine.
 #' @return liste : `contrast` (moyenne de (Dmax-Dmin)/Dmin), `cv_d2` (coef. de
 #'   variation des distances au carré).
+#' @export
 distance_concentration <- function(n, p, gen = function(n, p) matrix(runif(n * p), n, p),
                                    seed = NULL) {
   if (!is.null(seed)) set.seed(seed)

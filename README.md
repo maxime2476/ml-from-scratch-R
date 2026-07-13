@@ -128,8 +128,10 @@ Module 23 **quantifie** la fragilité des hypothèses d'identification des Modul
   débiaisé, sensibilité) confrontée au **benchmark expérimental NSW** (~1794 \$).
   Reproduit la leçon de LaLonde : sur données observationnelles, la réponse
   dépend de la méthode et du recouvrement.
-- **`simulations/study_crossfitting.R`** — mini-étude méthodologique : *le
-  cross-fitting est-il nécessaire en DML ?* (biais, couverture avec/sans).
+- **`simulations/study_double_selection.R`** — mini-étude méthodologique
+  (Belloni-Chernozhukov-Hansen) : *pourquoi sélectionner les contrôles depuis les
+  deux équations ?* La sélection simple s'effondre (couverture 0.38), la double
+  reste valide (~0.95).
 - **`simulations/benchmark_scratch_vs_ref.R`** — from-scratch vs `lm`/`glm`/
   `ivreg` : précision (1e-15), vitesse, stabilité (QR vs équations normales).
 - **`shiny-app/`** — laboratoire interactif (biais-variance, chemins de

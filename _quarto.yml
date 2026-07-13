@@ -45,6 +45,15 @@ book:
         - derivations/19_conformal.qmd
         - derivations/20_quantile.qmd
         - derivations/21_panel.qmd
+    - part: "Inférence en haute dimension"
+      chapters:
+        - derivations/22_debiased_lasso.qmd
+        - derivations/23_sensitivity.qmd
+    - part: "Applications et études"
+      chapters:
+        - applications/lalonde.qmd
+        - rapport/etude_double_selection.qmd
+        - rapport/benchmark.qmd
     - part: "Synthèse"
       chapters:
         - rapport/rapport.qmd

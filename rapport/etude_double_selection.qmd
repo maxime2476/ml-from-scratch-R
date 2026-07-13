@@ -1,0 +1,72 @@
+---
+title: "Étude — Pourquoi la « double sélection » ? (Belloni-Chernozhukov-Hansen)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, number-sections: true}
+---
+
+*Mini-étude méthodologique. Code :*
+[`simulations/study_double_selection.R`](../simulations/study_double_selection.R).
+
+## Question
+
+En présence de nombreux contrôles potentiels ($p$ grand), il est tentant de
+laisser le **lasso** (Module 4) choisir lesquels inclure pour estimer un effet
+causal $\theta$ dans
+
+$$ Y = \theta D + X'\beta + \varepsilon, \qquad D = X'\gamma + v. $$
+
+La question n'est pas *s'il faut* sélectionner, mais **comment** : la manière de
+sélectionner détermine la validité de l'inférence sur $\theta$.
+
+## Deux stratégies
+
+- **Sélection simple.** On retient les contrôles associés au **résultat** (une
+  fois $D$ pris en compte), puis OLS de $Y$ sur $D$ et ces contrôles.
+- **Sélection double** (Belloni-Chernozhukov-Hansen 2014). On retient l'**union**
+  des variables sélectionnées dans l'équation du **résultat** ($Y\sim X$) *et*
+  dans celle du **traitement** ($D\sim X$), puis OLS.
+
+Le cas critique : un confondeur $X_1$ qui pèse **fortement sur le traitement**
+($\gamma_1$ grand) mais **faiblement sur le résultat une fois $D$ contrôlé**
+($\beta_1$ petit). La sélection simple le **rate** (signal résiduel faible) ;
+l'omettre biaise $\theta$. La sélection double le **rattrape** par l'équation du
+traitement.
+
+## Dispositif
+
+$n=250$, $p=100$, $\theta_0=1$, $\beta_1=0{,}15$ ; on fait varier la force
+$\gamma_1$ du confondeur sur le traitement ; $R=300$ réplications ; pénalité
+lasso théorique $\lambda\propto\hat\sigma\sqrt{2n\log p}$.
+
+## Résultat
+
+| $\gamma_1$ | méthode | biais | couverture 95 % |
+|---:|---|---:|---:|
+| 0.5 | sélection simple | +0.049 | 0.847 |
+| 0.5 | **sélection double** | −0.003 | **0.983** |
+| 1.5 | sélection simple | +0.069 | 0.460 |
+| 1.5 | **sélection double** | +0.003 | **0.957** |
+| 2.5 | sélection simple | +0.051 | 0.383 |
+| 2.5 | **sélection double** | −0.003 | **0.957** |
+
+![Couverture : simple vs double sélection](../simulations/output/study_double_selection.png)
+
+## Conclusion
+
+Le résultat est **net et monotone** : plus le confondeur pèse sur le traitement,
+plus la **sélection simple** est biaisée et plus sa couverture **s'effondre**
+(jusqu'à 0.38 — un IC « à 95 % » qui ne couvre en réalité qu'un tiers du temps).
+La **sélection double** reste centrée ($\text{biais}\approx0$) et **valide**
+(couverture $\approx0.95$) quelle que soit la force du confondeur.
+
+**Leçon.** Sélectionner des contrôles par le lasso ne suffit pas : il faut le
+faire depuis **les deux équations**. C'est la contrepartie « sélection » de
+l'orthogonalisation de Neyman (Module 16) et du lasso débiaisé (Module 22) — trois
+formes d'une même exigence : **neutraliser le biais de régularisation avant
+d'inférer**.
+
+## Références {.unnumbered}
+
+- Belloni, Chernozhukov & Hansen (2014), « Inference on treatment effects after
+  selection among high-dimensional controls », *Review of Economic Studies* 81(2).

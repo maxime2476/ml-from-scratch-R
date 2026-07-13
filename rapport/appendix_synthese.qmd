@@ -1,0 +1,83 @@
+---
+title: "Annexe — La pierre de Rosette des estimateurs"
+subtitle: "Quatre regards sur un même objet"
+lang: fr
+format:
+  html:
+    toc: true
+    number-sections: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+## Idée directrice {#sec-idee}
+
+Le projet montre qu'un même estimateur admet **quatre lectures** équivalentes,
+selon la discipline qui le regarde :
+
+1. **Perte / M-estimation** — $\hat\theta=\arg\min\frac1n\sum_i\rho(z_i,\theta)$,
+   ou de façon équivalente $\frac1n\sum_i\psi(z_i,\hat\theta)=0$ (Module 14).
+2. **Bayésien / MAP** — $\hat\theta=\arg\max\big[\log p(\text{données}\mid\theta)
+   + \log p(\theta)\big]$ ; la **pénalité est un $-\log$-prior** (Modules 4, 14).
+3. **Optimisation** — l'algorithme qui résout le problème (forme fermée, Newton,
+   coordinate descent, SGD ; Module 0).
+4. **Inférence** — la loi de $\hat\theta$ et sa variance (classique ou sandwich
+   $A^{-1}BA^{-1}$ ; Modules 1, 2, 14).
+
+Cette annexe rassemble ces quatre colonnes pour les estimateurs du projet. C'est
+la **cohérence transversale** du mémoire, résumée en une page.
+
+## Tableau de synthèse {#sec-tableau}
+
+| Estimateur | Perte $\rho$ / score $\psi$ | Vue bayésienne (prior → MAP) | Optimisation | Inférence (variance) |
+|---|---|---|---|---|
+| **OLS** (M1) | $\rho=(y-x^\top\theta)^2$ ; $\psi=x(y-x^\top\theta)$ | prior plat → MAP = MV gaussienne | forme fermée (QR, M0) | $\sigma^2(X^\top X)^{-1}$ ; loi $t/F$ |
+| **WLS / GLS** (M2) | $\rho=w(y-x^\top\theta)^2$ | erreurs corrélées connues | forme fermée (données transformées) | $(X^\top\Omega^{-1}X)^{-1}$ (Aitken) |
+| **OLS robuste** (M2) | idem OLS | idem | idem | **sandwich HC0–HC3** |
+| **Ridge** (M4) | $\rho=(y-x^\top\theta)^2+\tfrac\lambda n\|\theta\|^2$ | **prior gaussien** $\mathcal N(0,\tau^2)$, $\lambda=\sigma^2/\tau^2$ | forme fermée $(X^\top X+\lambda I)^{-1}$ | biaisé ; postérieure $\mathcal N$ conjuguée (M14) |
+| **Lasso** (M4) | $\rho=(y-x^\top\theta)^2+\tfrac\lambda n\|\theta\|_1$ | **prior de Laplace** ; MAP = mode | **coordinate descent** (soft-threshold) | post-sélection **invalide** (M14) |
+| **Logistique / GLM** (M3) | $\rho=-\log f$ (famille exp.) ; $\psi=$ score | prior plat → MV | **Newton = IRLS** (M0) | Fisher $(X^\top WX)^{-1}$ ; Wald/LR/score |
+| **IV / 2SLS** (M5) | moments $\mathbb E[Z\varepsilon]=0$ | — | forme fermée $(X^\top P_Z X)^{-1}$ | $\sigma^2(X^\top P_Z X)^{-1}$ |
+| **KNN** (M7) | moyenne locale | — | tri des distances | variance $\sigma^2/k$ (M7) |
+| **CART** (M8) | impureté (Gini/variance) | — | **greedy** récursif | (non paramétrique) |
+| **Forêt** (M9) | moyenne de bags | — | bootstrap + agrégation | $\rho\sigma^2+\tfrac{1-\rho}B\sigma^2$ ; OOB |
+| **Boosting** (M10) | perte additive $\ell$ | — | **descente de gradient fonctionnelle** ; Newton/feuille | (via validation) |
+| **MLP** (M12) | $\rho=$ EQM / entropie croisée | (poids : prior gaussien = weight decay) | **SGD + rétropropagation** (M0) | (bootstrap / différences finies) |
+| **DML** (M16) | score **orthogonal de Neyman** | — | résidualisation + cross-fitting | $\sqrt n$-normal, sandwich |
+
+## Trois invariants du projet {#sec-invariants}
+
+**Le sandwich $A^{-1}BA^{-1}$ apparaît trois fois, identique.** La robustesse HC0
+du Module 2, la variance générique de la M-estimation du Module 14, et la variance
+du DML du Module 16 sont **le même objet** — la théorie asymptotique des
+M-estimateurs. Sous homoscédasticité/spécification correcte, $B=\sigma^2 A$ et il
+se réduit à la variance classique.
+
+**La pénalité est un prior.** Ridge = prior gaussien, lasso = prior de Laplace ;
+minimiser « perte + pénalité » **est** maximiser une log-postérieure (MAP). Le
+biais de régularisation (M14) et le contrôle de la complexité de Rademacher (M13)
+sont deux visages de la même intervention.
+
+**Frisch-Waugh-Lovell se généralise en score de Neyman.** La régression
+résidu-sur-résidu de FWL (M1), qui partiale linéairement les contrôles, devient au
+Module 16 une résidualisation **non paramétrique** (ML) débiaisée par
+cross-fitting. C'est la même mécanique, du linéaire au ML — la boucle du projet.
+
+## Lecture optimisation transversale {#sec-optim}
+
+Le Module 0 fournit **un catalogue d'optimiseurs** ; chaque modèle en choisit un
+selon la structure de son problème :
+
+| Structure du problème | Optimiseur | Modèles |
+|---|---|---|
+| Forme fermée (système linéaire bien conditionné) | QR / Cholesky | OLS, WLS, GLS, ridge, IV |
+| Rang déficient / $p>n$ | SVD (pseudo-inverse) | OLS colinéaire |
+| Lisse, hessienne abordable | Newton | GLM (= IRLS) |
+| Lisse + pénalité séparable | coordinate descent | lasso |
+| Perte-somme, $n$ grand | SGD | MLP |
+| Perte fonctionnelle additive | descente de gradient fonctionnelle | boosting |
+
+Le même moteur mathématique (descente, Newton, séparabilité) irrigue tout le
+projet ; c'est ce que rend visible la lecture « optimisation ».

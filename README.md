@@ -124,6 +124,26 @@ Compiler une dérivation :
 quarto render derivations/01_ols.qmd
 ```
 
+## Reproductibilité et qualité
+
+Le projet est structuré en **compendium de recherche reproductible** :
+
+- **Pipeline en une commande** : `make all` (ou `Rscript run_all.R`) charge les
+  implémentations, lance les tests et exécute toutes les études Monte Carlo.
+  `make book` compile le **livre Quarto** (17 dérivations + rapport + annexe de
+  synthèse), `make derivations` / `make rapport` les documents séparément.
+- **Environnement verrouillé** : `renv.lock` fige les versions exactes des ~160
+  packages (R 4.6.1). `renv::restore()` recrée l'environnement à l'identique.
+- **Package documenté** : `NAMESPACE` et 94 pages d'aide `man/*.Rd` générées par
+  roxygen2 ; `R CMD check` s'installe et se charge proprement (les avertissements
+  résiduels concernent les accents non-ASCII des messages francophones).
+- **Rigueur des simulations** : les utilitaires de `R/mc_tools.R` rapportent
+  l'**erreur Monte Carlo** de chaque quantité (biais, RMSE, couverture) ;
+  `simulations/mc_convergence.R` vérifie la **consistance $\sqrt n$** et les taux.
+- **Intégration continue** : `.github/workflows/` fournit `R-CMD-check`
+  (Linux + Windows) et la **couverture** (`covr` → Codecov). Couverture ~97 % sur
+  les modules noyau.
+
 ## Conventions
 
 - R base pour les calculs ; style lisible pour le reste.

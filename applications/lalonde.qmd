@@ -1,0 +1,78 @@
+---
+title: "Application — LaLonde (NSW) : la boîte à outils causale à l'épreuve"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 2, number-sections: true}
+---
+
+## Enjeu
+
+LaLonde (1986) a posé une question devenue canonique en inférence causale : les
+méthodes **observationnelles** peuvent-elles reproduire le résultat d'une
+**expérience randomisée** ? Le programme de formation *National Supported Work*
+(NSW) fut évalué par un **essai randomisé** ; on dispose donc d'un **étalon-or**.
+On lui substitue ensuite un groupe de comparaison **non expérimental** (PSID) et
+l'on juge chaque méthode à sa capacité à retrouver l'effet expérimental.
+
+Toutes les estimations utilisent les implémentations **from scratch** de ce
+projet ; le code complet est dans [`applications/lalonde.R`](lalonde.R)
+(`Rscript applications/lalonde.R`).
+
+## L'étalon-or expérimental
+
+Sur l'échantillon randomisé (`lalonde.exp`, 445 obs), le traitement est
+indépendant des covariables : l'ATT est identifié **sans hypothèse**.
+
+| Estimateur | ATT sur `re78` |
+|---|---|
+| Différence de moyennes | **1 794 \$** |
+| OLS ajusté (M1) | 1 676 \$ (se 639) |
+
+C'est la cible que les méthodes observationnelles doivent viser.
+
+## Le défi observationnel (PSID)
+
+On garde les 185 traités NSW mais on remplace les contrôles par 2 490 individus
+du PSID — non comparables. Résultats (`lalonde.psid`) :
+
+| Méthode | ATT (\$) | se | écart / étalon |
+|---|---:|---:|---:|
+| Différence de moyennes (naïf) | −15 205 | – | −16 881 |
+| OLS + contrôles (M1) | 752 | 915 | −924 |
+| **IPW propension (M3)** | **1 575** | – | **−101** |
+| DML forêts (M16) | −1 183 | 987 | −2 860 |
+| Lasso débiaisé (M22) | −4 484 | 1 767 | −6 160 |
+
+![ATT estimés vs benchmark expérimental](output/lalonde_atts.png)
+
+## Lecture
+
+1. **Le naïf est catastrophique** (−15 205 \$) : les contrôles PSID sont
+   structurellement plus riches, la sélection domine tout.
+2. **Modéliser la sélection aide** : l'IPW par score de propension (Module 3)
+   retombe à **1 575 \$**, à un cheveu de l'étalon (−101 \$) ; l'OLS corrige
+   l'essentiel du biais mais sous-estime.
+3. **Mais le résultat reste instable** : DML et lasso débiaisé restent négatifs.
+   Le diagnostic l'explique — **78 % des contrôles PSID ont un score de propension
+   $\hat e(x)<0.01$** : le support commun est minuscule, et les méthodes qui
+   extrapolent (forêts, dictionnaire étendu) partent à la dérive.
+
+> **Conclusion de LaLonde, confirmée.** Aucune hypothèse d'identification ne
+> remplace la randomisation : sur données observationnelles, la réponse **dépend
+> de la méthode et du recouvrement**. C'est précisément pourquoi l'étalon
+> expérimental — et l'**analyse de sensibilité** (Module 23) qui chiffre la
+> fragilité — sont indispensables.
+
+## Sensibilité (Module 23)
+
+Pour l'OLS observationnel : robustness value $\approx 0{,}02$. Un confondeur
+« aussi fort que le revenu 1975 » ($R^2\approx0{,}14$) suffirait à faire basculer
+l'ATT ajusté à **−6 244 \$**. L'estimation observationnelle est donc **non
+robuste** — cohérent avec son écart au benchmark.
+
+## Références {.unnumbered}
+
+- LaLonde (1986), « Evaluating the econometric evaluations of training programs »,
+  *American Economic Review* 76(4).
+- Dehejia & Wahba (1999, 2002) ; Smith & Todd (2005) — le débat sur le
+  recouvrement.

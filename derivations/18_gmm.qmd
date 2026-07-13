@@ -1,0 +1,103 @@
+---
+title: "Module 18 — Méthode des moments généralisée (GMM)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+La **GMM** (Hansen 1982) estime $\theta$ à partir de **conditions de moments**
+$\mathbb E[g(z,\theta_0)]=0$. Elle **unifie** l'OLS (M1), l'IV/2SLS (M5) et la
+M-estimation (M14) : chacun correspond à un choix de moments. On dérive
+l'estimateur, la **variance sandwich**, la GMM **efficace** (à deux étapes), le
+**test de suridentification** (J), et on prouve que la **GMM linéaire = 2SLS**.
+
+## Estimateur GMM {#sec-est}
+
+Soit $g:\mathcal Z\times\Theta\to\mathbb R^m$, $\theta\in\mathbb R^k$, $m\ge k$
+(condition d'ordre), et $\bar g(\theta)=\frac1n\sum_i g(z_i,\theta)$. La GMM
+minimise une **forme quadratique** des moments empiriques :
+$$
+\hat\theta(W) = \arg\min_\theta\ \bar g(\theta)^\top W\,\bar g(\theta),
+\tag{18.1}
+$$
+avec $W$ **symétrique définie positive**. Si $m=k$ (**juste-identifié**), $W$ est
+sans effet : $\hat\theta$ résout $\bar g(\theta)=0$. Si $m>k$
+(**suridentifié**), $W$ pondère les $m$ moments.
+
+### Loi asymptotique {#sec-asy}
+
+Soit $G=\mathbb E[\partial_\theta g(z,\theta_0)]$ ($m\times k$) et
+$S=\mathbb E[g\,g^\top]$ ($m\times m$, variance des moments). Un développement de
+Taylor des CPO de (18.1) donne
+$$
+\sqrt n(\hat\theta - \theta_0)\xrightarrow{d}\mathcal N\!\Big(0,\ (G^\top W G)^{-1}G^\top W S W G (G^\top W G)^{-1}\Big).
+\tag{18.2}
+$$
+(Même structure sandwich que la M-estimation, Module 14.)
+
+### GMM efficace {#sec-eff}
+
+> **Proposition 18.1.** La variance (18.2) est **minimisée** par $W=S^{-1}$, et
+> vaut alors $(G^\top S^{-1}G)^{-1}$.
+
+*Preuve* (admise, argument de Gauss-Markov généralisé : pour tout $W$,
+$(G^\top W G)^{-1}G^\top W S W G(G^\top W G)^{-1} - (G^\top S^{-1}G)^{-1}\succeq 0$ ;
+cf. Hansen 1982, Hayashi §3.5). En pratique $S$ est inconnue : la **GMM à deux
+étapes** l'estime — étape 1 avec $W_1=I$ (ou $(Z^\top Z)^{-1}$) donne $\hat\theta_1$,
+d'où $\hat S=\frac1n\sum_i g(z_i,\hat\theta_1)g(z_i,\hat\theta_1)^\top$ ; étape 2
+avec $W_2=\hat S^{-1}$.
+
+## GMM linéaire = 2SLS {#sec-2sls}
+
+Pour les moments d'instruments $g_i(\beta)=Z_i(y_i-X_i^\top\beta)$, on a
+$\bar g(\beta)=\frac1n Z^\top(y-X\beta)$.
+
+> **Proposition 18.2.** La GMM linéaire (18.1) avec $W=(Z^\top Z)^{-1}$ **est**
+> l'estimateur 2SLS (Module 5, éq. 5.4).
+
+**Preuve.** L'objectif est $(y-X\beta)^\top Z\,W\,Z^\top(y-X\beta)/n^2$. Sa CPO
+$X^\top Z\,W\,Z^\top(y-X\beta)=0$ donne
+$$
+\hat\beta = (X^\top Z\,W\,Z^\top X)^{-1}X^\top Z\,W\,Z^\top y .
+$$
+Avec $W=(Z^\top Z)^{-1}$ et $P_Z=Z(Z^\top Z)^{-1}Z^\top$,
+$\hat\beta=(X^\top P_Z X)^{-1}X^\top P_Z y=\hat\beta_{\mathrm{2SLS}}$. $\blacksquare$
+
+De plus, la GMM **efficace à deux étapes** domine le 2SLS sous
+**hétéroscédasticité** (elle pondère par $\hat S^{-1}$, où $S=\mathbb E[\varepsilon^2
+ZZ^\top]$, au lieu de traiter $S=\sigma^2\mathbb E[ZZ^\top]$). Le 2SLS n'est
+efficace que sous homoscédasticité.
+
+## Test de suridentification (J) {#sec-J}
+
+Si $m>k$, il reste $m-k$ moments « en trop » : sous spécification correcte, la
+statistique de Hansen
+$$
+J = n\,\bar g(\hat\theta)^\top \hat S^{-1}\,\bar g(\hat\theta)\ \xrightarrow{d}\ \chi^2_{m-k}
+\tag{18.3}
+$$
+(à la GMM efficace). Un $J$ grand rejette la **validité des instruments** / la
+spécification. C'est le test de suridentification.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/18_gmm.R`) |
+|---|---|
+| (18.1) GMM générique | `gmm_fit(g_fn, theta0, ...)` |
+| GMM linéaire (IV) + 2 étapes | `gmm_linear(y, X, Z, twostep)` |
+| (18.2) variance sandwich | sortie `vcov` |
+| (18.3) test J | sortie `J`, `J_pvalue` |
+| Prop. 18.2 = 2SLS | vérifié dans `test-18.R` |
+
+Validation : `gmm_linear(W=(Z'Z)^{-1})` = `tsls_fit` (exact) ; GMM à deux étapes
+contre le package `gmm`. Monte Carlo : gain d'efficacité de la GMM efficace sur
+le 2SLS sous hétéroscédasticité ; taille/puissance du test J.
+
+## Références {.unnumbered}
+
+- Hansen (1982), « Large Sample Properties of GMM Estimators », *Econometrica*.
+- Hayashi — *Econometrics*, ch. 3.
+- Wooldridge — *Econometric Analysis of CS & Panel Data*, ch. 8, 14.

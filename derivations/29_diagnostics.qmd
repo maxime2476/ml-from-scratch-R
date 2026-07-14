@@ -1,0 +1,82 @@
+---
+title: "Module 29 — Tests de spécification et diagnostics"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le Module 2 *corrige* l'hétéroscédasticité et l'autocorrélation (sandwich,
+Newey-West) ; le Module 5 *corrige* l'endogénéité (IV). Encore faut-il les
+**détecter** — et savoir si la correction est nécessaire ou valide. Ce module
+rassemble la **trousse de diagnostics** de l'économétricien : chaque test compare
+un modèle contraint ($H_0$) à une alternative, presque toujours via une
+**régression auxiliaire** et une statistique $nR^2$ ($\chi^2$) ou un $F$.
+
+## Hétéroscédasticité {#sec-hetero}
+
+Sous $H_0:\operatorname{Var}(\varepsilon_i)=\sigma^2$, les résidus au carré ne
+doivent pas dépendre des régresseurs.
+
+- **Breusch-Pagan** (studentisé, Koenker) : régresser $\hat\varepsilon_i^2$ sur
+  $X$ ; $BP=nR^2_{\text{aux}}\sim\chi^2_{p-1}$.
+- **White** : idem en ajoutant **carrés et produits croisés** de $X$ — détecte
+  toute dépendance de la variance en $X$, sans forme imposée.
+
+**Remède : FGLS.** On modélise $\log\hat\varepsilon_i^2=X_i\gamma$, d'où des poids
+$\hat w_i=1/\exp(X_i\hat\gamma)$ et une WLS (Module 2), asymptotiquement plus
+efficace que l'OLS. *(MC : FGLS réduit fortement la statistique de BP.)*
+
+## Autocorrélation {#sec-auto}
+
+- **Durbin-Watson** : $DW=\sum_{t\ge2}(\hat\varepsilon_t-\hat\varepsilon_{t-1})^2
+  /\sum_t\hat\varepsilon_t^2\approx 2(1-\hat\rho)$. Proche de 2 = pas
+  d'autocorrélation.
+- **Breusch-Godfrey** (LM) : régresser $\hat\varepsilon$ sur $X$ et $p$ retards de
+  $\hat\varepsilon$ ; $nR^2\sim\chi^2_p$. Plus général (ordre élevé, régresseurs
+  retardés admis) que Durbin-Watson.
+
+## Endogénéité et instruments {#sec-endo}
+
+- **Durbin-Wu-Hausman** : régresser les régresseurs suspects sur les instruments
+  ($\hat V$ résidus de première étape), les ajouter à l'OLS et **tester leur
+  significativité jointe** ($F$). Non-rejet $\Rightarrow$ l'OLS suffit ;
+  rejet $\Rightarrow$ l'endogénéité est réelle, l'IV (Module 5) est requis.
+  *(La forme augmentée est algébriquement équivalente au test de Hausman
+  $\hat\beta_{IV}-\hat\beta_{OLS}$.)*
+- **Sargan** (suridentification) : régresser les **résidus 2SLS** sur *tous* les
+  instruments ; $nR^2\sim\chi^2_{q-k}$. Rejet = au moins un instrument est
+  **invalide** (corrélé à l'erreur). N'a de sens que si $q>k$.
+
+## Forme fonctionnelle et normalité {#sec-form}
+
+- **RESET (Ramsey)** : ajouter $\hat y^2,\hat y^3$ au modèle et tester ($F$) leur
+  significativité. Rejet = non-linéarité négligée.
+- **Jarque-Bera** : $JB=\tfrac n6(S^2+\tfrac14(K-3)^2)\sim\chi^2_2$, où $S$
+  (asymétrie) et $K$ (aplatissement) valent $0$ et $3$ sous normalité.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Test | Cible | Fonction R (`R/29_diagnostics.R`) | Référence |
+|---|---|---|---|
+| Breusch-Pagan | hétéroscéd. | `bp_test` | `lmtest::bptest` |
+| White | hétéroscéd. | `white_test` | `lmtest::bptest` |
+| Durbin-Watson | autocorr. | `dw_test` | `lmtest::dwtest` |
+| Breusch-Godfrey | autocorr. | `bg_test` | `lmtest::bgtest` |
+| Durbin-Wu-Hausman | endogén. | `dwh_test` | `AER::ivreg` (Wu-Hausman) |
+| Sargan | suridentif. | `sargan_test` | `AER::ivreg` (Sargan) |
+| RESET | forme fonct. | `reset_test` | `lmtest::resettest` |
+| Jarque-Bera | normalité | `jarque_bera` | `tseries::jarque.bera.test` |
+| FGLS (remède) | hétéroscéd. | `fgls` | — |
+
+Validation : **toutes** les statistiques coïncident avec leur référence à la
+précision machine ($<10^{-13}$). Monte Carlo : sous $H_0$ les tests ont la
+**taille** nominale (~5 %) ; sous l'alternative, leur **puissance** croît.
+
+## Références {.unnumbered}
+
+- Breusch & Pagan (1979) ; Koenker (1981) ; White (1980) ; Durbin & Watson
+  (1950) ; Godfrey (1978) ; Hausman (1978) ; Sargan (1958) ; Ramsey (1969) ;
+  Jarque & Bera (1980).

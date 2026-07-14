@@ -1,0 +1,64 @@
+---
+title: "Module 39 — Machines à vecteurs de support (SVM)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Parmi tous les hyperplans séparateurs, le SVM choisit celui de **marge maximale**
+— le plus robuste. Sa formulation **duale** ne fait intervenir les données que par
+**produits scalaires**, ouvrant l'**astuce du noyau** : des frontières non
+linéaires sans jamais construire l'espace de caractéristiques.
+
+## Marge maximale et forme primale {#sec-primal}
+
+Pour des classes $y_i\in\{-1,+1\}$, la marge d'un hyperplan $w^\top x+b$ est
+$1/\|w\|$. La **marge souple** (Cortes-Vapnik) minimise
+$$
+\tfrac12\|w\|^2 + C\sum_i \xi_i \quad\text{s.c.}\quad y_i(w^\top x_i+b)\ge 1-\xi_i,\ \xi_i\ge 0,
+\tag{39.1}
+$$
+soit, de façon équivalente, la **perte hinge** régularisée
+$\sum_i\max(0,1-y_i(w^\top x_i+b))+\tfrac1{2C}\|w\|^2$. Le paramètre $C$ règle le
+compromis marge/erreurs.
+
+## Le dual et l'astuce du noyau {#sec-dual}
+
+Le lagrangien de (39.1) donne le **problème dual** (une QP) :
+$$
+\max_\alpha\ \sum_i\alpha_i-\tfrac12\sum_{ij}\alpha_i\alpha_j y_iy_j\,\langle x_i,x_j\rangle
+\quad\text{s.c.}\quad 0\le\alpha_i\le C,\ \sum_i\alpha_i y_i=0.
+\tag{39.2}
+$$
+
+> **Astuce du noyau.** Comme (39.2) ne dépend que de $\langle x_i,x_j\rangle$, on
+> remplace ce produit scalaire par un **noyau** $K(x_i,x_j)$ (Module 27) — RBF,
+> polynomial… — et l'on apprend une frontière non linéaire *sans* expliciter
+> l'espace. La prédiction est $\hat y(x)=\mathrm{sign}\bigl(\sum_i\alpha_i y_i K(x_i,x)+b\bigr)$.
+
+Les $x_i$ avec $\alpha_i>0$ sont les **vecteurs de support** : eux seuls
+définissent la frontière (parcimonie). *(Vérifié : mêmes prédictions et même
+nombre de vecteurs de support que `e1071` ; le noyau RBF sépare le XOR que le
+linéaire ne peut pas.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/39_svm.R`) | Référence |
+|---|---|---|
+| (39.2) SVM dual (QP) | `svm_fit(X, y, C, kernel)` | `e1071::svm` |
+| noyau RBF | `svm_rbf(X1, X2, gamma)` | — |
+| prédiction | `svm_predict(object, Xnew)` | `e1071` |
+
+Validation : prédictions et nombre de vecteurs de support = `e1071` (libsvm), aux
+tolérances de la QP ; conditions KKT ($0\le\alpha\le C$, $\sum\alpha y=0$) ;
+séparabilité parfaite en marge dure. Monte Carlo : l'astuce du noyau (linéaire vs
+RBF) et l'effet de $C$ sur la parcimonie.
+
+## Références {.unnumbered}
+
+- Cortes & Vapnik (1995), « Support-vector networks », *Machine Learning*.
+- Boser, Guyon & Vapnik (1992) — l'astuce du noyau.
+- Schölkopf & Smola (2002), *Learning with Kernels*.

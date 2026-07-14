@@ -1,0 +1,74 @@
+---
+title: "Module 35 — Entraînement des réseaux : optimiseurs et régularisation"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le Module 12 entraînait un MLP par **SGD nu**. En pratique, l'apprentissage
+profond repose sur deux familles d'outils que ce module reconstruit : des
+**optimiseurs adaptatifs** (Adam) qui accélèrent la descente, et des couches de
+**régularisation** (dropout, batch normalization) qui stabilisent et généralisent.
+
+## Optimiseurs adaptatifs {#sec-opt}
+
+Le SGD à pas fixe souffre du **mauvais conditionnement** : un pas trop grand
+diverge dans les directions raides, trop petit rampe dans les directions plates.
+
+- **Momentum (Polyak)** : $u_t=\mu u_{t-1}-\eta g_t$, $x_{t+1}=x_t+u_t$ — accumule
+  l'inertie, amortit les oscillations.
+- **RMSprop** : $v_t=\rho v_{t-1}+(1-\rho)g_t^2$, pas $\eta g_t/\sqrt{v_t+\epsilon}$
+  — normalise **par coordonnée** selon l'amplitude récente des gradients.
+- **Adam** : combine les deux, avec correction de biais des moments,
+$$
+m_t=\beta_1 m_{t-1}+(1-\beta_1)g_t,\quad v_t=\beta_2 v_{t-1}+(1-\beta_2)g_t^2,\quad
+x_{t+1}=x_t-\eta\,\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon},
+\tag{35.1}
+$$
+avec $\hat m_t=m_t/(1-\beta_1^t)$, $\hat v_t=v_t/(1-\beta_2^t)$. C'est l'optimiseur
+par défaut du *deep learning*. *(Vérifié : converge sur une quadratique mal
+conditionnée où le GD à pas fixe peine.)*
+
+## Dropout {#sec-dropout}
+
+À l'apprentissage, on **éteint** aléatoirement une fraction $r$ des unités et l'on
+**remet à l'échelle** par $1/(1-r)$ (*inverted dropout*), ce qui **préserve
+l'espérance**. À l'évaluation, l'identité. Effet : empêche la **co-adaptation**
+des neurones — une forme de moyennage d'ensemble implicite, donc de
+régularisation. *(Vérifié : identité en test, espérance préservée en apprentissage.)*
+
+## Batch normalization {#sec-bn}
+
+On normalise chaque feature sur le **batch** puis on la ré-échelle :
+$$
+\hat x_j=\frac{x_j-\mu_j}{\sqrt{\sigma_j^2+\epsilon}},\qquad y_j=\gamma_j\hat x_j+\beta_j.
+\tag{35.2}
+$$
+Cela **réduit le décalage de covariance interne** (la distribution des entrées
+d'une couche cesse de dériver pendant l'apprentissage), autorisant des pas plus
+grands et une convergence plus rapide. La **rétropropagation** à travers (35.2)
+demande un peu d'algèbre (dérivées via $\mu$ et $\sigma^2$) — implémentée et
+**vérifiée contre la différentiation numérique** ($10^{-8}$).
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/35_nn_training.R`) |
+|---|---|
+| (35.1) Adam | `optim_adam(grad, x0, ...)` |
+| RMSprop, momentum | `optim_rmsprop`, `optim_momentum` |
+| dropout (inverted) | `dropout(x, rate, training)` |
+| (35.2) batch norm (avant/arrière) | `batch_norm`, `batch_norm_backward` |
+
+Validation : les optimiseurs convergent vers l'optimum d'une quadratique mal
+conditionnée ; dropout préserve l'espérance ; la rétropropagation de la batch
+norm coïncide avec `numDeriv`. Monte Carlo : Adam converge nettement plus vite
+que le GD ; le dropout réduit le sur-apprentissage.
+
+## Références {.unnumbered}
+
+- Kingma & Ba (2015), « Adam: a method for stochastic optimization ».
+- Srivastava et al. (2014), « Dropout ». Ioffe & Szegedy (2015), « Batch
+  normalization ». Tieleman & Hinton (2012, RMSprop) ; Polyak (1964, momentum).

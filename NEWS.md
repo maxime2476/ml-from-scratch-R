@@ -19,6 +19,14 @@ d'apprentissage et d'économétrie, validés contre les packages de référence 
   (Breusch-Pagan, White, Hausman, Sargan…), variables dépendantes limitées
   (probit, Tobit, Heckman), séries temporelles (AR/ARMA, ADF), non paramétrique
   et RDD, MCMC, méthode delta et tests multiples.
+* Réseaux de neurones profonds (Modules 35–38) : optimiseurs (Adam) et
+  régularisation (dropout, batch norm), CNN, RNN/LSTM, attention et Transformer.
+* Machine learning — compléments (Modules 39–43) : SVM (dual QP, noyau),
+  classifieurs génératifs (LDA/QDA/Naive Bayes), clustering avancé (hiérarchique,
+  DBSCAN, spectral), réduction de dimension (kernel PCA, ICA, NMF, t-SNE), bandits
+  et apprentissage par renforcement (UCB, Thompson, Q-learning).
+* Économétrie avancée (Modules 44–47) : VAR (Granger, IRF), GARCH, analyse de
+  survie (Kaplan-Meier, Cox), panel avancé (contrôle synthétique, panel dynamique).
 * Contribution originale : diagramme de phase des estimateurs ; chapitre de
   théorie (efficacité semiparamétrique du DML) ; mémoire écrit défendu.
 * Infrastructure : compendium reproductible (`renv`, `_targets.R`, `Dockerfile`,

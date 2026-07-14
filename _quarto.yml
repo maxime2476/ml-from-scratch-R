@@ -65,6 +65,25 @@ book:
         - derivations/32_nonparametric.qmd
         - derivations/33_mcmc.qmd
         - derivations/34_inference_tools.qmd
+    - part: "Réseaux de neurones profonds"
+      chapters:
+        - derivations/35_nn_training.qmd
+        - derivations/36_cnn.qmd
+        - derivations/37_rnn.qmd
+        - derivations/38_attention.qmd
+    - part: "Machine learning (compléments)"
+      chapters:
+        - derivations/39_svm.qmd
+        - derivations/40_generative.qmd
+        - derivations/41_clustering.qmd
+        - derivations/42_dimreduction.qmd
+        - derivations/43_bandits_rl.qmd
+    - part: "Économétrie avancée"
+      chapters:
+        - derivations/44_var.qmd
+        - derivations/45_garch.qmd
+        - derivations/46_survival.qmd
+        - derivations/47_panel_advanced.qmd
     - part: "Applications et études"
       chapters:
         - applications/lalonde.qmd

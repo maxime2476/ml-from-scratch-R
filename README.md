@@ -157,6 +157,41 @@ paramétrique et l'inférence bayésienne computationnelle. La bibliographie
 consolidée est dans [`references.bib`](references.bib) ; un
 [glossaire et index des notations](rapport/glossaire.qmd) couvre l'ensemble.
 
+### Réseaux de neurones profonds (modules 35–38)
+
+| Fichier | Module | Points clés | Réf. |
+|:-------:|--------|-------------|------|
+| `35` | **Optimiseurs & régularisation** | Adam, RMSprop, momentum ; dropout, batch normalization | `numDeriv` |
+| `36` | **CNN** | convolution, pooling, rétropropagation, partage de poids | `numDeriv` |
+| `37` | **RNN / LSTM** | états cachés, BPTT, gradient évanescent, autoroute LSTM | `numDeriv` |
+| `38` | **Attention & Transformer** | attention, multi-têtes, encodage positionnel, layer norm | *propriétés* |
+
+### Machine learning — compléments (modules 39–43)
+
+| Fichier | Module | Points clés | Réf. |
+|:-------:|--------|-------------|------|
+| `39` | **SVM** | marge maximale, dual QP, astuce du noyau | `e1071` |
+| `40` | **Classifieurs génératifs** | LDA, QDA, Naive Bayes | `MASS`, `e1071` |
+| `41` | **Clustering avancé** | hiérarchique, DBSCAN, spectral | `stats`, `dbscan` |
+| `42` | **Réduction de dimension** | kernel PCA, ICA, NMF, t-SNE | `kernlab`, `fastICA` |
+| `43` | **Bandits & RL** | UCB, Thompson, value iteration, Q-learning | *théorie* |
+
+### Économétrie avancée (modules 44–47)
+
+| Fichier | Module | Points clés | Réf. |
+|:-------:|--------|-------------|------|
+| `44` | **VAR / VECM** | VAR(p), causalité de Granger, IRF | `vars` |
+| `45` | **GARCH** | ARCH-LM, volatilité conditionnelle (MLE) | `tseries` |
+| `46` | **Survie / durée** | Kaplan-Meier, log-rank, Cox | `survival` |
+| `47` | **Panel avancé** | contrôle synthétique, panel dynamique (biais de Nickell) | `plm` |
+
+**Le projet compte désormais 48 modules (0–47)** couvrant les moindres carrés,
+l'inférence, les GLM, la régularisation, les arbres/forêts/boosting, la théorie
+de l'apprentissage, la causalité (DML, DiD, sensibilité, contrôle synthétique),
+les réseaux profonds (CNN, RNN, Transformer), le clustering et la réduction de
+dimension, l'apprentissage par renforcement, et l'économétrie des séries
+temporelles, de la volatilité, de la survie et du panel dynamique.
+
 ### Applications, études et outils
 
 - **`applications/lalonde.R`** — la boîte à outils causale (OLS, IPW, DML, lasso

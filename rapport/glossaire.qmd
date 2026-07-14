@@ -58,6 +58,20 @@ Référence transversale : les **notations** communes à tout le projet et les
 | **MCMC** | échantillonner un posterieur sans forme fermée | 33 |
 | **Méthode delta** | variance asymptotique d'une fonction d'un estimateur | 34 |
 | **FWER / FDR** | garanties des tests multiples (Bonferroni / BH) | 34 |
+| **Adam / batch norm / dropout** | optimiseur adaptatif et régularisations d'un réseau | 35 |
+| **Convolution / pooling** | partage de poids local ; sous-échantillonnage (CNN) | 36 |
+| **BPTT / gradient évanescent** | rétropropagation dans le temps ; oubli du RNN | 37 |
+| **LSTM** | cellule à portes ; autoroute de mémoire | 37 |
+| **Attention / Transformer** | recherche associative pondérée ; encodage positionnel | 38 |
+| **SVM / astuce du noyau** | marge maximale ; frontière non linéaire via noyau | 39 |
+| **LDA / QDA / Naive Bayes** | classifieurs génératifs (frontière linéaire/quadratique/naïve) | 40 |
+| **DBSCAN / spectral** | clustering par densité ; par le spectre du graphe | 41 |
+| **kernel PCA / ICA / NMF / t-SNE** | réductions de dimension non linéaires | 42 |
+| **UCB / Thompson / Q-learning** | exploration-exploitation ; RL sans modèle | 43 |
+| **VAR / Granger / IRF** | séries multivariées ; précédence prédictive ; réponse à un choc | 44 |
+| **ARCH / GARCH** | volatilité conditionnelle (regroupement) | 45 |
+| **Kaplan-Meier / Cox** | survie non paramétrique ; risques proportionnels | 46 |
+| **Contrôle synthétique / biais de Nickell** | clone pondéré ; biais du panel dynamique à effets fixes | 47 |
 
 ## Les quatre idées (aide-mémoire) {#sec-idees}
 

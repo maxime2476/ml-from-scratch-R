@@ -95,6 +95,21 @@ reference:
   contents:
   - matches("^kde$|nadaraya_watson|local_linear|bw_loocv|^rdd$|metropolis_hastings|gibbs_linreg|gelman_rubin|^ess$")
 
+- title: "Réseaux de neurones profonds"
+  desc: "Optimiseurs, régularisation, CNN, RNN/LSTM, attention (Modules 35-38)."
+  contents:
+  - matches("optim_adam|optim_rmsprop|optim_momentum|^dropout$|batch_norm|conv2d|max_pool2d|rnn_forward|rnn_backward|lstm_forward|softmax_rows|^attention$|multi_head_attention|positional_encoding|layer_norm")
+
+- title: "Machine learning : SVM, génératifs, clustering, réduction de dimension, RL"
+  desc: "Modules 39-43."
+  contents:
+  - matches("svm_fit|svm_predict|svm_rbf|lda_fit|lda_predict|qda_fit|qda_predict|naive_bayes|agglomerative|dbscan_fit|spectral_clustering|kernel_pca|ica_fastica|^nmf$|^tsne$|bandit_ucb|bandit_thompson|value_iteration|q_learning")
+
+- title: "Économétrie avancée : VAR, GARCH, survie, panel"
+  desc: "Modules 44-47."
+  contents:
+  - matches("var_fit|granger_test|var_irf|arch_lm_test|garch_fit|kaplan_meier|logrank_test|cox_ph|synthetic_control|dynamic_panel")
+
 - title: "Package"
   contents:
   - matches("mlfromscratch")

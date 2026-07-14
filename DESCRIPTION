@@ -61,6 +61,7 @@ Suggests:
     sampleSelection,
     tseries,
     vars,
+    survival,
     rdrobust,
     e1071,
     dbscan,

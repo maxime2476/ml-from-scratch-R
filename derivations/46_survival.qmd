@@ -1,0 +1,67 @@
+---
+title: "Module 46 — Analyse de survie (durée)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+La variable expliquée est une **durée** jusqu'à un événement (décès, panne,
+défaut, résiliation…). Deux particularités interdisent l'OLS : la durée est
+**positive et asymétrique**, et surtout **censurée** — pour beaucoup de sujets on
+ne sait que « l'événement n'a pas eu lieu avant $t$ ». On modélise la **fonction
+de survie** $S(t)=P(T>t)$ et le **risque** $\lambda(t)$.
+
+## Kaplan-Meier {#sec-km}
+
+Estimateur **non paramétrique** de $S(t)$ qui exploite correctement la censure :
+$$
+\hat S(t)=\prod_{t_i\le t}\Bigl(1-\frac{d_i}{n_i}\Bigr),
+\tag{46.1}
+$$
+$d_i$ = événements et $n_i$ = sujets **à risque** en $t_i$. Une censure retire un
+sujet du risque **sans** compter comme événement — l'information partielle est
+ainsi utilisée. *(Vérifié : = `survival::survfit`.)*
+
+## Log-rank {#sec-logrank}
+
+Pour comparer deux courbes de survie, on cumule à chaque temps d'événement l'écart
+entre décès **observés** et **attendus** (sous survies égales) ;
+$\chi^2=(O-E)^2/V$. *(= `survival::survdiff`.)*
+
+## Modèle de Cox à risques proportionnels {#sec-cox}
+
+Modèle **semi-paramétrique** : le risque est
+$$
+\lambda(t\mid x)=\lambda_0(t)\,\exp(x^\top\beta),
+\tag{46.2}
+$$
+où le **risque de base** $\lambda_0(t)$ reste **non spécifié** — seul le rapport
+$\exp(x^\top\beta)$ (hazard ratio) est modélisé. On estime $\beta$ **sans**
+$\lambda_0$ par la **vraisemblance partielle** :
+$$
+L(\beta)=\prod_{i:\,\text{événement}}\frac{\exp(x_i^\top\beta)}{\sum_{j\in R(t_i)}\exp(x_j^\top\beta)},
+\tag{46.3}
+$$
+$R(t_i)$ = ensemble à risque. Le $\log L$ se maximise par Newton. C'est l'un des
+modèles les plus utilisés en biostatistique et en durée. *(Vérifié : $\hat\beta$
+et se = `survival::coxph` ; récupère le vrai hazard ratio.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/46_survival.R`) | Référence |
+|---|---|---|
+| (46.1) Kaplan-Meier | `kaplan_meier(time, event)` | `survival::survfit` |
+| log-rank | `logrank_test(time, event, group)` | `survival::survdiff` |
+| (46.2)-(46.3) Cox | `cox_ph(time, event, X)` | `survival::coxph` |
+
+Validation : Kaplan-Meier, log-rank et les coefficients de Cox coïncident avec le
+package `survival`. Monte Carlo : Cox récupère le vrai hazard ratio et le
+log-rank détecte une différence de survie.
+
+## Références {.unnumbered}
+
+- Kaplan & Meier (1958). Cox (1972), « Regression models and life-tables », *JRSS-B*.
+- Klein & Moeschberger (2003), *Survival Analysis*.

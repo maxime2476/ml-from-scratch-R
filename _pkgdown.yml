@@ -78,6 +78,23 @@ reference:
   contents:
   - matches("mc_|coverage_mc|reject_mc|convergence_study|rmse_rate|hoeffding|rademacher|shatter|separable|concentration|edge_length|gaussian_loglik|ridge_posterior|m_estimation|ols_psi|bias_variance_mc")
 
+- title: "Diagnostics, tests et outils d'inférence"
+  desc: "Tests de spécification (Module 29), méthode delta et tests multiples (Module 34)."
+  contents:
+  - matches("bp_test|white_test|dw_test|bg_test|dwh_test|sargan_test|reset_test|jarque_bera|fgls|delta_method|p_adjust")
+
+- title: "Variables dépendantes limitées"
+  contents:
+  - matches("^probit$|tobit_fit|heckman")
+
+- title: "Séries temporelles"
+  contents:
+  - matches("acf_ts|pacf_ts|ar_yw|arma_css|ljung_box|adf_test")
+
+- title: "Non paramétrique, RDD et MCMC"
+  contents:
+  - matches("^kde$|nadaraya_watson|local_linear|bw_loocv|^rdd$|metropolis_hastings|gibbs_linreg|gelman_rubin|^ess$")
+
 - title: "Package"
   contents:
   - matches("mlfromscratch")

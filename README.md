@@ -154,6 +154,19 @@ traversent les 29 modules.
 - **`shiny-app/`** — laboratoire interactif (biais-variance, chemins de
   régularisation, orthogonalisation DML) : `shiny::runApp("shiny-app")`.
 
+### Compendium reproductible
+
+Le dépôt est un **compendium de recherche citable** :
+
+- **`renv.lock`** — versions exactes de tous les packages.
+- **`_targets.R`** — pipeline à **dépendances suivies** (`make pipeline` /
+  `targets::tar_make()`) : seuls les objets impactés sont recalculés ; graphe via
+  `targets::tar_visnetwork()`.
+- **`Dockerfile`** — environnement bit-à-bit (R épinglé + Quarto + LaTeX, renv
+  restauré) : `make docker`.
+- **`CITATION.cff`** — métadonnées de citation (prêtes pour un DOI Zenodo).
+- **`run_tests.R`** — suite complète en processus isolés (cf. ci-dessous).
+
 ## Prérequis
 
 - **R ≥ 4.x**

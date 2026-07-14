@@ -5,7 +5,7 @@
 RSCRIPT ?= Rscript
 QUARTO  ?= quarto
 
-.PHONY: all tests sims derivations rapport book check clean help
+.PHONY: all tests sims derivations rapport book check clean help pipeline docker
 
 help:            ## Affiche les cibles disponibles
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -13,8 +13,14 @@ help:            ## Affiche les cibles disponibles
 
 all: tests sims  ## Lance les tests puis toutes les simulations
 
-tests:           ## Suite de tests testthat (255 vérifications)
-	$(RSCRIPT) run_all.R tests
+tests:           ## Suite de tests, un processus par fichier (isolation, 380+ vérifs)
+	$(RSCRIPT) run_tests.R
+
+pipeline:        ## Reproduction à dépendances suivies (targets::tar_make)
+	$(RSCRIPT) -e "targets::tar_make()"
+
+docker:          ## Construit l'image Docker reproductible
+	docker build -t mlfromscratch .
 
 sims:            ## Toutes les études Monte Carlo
 	$(RSCRIPT) run_all.R sims

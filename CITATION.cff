@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "Si vous utilisez ce projet, merci de le citer comme ci-dessous."
+title: "ML from Scratch in R — Déconstruction mathématique et statistique des modèles d'apprentissage automatique"
+abstract: >-
+  Réimplémentation pédagogique, en R base, de 29 modules d'apprentissage
+  automatique et d'économétrie (des moindres carrés à la différentiation
+  automatique, en passant par la causalité en haute dimension, les processus
+  gaussiens et la double descente), chacun adossé à sa dérivation mathématique
+  complète, validé numériquement contre les packages de référence et étudié par
+  simulation Monte Carlo. Le fil conducteur — projection, fonction d'influence,
+  compromis biais-variance, optimisation — unifie statistique, économétrie et
+  machine learning.
+type: software
+authors:
+  - family-names: Gourguechon
+    given-names: Maxime
+    email: maxime.gourguechon76@gmail.com
+version: 0.0.0.9000
+date-released: "2026-07-14"
+license: MIT
+repository-code: "https://github.com/mgourguechon/ml-from-scratch-R"
+keywords:
+  - machine learning
+  - econometrics
+  - reproducible research
+  - influence functions
+  - double machine learning
+  - difference-in-differences
+  - gaussian processes
+  - automatic differentiation
+  - R

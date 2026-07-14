@@ -1,0 +1,66 @@
+---
+title: "Module 41 — Clustering avancé : hiérarchique, densité, spectral"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le k-means (Module 11) suppose des groupes **convexes, sphériques, de nombre
+connu**. Trois méthodes lèvent ces limites : la **hiérarchie** (un arbre de
+fusions, sans fixer $k$), la **densité** (DBSCAN : formes arbitraires + bruit) et
+le **spectre du graphe** (clusters non convexes).
+
+## Clustering hiérarchique agglomératif {#sec-hier}
+
+On part de $n$ singletons et l'on **fusionne** itérativement les deux groupes les
+plus proches, selon une **liaison** :
+$$
+d_{\text{complete}}=\max_{a\in A,b\in B}d(a,b),\ \ d_{\text{single}}=\min,\ \
+d_{\text{average}}=\tfrac1{|A||B|}\textstyle\sum d(a,b).
+$$
+La formule de **Lance-Williams** met à jour les distances en $O(1)$ à chaque
+fusion. On obtient un **dendrogramme** ; le couper à hauteur donnée fixe $k$.
+*(Vérifié : la partition à $k$ groupes = `stats::cutree(hclust)` — ARI $=1$.)*
+
+## DBSCAN : clustering par densité {#sec-dbscan}
+
+Un point est **cœur** s'il a $\ge$ `minPts` voisins dans un rayon $\varepsilon$.
+Les clusters sont les **composantes connexes** de points-cœur (avec leurs voisins
+directs) ; les points isolés sont du **bruit**. Avantages : détecte des **formes
+arbitraires**, ne fixe pas $k$, et **identifie les aberrants**. *(Vérifié :
+partition identique à `dbscan::dbscan`.)*
+
+## Clustering spectral {#sec-spectral}
+
+On construit un **graphe de similarité** $W$ (noyau RBF), sa matrice de degrés
+$D$, et le **Laplacien normalisé** $L=I-D^{-1/2}WD^{-1/2}$. On plonge les points
+dans les **$k$ vecteurs propres** de plus petites valeurs propres, on normalise
+par ligne, puis on applique k-means (Ng-Jordan-Weiss).
+
+> **Idée.** Les petites valeurs propres du Laplacien encodent la **connectivité**
+> du graphe : deux points reliés par un chemin dense (même « spirale ») sont
+> proches dans l'espace spectral, *même s'ils sont éloignés en distance
+> euclidienne*. Le spectral sépare donc les clusters **non convexes** que le
+> k-means déchire. *(MC : ARI $\approx1$ sur des cercles concentriques, où le
+> k-means échoue totalement.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/41_clustering.R`) | Référence |
+|---|---|---|
+| hiérarchique (Lance-Williams) | `agglomerative(X, k, linkage)` | `stats::hclust`/`cutree` |
+| DBSCAN | `dbscan_fit(X, eps, minPts)` | `dbscan::dbscan` |
+| spectral (Ng-Jordan-Weiss) | `spectral_clustering(X, k, gamma)` | *récupération de clusters* |
+
+Validation : la partition hiérarchique = `cutree(hclust)` (ARI $=1$) ; DBSCAN =
+`dbscan::dbscan` ; le spectral récupère des cercles concentriques. Monte Carlo :
+spectral et DBSCAN réussissent sur des formes non convexes là où le k-means échoue.
+
+## Références {.unnumbered}
+
+- Ward (1963) ; Lance & Williams (1967).
+- Ester, Kriegel, Sander & Xu (1996), « DBSCAN ».
+- Ng, Jordan & Weiss (2002) ; von Luxburg (2007), « A tutorial on spectral clustering ».

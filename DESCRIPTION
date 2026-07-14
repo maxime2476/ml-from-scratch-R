@@ -62,6 +62,7 @@ Suggests:
     tseries,
     rdrobust,
     e1071,
+    dbscan,
     coda
 VignetteBuilder: knitr
 Config/testthat/edition: 3

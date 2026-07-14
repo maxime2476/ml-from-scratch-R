@@ -1,0 +1,59 @@
+---
+title: "Module 45 — Volatilité conditionnelle (GARCH)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Les rendements financiers ont une moyenne quasi nulle et imprévisible, mais leur
+**variance varie dans le temps** : les journées agitées s'enchaînent (**regroupement
+de volatilité**). Le modèle **GARCH** capture cette dynamique de la variance
+conditionnelle — pilier de la finance empirique (VaR, options, gestion du risque).
+
+## Effet ARCH et test {#sec-arch}
+
+Un carré de rendement $\varepsilon_t^2$ élevé tend à être suivi d'autres élevés :
+c'est l'**hétéroscédasticité conditionnelle autorégressive (ARCH)**. Le **test
+ARCH-LM** régresse $\hat\varepsilon_t^2$ sur ses retards ; $nR^2\sim\chi^2_q$ sous
+l'absence d'effet. Rejet = la volatilité se regroupe. *(MC : rejette sur des
+données GARCH, pas sur du bruit blanc.)*
+
+## Le modèle GARCH(1,1) {#sec-garch}
+
+$$
+x_t=\sigma_t z_t,\ z_t\sim(0,1),\qquad
+\sigma_t^2=\omega+\alpha\,x_{t-1}^2+\beta\,\sigma_{t-1}^2.
+\tag{45.1}
+$$
+La variance de demain combine un **socle** $\omega$, la **surprise** d'hier
+$x_{t-1}^2$ (terme ARCH) et la **variance** d'hier $\sigma_{t-1}^2$ (terme GARCH,
+persistance). Contraintes : $\omega>0$, $\alpha,\beta\ge0$, et $\alpha+\beta<1$
+pour la **stationnarité** (la volatilité revient vers $\omega/(1-\alpha-\beta)$).
+
+**Estimation.** On maximise la **log-vraisemblance** (quasi-)gaussienne
+$$
+\ell(\omega,\alpha,\beta)=-\tfrac12\sum_t\Bigl(\log\sigma_t^2+\frac{x_t^2}{\sigma_t^2}\Bigr),
+\tag{45.2}
+$$
+$\sigma_t^2$ étant calculé récursivement par (45.1). *(Vérifié : $\hat\omega,
+\hat\alpha,\hat\beta$ = `tseries::garch` et récupèrent les vraies valeurs.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/45_garch.R`) | Référence |
+|---|---|---|
+| test ARCH-LM | `arch_lm_test(x, q)` | *définition $nR^2$* |
+| (45.1)-(45.2) GARCH(1,1) MLE | `garch_fit(x)` | `tseries::garch` |
+| volatilité conditionnelle | `garch_fit(x)$sigma` | — |
+
+Validation : paramètres = `tseries::garch` (à $\sim10^{-2}$, QMLE) et $\approx$ les
+vraies valeurs ; le test ARCH-LM détecte le regroupement. Monte Carlo : la
+volatilité conditionnelle estimée **suit** la volatilité réalisée (regroupement).
+
+## Références {.unnumbered}
+
+- Engle (1982) — ARCH. Bollerslev (1986) — GARCH.
+- Engle & Patton (2001) — « What good is a volatility model? ».

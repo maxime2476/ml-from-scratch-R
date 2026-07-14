@@ -1,0 +1,82 @@
+---
+title: "Module 33 — MCMC : l'inférence bayésienne computationnelle"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Les Modules 14 (ridge bayésien) et 27 (processus gaussiens) avaient un posterieur
+en **forme fermée** (conjugué). En général, il n'y en a pas. La solution : ne pas
+*calculer* le posterieur mais l'**échantillonner**, en construisant une **chaîne
+de Markov** dont la loi stationnaire **est** le posterieur $\pi(\theta)\propto
+\text{vraisemblance}\times\text{prior}$. On n'a besoin de $\pi$ **qu'à une
+constante près** — précisément ce que le théorème de Bayes fournit sans la
+constante de normalisation.
+
+## Metropolis-Hastings {#sec-mh}
+
+Depuis $\theta$, on **propose** $\theta'\sim q(\cdot\mid\theta)$ (ici une marche
+aléatoire $\theta'=\theta+\mathcal N(0,\Sigma)$) et on l'**accepte** avec
+$$
+\alpha=\min\Bigl(1,\ \frac{\pi(\theta')\,q(\theta\mid\theta')}{\pi(\theta)\,q(\theta'\mid\theta)}\Bigr)
+\ \overset{q\ \text{sym.}}{=}\ \min\Bigl(1,\frac{\pi(\theta')}{\pi(\theta)}\Bigr).
+\tag{33.1}
+$$
+
+> **Proposition 33.1 (stationnarité).** La condition de **bilan détaillé**
+> $\pi(\theta)P(\theta\to\theta')=\pi(\theta')P(\theta'\to\theta)$ est satisfaite
+> par la règle (33.1) ; $\pi$ est donc la loi **stationnaire** de la chaîne, et
+> les moyennes ergodiques convergent vers les espérances sous $\pi$.
+
+Le pas $\Sigma$ arbitre : trop petit = chaîne lente (taux d'acceptation ~1) ; trop
+grand = rejets fréquents. L'optimum empirique est un taux d'acceptation ~0.234
+(cibles de grande dimension). *(Vérifié : MH récupère les moments d'une cible
+normale et Beta.)*
+
+## Échantillonnage de Gibbs {#sec-gibbs}
+
+Quand les lois **conditionnelles complètes** sont connues, on les tire à tour de
+rôle (un cas particulier de MH avec acceptation toujours égale à 1). Pour la
+**régression linéaire bayésienne** (prior non informatif) :
+$$
+\beta\mid\sigma^2,y\sim\mathcal N\bigl(\hat\beta_{OLS},\sigma^2(X^\top X)^{-1}\bigr),\qquad
+\sigma^2\mid\beta,y\sim\text{Inv-Gamma}\bigl(\tfrac n2,\tfrac12\|y-X\beta\|^2\bigr).
+\tag{33.2}
+$$
+La chaîne explore le posterieur joint ; sa **moyenne coïncide avec l'OLS** (M1) —
+le pont bayésien/fréquentiste, obtenu par simulation. *(Vérifié.)*
+
+## Diagnostics de convergence {#sec-diag}
+
+Une chaîne fournit des tirages **corrélés** : il faut vérifier qu'elle a
+**convergé** et mesurer son information réelle.
+
+- **Gelman-Rubin ($\hat R$)** : lance plusieurs chaînes de départs dispersés et
+  compare variance inter- ($B$) et intra-chaîne ($W$) :
+  $\hat R=\sqrt{\hat V/W}$, $\hat V=\frac{n-1}nW+\frac Bn$. $\hat R\to 1$ à
+  convergence ; $>1.1$ = alerte. *(≈ `coda::gelman.diag`.)*
+- **Taille d'échantillon effective (ESS)** :
+  $\mathrm{ESS}=n/(1+2\sum_k\hat\rho_k)$ — le nombre de tirages **indépendants**
+  équivalents. *(≈ `coda::effectiveSize`.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/33_mcmc.R`) | Référence |
+|---|---|---|
+| (33.1) Metropolis-Hastings | `metropolis_hastings(log_target, ...)` | *moments cibles* |
+| (33.2) Gibbs (régression) | `gibbs_linreg(X, y)` | OLS (M1) |
+| Gelman-Rubin $\hat R$ | `gelman_rubin(chains)` | `coda::gelman.diag` |
+| taille effective (ESS) | `ess(x)` | `coda::effectiveSize` |
+
+Validation : MH récupère les moments d'une cible normale et Beta ; le Gibbs
+retrouve l'OLS ; $\hat R$ et ESS coïncident avec `coda`. Monte Carlo : l'effet du
+pas de proposition sur le mélange (acceptation, ESS) et la convergence.
+
+## Références {.unnumbered}
+
+- Metropolis et al. (1953) ; Hastings (1970) ; Geman & Geman (1984).
+- Gelman & Rubin (1992) ; Geyer (1992) — diagnostics.
+- Robert & Casella (2004), *Monte Carlo Statistical Methods*.

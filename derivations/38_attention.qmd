@@ -1,0 +1,76 @@
+---
+title: "Module 38 — Attention et Transformer"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le RNN (Module 37) traite une séquence **pas à pas** et peine sur les longues
+dépendances. Le **Transformer** remplace la récurrence par l'**attention** : un
+accès **direct** et parallèle à *toutes* les positions. C'est l'architecture des
+grands modèles de langage et de la vision moderne. On en reconstruit le cœur.
+
+## L'attention par produit scalaire {#sec-attn}
+
+Chaque position émet une **requête** $q$, chaque position offre une **clé** $k$ et
+une **valeur** $v$. La sortie d'une requête est une **moyenne pondérée des
+valeurs**, les poids mesurant la similarité requête-clé :
+$$
+\mathrm{Attn}(Q,K,V)=\underbrace{\mathrm{softmax}\!\Bigl(\frac{QK^\top}{\sqrt{d_k}}\Bigr)}_{\text{poids d'attention}}V.
+\tag{38.1}
+$$
+Le facteur $1/\sqrt{d_k}$ empêche les produits scalaires de saturer le softmax.
+C'est une **recherche associative douce** : une requête « récupère » la valeur de
+la clé qui lui ressemble le plus. *(Vérifié : les poids somment à 1 ; une requête
+alignée sur une clé récupère sa valeur.)*
+
+**Masque causal.** En génération auto-régressive, la position $i$ ne doit voir que
+$j\le i$ : on met $-\infty$ au-dessus de la diagonale avant le softmax. *(Vérifié.)*
+
+## Attention multi-têtes {#sec-mha}
+
+On projette $X$ en $Q,K,V$, on découpe en $h$ **têtes** (sous-espaces), on applique
+(38.1) en parallèle, puis on concatène et reprojette. Chaque tête capte un **type
+de relation** différent (syntaxe, coréférence…).
+
+## Permutation-équivariance et encodage positionnel {#sec-pos}
+
+> **Propriété.** L'attention est **équivariante à la permutation** des positions :
+> réordonner les entrées réordonne identiquement les sorties. Elle ignore donc
+> l'**ordre**.
+
+C'est un problème pour le langage (l'ordre porte le sens). On ajoute donc un
+**encodage positionnel** sinusoïdal $PE_{pos,2i}=\sin(pos/10000^{2i/d})$,
+$PE_{pos,2i+1}=\cos(\cdot)$, qui injecte l'information d'ordre. *(Vérifié :
+permutation-équivariance exacte ; l'encodage positionnel la brise.)*
+
+## Le bloc Transformer {#sec-block}
+
+Un bloc empile : attention multi-têtes $\to$ **connexion résiduelle** +
+**layer norm** $\to$ réseau dense position par position $\to$ résiduelle + norm.
+Les briques `multi_head_attention`, `layer_norm` et le MLP (Module 12) suffisent à
+le composer ; entraîné par autodiff (Module 28).
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/38_attention.R`) |
+|---|---|
+| softmax stable | `softmax_rows(X)` |
+| (38.1) attention (+ masque causal) | `attention(Q, K, V, mask)` |
+| attention multi-têtes | `multi_head_attention(X, ...)` |
+| encodage positionnel | `positional_encoding(seq_len, d_model)` |
+| layer norm | `layer_norm(X, gamma, beta)` |
+
+Validation : les poids d'attention somment à 1 ; le masque causal annule le futur ;
+l'attention est permutation-équivariante et l'encodage positionnel la brise ;
+l'encodage suit sa formule. Monte Carlo : l'attention comme **recherche
+associative** (netteté croissante avec l'échelle) et la nécessité de l'encodage
+positionnel.
+
+## Références {.unnumbered}
+
+- Vaswani et al. (2017), « Attention is all you need », *NeurIPS*.
+- Bahdanau, Cho & Bengio (2015) — attention pour la traduction.

@@ -1,0 +1,63 @@
+---
+title: "Module 47 — Panel avancé : contrôle synthétique et panel dynamique"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Deux méthodes causales pour données de panel, au-delà des effets fixes (Module 21)
+et de la DiD (Module 25) : le **contrôle synthétique** (une seule unité traitée,
+comparée à un « clone » pondéré) et le **panel dynamique** (quand le passé de $y$
+est un régresseur, les effets fixes deviennent biaisés).
+
+## Contrôle synthétique {#sec-sc}
+
+Quand **une** unité est traitée (une région, un pays) et qu'aucun contrôle unique
+ne lui ressemble, on en fabrique un **synthétique** : une combinaison **convexe**
+des unités de contrôle,
+$$
+\hat w=\arg\min_{w\ge0,\ \mathbf 1^\top w=1}\ \bigl\|Y^{\text{traité}}_{\text{pré}}-Y^{\text{contrôles}}_{\text{pré}}\,w\bigr\|^2,
+\tag{47.1}
+$$
+qui **reproduit la trajectoire pré-traitement** (résolu par programmation
+quadratique). L'**effet** est l'écart post-traitement entre l'unité et son
+synthétique. La contrainte simplexe évite l'extrapolation. *(Vérifié : récupère
+une combinaison convexe connue ; détecte un effet injecté.)*
+
+## Panel dynamique et biais de Nickell {#sec-dyn}
+
+Soit $y_{it}=\rho y_{i,t-1}+\alpha_i+\varepsilon_{it}$.
+
+> **Le piège.** L'estimateur **within** (effets fixes) est **biaisé** même à
+> grand $N$ : après démean, $\tilde y_{i,t-1}$ contient $\bar y_i$, donc *tous* les
+> $\varepsilon_{is}$, et se corrèle à $\tilde\varepsilon_{it}$. C'est le **biais de
+> Nickell**, d'ordre $-1/T$ (sévère en panel court).
+
+**La solution.** On **différencie** pour éliminer $\alpha_i$ :
+$\Delta y_{it}=\rho\Delta y_{i,t-1}+\Delta\varepsilon_{it}$. On **instrumente**
+$\Delta y_{i,t-1}$ par le **niveau retardé** $y_{i,t-2}$ (Anderson-Hsiao) : il est
+corrélé à $\Delta y_{i,t-1}$ mais **pas** à $\Delta\varepsilon_{it}=\varepsilon_{it}
+-\varepsilon_{i,t-1}$. Arellano-Bond généralise en empilant *tous* les niveaux
+retardés comme instruments (GMM, plus efficace). *(Vérifié : l'IV est ~ sans
+biais, le within nettement biaisé ; $\approx$ `plm::pgmm`.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/47_panel_advanced.R`) | Référence |
+|---|---|---|
+| (47.1) contrôle synthétique | `synthetic_control(Y1, Y0, pre)` | *construction* |
+| panel dynamique (IV) | `dynamic_panel_iv(data)` | `plm::pgmm` |
+| within (biais de Nickell) | `dynamic_panel_fe(data)` | — |
+
+Validation : le contrôle synthétique récupère une combinaison convexe connue et
+détecte un effet ; l'IV corrige le biais de Nickell du within et s'accorde à
+`plm::pgmm`. Monte Carlo : ampleur du biais de Nickell (within) vs la correction IV.
+
+## Références {.unnumbered}
+
+- Abadie, Diamond & Hainmueller (2010) — contrôle synthétique.
+- Nickell (1981) — biais des effets fixes dynamiques.
+- Anderson & Hsiao (1981) ; Arellano & Bond (1991) — GMM en panel dynamique.

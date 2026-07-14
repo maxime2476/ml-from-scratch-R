@@ -1,0 +1,72 @@
+---
+title: "Glossaire et index des notations"
+format:
+  html: {toc: true, number-sections: false}
+---
+
+Référence transversale : les **notations** communes à tout le projet et les
+**termes** clés, avec le module où chacun est introduit.
+
+## Index des notations {#sec-notations}
+
+| Symbole | Signification |
+|:---:|---|
+| $n,\;p$ | taille d'échantillon ; nombre de variables |
+| $X$ | matrice de design $n\times p$ (constante incluse) |
+| $y,\;\hat y$ | réponse ; valeurs ajustées |
+| $\beta,\;\hat\beta$ | coefficients ; leur estimateur |
+| $\hat\varepsilon,\;\sigma^2$ | résidus ; variance du bruit |
+| $\Phi,\;\phi$ | fonction de répartition et densité de $\mathcal N(0,1)$ |
+| $(X^\top X)^{-1}$ | via QR/Cholesky/SVD (Module 0), jamais l'inverse explicite |
+| $\hat\Sigma$ | matrice de covariance estimée d'un estimateur |
+| $\mathrm{IC}(z)$ | fonction d'influence (Module 24) |
+| $\lambda$ | pénalité de régularisation (ridge, lasso) ou intensité |
+| $\ell,\;h$ | échelle d'un noyau / fenêtre (Modules 27, 32) |
+| $K,\;K_h$ | noyau ; noyau remis à l'échelle $h$ |
+| $D,\;d$ | traitement (0/1) ; variable de traitement |
+| $\tau,\;\theta$ | effet causal (ATE, ATT) ; paramètre d'intérêt |
+| $e(x)$ | score de propension $P(D=1\mid X=x)$ |
+| $\hat\rho_k$ | autocorrélation au retard $k$ (Module 31) |
+| $\hat R,\;\mathrm{ESS}$ | Gelman-Rubin ; taille d'échantillon effective (Module 33) |
+
+## Glossaire des termes {#sec-termes}
+
+| Terme | Définition brève | Module |
+|---|---|:---:|
+| **Frisch-Waugh-Lovell** | contrôler $X$ = résidualiser ; base de tout partialling-out | 1 |
+| **Sandwich** | variance robuste $A^{-1}BA^{-1}$ | 2, 14 |
+| **IRLS** | moindres carrés pondérés itérés ; le Newton des GLM | 3 |
+| **Soft-thresholding** | l'opérateur de seuillage qui résout le lasso | 4 |
+| **Endogénéité** | régresseur corrélé à l'erreur ; biaise l'OLS | 5, 29 |
+| **VC-dimension / Rademacher** | mesures de complexité d'une classe de fonctions | 13 |
+| **M-estimation** | estimateur défini par $\sum\psi=0$ ; cadre unificateur | 14 |
+| **Score orthogonal (Neyman)** | insensible au premier ordre aux nuisances | 16, 24 |
+| **Bootstrap / jackknife** | rééchantillonnage pour estimer une variance | 17, 24 |
+| **Prédiction conforme** | IC de couverture garantie en échantillon fini | 19 |
+| **Effets fixes (within)** | démean intra-unité ; = FWL sur les panels | 21 |
+| **Lasso débiaisé** | correction d'un pas rendant l'inférence valide en $p>n$ | 22 |
+| **Robustness value** | force minimale d'un confondeur pour renverser l'effet | 23 |
+| **Fonction d'influence** | linéarisation d'un estimateur ; unifie l'inférence | 24 |
+| **Poids négatifs (dCDH)** | pourquoi le TWFE échoue à adoption échelonnée | 25 |
+| **Double descente** | second régime du risque au-delà de l'interpolation | 26 |
+| **Théorème de représentation** | régression RKHS = combinaison de noyaux | 27 |
+| **Différentiation automatique** | gradients exacts par le graphe de calcul | 28 |
+| **Ratio de Mills inverse** | terme correcteur du biais de sélection (Heckman) | 30 |
+| **Racine unitaire / ADF** | non-stationnarité ; test de Dickey-Fuller | 31 |
+| **Régression fallacieuse** | corrélation illusoire entre séries $I(1)$ | 31 |
+| **Discontinuité de régression** | effet causal local au franchissement d'un seuil | 32 |
+| **MCMC** | échantillonner un posterieur sans forme fermée | 33 |
+| **Méthode delta** | variance asymptotique d'une fonction d'un estimateur | 34 |
+| **FWER / FDR** | garanties des tests multiples (Bonferroni / BH) | 34 |
+
+## Les quatre idées (aide-mémoire) {#sec-idees}
+
+1. **Projeter** — moindres carrés, FWL, régularisation, orthogonalité de Neyman.
+2. **Influencer** — la fonction d'influence unifie sandwich, bootstrap, jackknife,
+   one-step, efficacité.
+3. **Arbitrer** — le compromis biais-variance et sa régularisation, jusqu'à la
+   double descente.
+4. **Optimiser** — le substrat computationnel : gradient, Newton, IRLS, EM,
+   rétropropagation, autodiff, MCMC.
+
+Voir la [synthèse capstone](capstone.qmd) pour le développement.

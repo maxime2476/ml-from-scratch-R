@@ -137,7 +137,25 @@ M17 (bootstrap), M16 (Neyman) et M22 (débiaisé) sont une seule idée (la fonct
 d'influence). Le Module 25 porte la **frontière économétrique** ; les Modules
 26–28 relient sur-paramétrisation, RKHS et la machinerie des frameworks modernes.
 La **[synthèse capstone](rapport/capstone.qmd)** tisse les quatre idées qui
-traversent les 29 modules.
+traversent les modules.
+
+### Compléments économétriques et statistiques (modules 29–34)
+
+| Fichier | Module | Points clés | Réf. de validation |
+|:-------:|--------|-------------|--------------------|
+| `29` | **Diagnostics** | hétéroscédasticité (Breusch-Pagan, White), autocorrélation (Durbin-Watson, Breusch-Godfrey), endogénéité (Hausman), suridentification (Sargan), RESET, Jarque-Bera, FGLS | `lmtest`, `AER`, `tseries` |
+| `30` | **Variables dép. limitées** | probit, Tobit (censure), Heckman (sélection) | `glm`, `AER`, `sampleSelection` |
+| `31` | **Séries temporelles** | ACF/PACF, AR (Yule-Walker), ARMA (CSS), Ljung-Box, Dickey-Fuller | `stats`, `tseries` |
+| `32` | **Non paramétrique + RDD** | KDE, Nadaraya-Watson, local linéaire, discontinuité de régression | `stats`, `rdrobust` |
+| `33` | **MCMC** | Metropolis-Hastings, Gibbs, Gelman-Rubin, ESS | analytique, `coda` |
+| `34` | **Delta + tests multiples** | méthode delta, Bonferroni (FWER), Benjamini-Hochberg (FDR) | `car`, `p.adjust` |
+
+Ces modules **comblent les trous canoniques** d'un socle d'économétrie et de
+statistique : détecter (et non seulement corriger) hétéroscédasticité et
+endogénéité, traiter les variables limitées, les séries temporelles, le non
+paramétrique et l'inférence bayésienne computationnelle. La bibliographie
+consolidée est dans [`references.bib`](references.bib) ; un
+[glossaire et index des notations](rapport/glossaire.qmd) couvre l'ensemble.
 
 ### Applications, études et outils
 

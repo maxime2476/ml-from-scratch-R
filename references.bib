@@ -1,0 +1,85 @@
+% =============================================================================
+% Bibliographie consolidee — ML from Scratch in R
+% Oeuvres pivots des 35 modules (0-34). Cle : auteur+annee.
+% =============================================================================
+
+% --- Fondations : moindres carres, algebre, inference ---
+@book{golub2013matrix, title={Matrix Computations}, author={Golub, Gene H. and Van Loan, Charles F.}, year={2013}, edition={4}, publisher={Johns Hopkins University Press}}
+@book{hastie2009elements, title={The Elements of Statistical Learning}, author={Hastie, Trevor and Tibshirani, Robert and Friedman, Jerome}, year={2009}, edition={2}, publisher={Springer}}
+@article{frisch1933partial, title={Partial time regressions as compared with individual trends}, author={Frisch, Ragnar and Waugh, Frederick V.}, journal={Econometrica}, year={1933}, volume={1}, number={4}, pages={387--401}}
+@article{white1980heteroskedasticity, title={A heteroskedasticity-consistent covariance matrix estimator and a direct test for heteroskedasticity}, author={White, Halbert}, journal={Econometrica}, year={1980}, volume={48}, number={4}, pages={817--838}}
+@article{newey1987hac, title={A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix}, author={Newey, Whitney K. and West, Kenneth D.}, journal={Econometrica}, year={1987}, volume={55}, number={3}, pages={703--708}}
+
+% --- GLM, regularisation, IV ---
+@book{mccullagh1989glm, title={Generalized Linear Models}, author={McCullagh, Peter and Nelder, John A.}, year={1989}, edition={2}, publisher={Chapman and Hall}}
+@article{tibshirani1996lasso, title={Regression shrinkage and selection via the lasso}, author={Tibshirani, Robert}, journal={Journal of the Royal Statistical Society: Series B}, year={1996}, volume={58}, number={1}, pages={267--288}}
+@article{hoerl1970ridge, title={Ridge regression: biased estimation for nonorthogonal problems}, author={Hoerl, Arthur E. and Kennard, Robert W.}, journal={Technometrics}, year={1970}, volume={12}, number={1}, pages={55--67}}
+@article{friedman2010glmnet, title={Regularization paths for generalized linear models via coordinate descent}, author={Friedman, Jerome and Hastie, Trevor and Tibshirani, Robert}, journal={Journal of Statistical Software}, year={2010}, volume={33}, number={1}, pages={1--22}}
+
+% --- Theorie de l'apprentissage ---
+@book{vapnik1998statistical, title={Statistical Learning Theory}, author={Vapnik, Vladimir N.}, year={1998}, publisher={Wiley}}
+@article{bartlett2002rademacher, title={Rademacher and Gaussian complexities: risk bounds and structural results}, author={Bartlett, Peter L. and Mendelson, Shahar}, journal={Journal of Machine Learning Research}, year={2002}, volume={3}, pages={463--482}}
+
+% --- Arbres, forets, boosting ---
+@book{breiman1984cart, title={Classification and Regression Trees}, author={Breiman, Leo and Friedman, Jerome and Olshen, Richard and Stone, Charles}, year={1984}, publisher={Wadsworth}}
+@article{breiman2001random, title={Random forests}, author={Breiman, Leo}, journal={Machine Learning}, year={2001}, volume={45}, number={1}, pages={5--32}}
+@article{friedman2001greedy, title={Greedy function approximation: a gradient boosting machine}, author={Friedman, Jerome H.}, journal={Annals of Statistics}, year={2001}, volume={29}, number={5}, pages={1189--1232}}
+
+% --- Reseaux, optimisation, autodiff ---
+@article{rumelhart1986backprop, title={Learning representations by back-propagating errors}, author={Rumelhart, David E. and Hinton, Geoffrey E. and Williams, Ronald J.}, journal={Nature}, year={1986}, volume={323}, pages={533--536}}
+@book{nocedal2006numerical, title={Numerical Optimization}, author={Nocedal, Jorge and Wright, Stephen J.}, year={2006}, edition={2}, publisher={Springer}}
+@article{baydin2018autodiff, title={Automatic differentiation in machine learning: a survey}, author={Baydin, Atilim Gunes and Pearlmutter, Barak A. and Radul, Alexey Andreyevich and Siskind, Jeffrey Mark}, journal={Journal of Machine Learning Research}, year={2018}, volume={18}, number={153}, pages={1--43}}
+
+% --- Interpretabilite, causalite, DML ---
+@article{lundberg2017shap, title={A unified approach to interpreting model predictions}, author={Lundberg, Scott M. and Lee, Su-In}, journal={Advances in Neural Information Processing Systems}, year={2017}, volume={30}}
+@article{chernozhukov2018double, title={Double/debiased machine learning for treatment and structural parameters}, author={Chernozhukov, Victor and Chetverikov, Denis and Demirer, Mert and Duflo, Esther and Hansen, Christian and Newey, Whitney and Robins, James}, journal={The Econometrics Journal}, year={2018}, volume={21}, number={1}, pages={C1--C68}}
+@book{imbens2015causal, title={Causal Inference for Statistics, Social, and Biomedical Sciences}, author={Imbens, Guido W. and Rubin, Donald B.}, year={2015}, publisher={Cambridge University Press}}
+
+% --- Bootstrap, GMM, conforme, quantile, panel ---
+@book{efron1994bootstrap, title={An Introduction to the Bootstrap}, author={Efron, Bradley and Tibshirani, Robert J.}, year={1994}, publisher={Chapman and Hall/CRC}}
+@article{hansen1982gmm, title={Large sample properties of generalized method of moments estimators}, author={Hansen, Lars Peter}, journal={Econometrica}, year={1982}, volume={50}, number={4}, pages={1029--1054}}
+@book{vovk2005algorithmic, title={Algorithmic Learning in a Random World}, author={Vovk, Vladimir and Gammerman, Alexander and Shafer, Glenn}, year={2005}, publisher={Springer}}
+@article{koenker1978quantile, title={Regression quantiles}, author={Koenker, Roger and Bassett, Gilbert}, journal={Econometrica}, year={1978}, volume={46}, number={1}, pages={33--50}}
+@book{wooldridge2010panel, title={Econometric Analysis of Cross Section and Panel Data}, author={Wooldridge, Jeffrey M.}, year={2010}, edition={2}, publisher={MIT Press}}
+
+% --- Haute dimension : lasso debiaise, sensibilite ---
+@article{zhang2014confidence, title={Confidence intervals for low dimensional parameters in high dimensional linear models}, author={Zhang, Cun-Hui and Zhang, Stephanie S.}, journal={Journal of the Royal Statistical Society: Series B}, year={2014}, volume={76}, number={1}, pages={217--242}}
+@article{belloni2014inference, title={Inference on treatment effects after selection among high-dimensional controls}, author={Belloni, Alexandre and Chernozhukov, Victor and Hansen, Christian}, journal={Review of Economic Studies}, year={2014}, volume={81}, number={2}, pages={608--650}}
+@article{cinelli2020sensitivity, title={Making sense of sensitivity: extending omitted variable bias}, author={Cinelli, Carlos and Hazlett, Chad}, journal={Journal of the Royal Statistical Society: Series B}, year={2020}, volume={82}, number={1}, pages={39--67}}
+
+% --- Fonctions d'influence, efficacite ---
+@book{tsiatis2006semiparametric, title={Semiparametric Theory and Missing Data}, author={Tsiatis, Anastasios A.}, year={2006}, publisher={Springer}}
+@article{hahn1998role, title={On the role of the propensity score in efficient semiparametric estimation of average treatment effects}, author={Hahn, Jinyong}, journal={Econometrica}, year={1998}, volume={66}, number={2}, pages={315--331}}
+@article{robins1994estimation, title={Estimation of regression coefficients when some regressors are not always observed}, author={Robins, James M. and Rotnitzky, Andrea and Zhao, Lue Ping}, journal={Journal of the American Statistical Association}, year={1994}, volume={89}, number={427}, pages={846--866}}
+
+% --- DiD moderne ---
+@article{goodmanbacon2021, title={Difference-in-differences with variation in treatment timing}, author={Goodman-Bacon, Andrew}, journal={Journal of Econometrics}, year={2021}, volume={225}, number={2}, pages={254--277}}
+@article{callaway2021did, title={Difference-in-differences with multiple time periods}, author={Callaway, Brantly and Sant'Anna, Pedro H. C.}, journal={Journal of Econometrics}, year={2021}, volume={225}, number={2}, pages={200--230}}
+@article{sun2021estimating, title={Estimating dynamic treatment effects in event studies with heterogeneous treatment effects}, author={Sun, Liyang and Abraham, Sarah}, journal={Journal of Econometrics}, year={2021}, volume={225}, number={2}, pages={175--199}}
+@article{dechaisemartin2020twoway, title={Two-way fixed effects estimators with heterogeneous treatment effects}, author={de Chaisemartin, Cl{\'e}ment and D'Haultf{\oe}uille, Xavier}, journal={American Economic Review}, year={2020}, volume={110}, number={9}, pages={2964--2996}}
+
+% --- Frontieres : double descente, GP ---
+@article{belkin2019reconciling, title={Reconciling modern machine-learning practice and the classical bias-variance trade-off}, author={Belkin, Mikhail and Hsu, Daniel and Ma, Siyuan and Mandal, Soumik}, journal={Proceedings of the National Academy of Sciences}, year={2019}, volume={116}, number={32}, pages={15849--15854}}
+@book{rasmussen2006gaussian, title={Gaussian Processes for Machine Learning}, author={Rasmussen, Carl Edward and Williams, Christopher K. I.}, year={2006}, publisher={MIT Press}}
+
+% --- Diagnostics, LDV, series temporelles ---
+@article{breusch1979simple, title={A simple test for heteroscedasticity and random coefficient variation}, author={Breusch, Trevor S. and Pagan, Adrian R.}, journal={Econometrica}, year={1979}, volume={47}, number={5}, pages={1287--1294}}
+@article{hausman1978specification, title={Specification tests in econometrics}, author={Hausman, Jerry A.}, journal={Econometrica}, year={1978}, volume={46}, number={6}, pages={1251--1271}}
+@article{heckman1979sample, title={Sample selection bias as a specification error}, author={Heckman, James J.}, journal={Econometrica}, year={1979}, volume={47}, number={1}, pages={153--161}}
+@article{tobin1958estimation, title={Estimation of relationships for limited dependent variables}, author={Tobin, James}, journal={Econometrica}, year={1958}, volume={26}, number={1}, pages={24--36}}
+@article{dickey1979distribution, title={Distribution of the estimators for autoregressive time series with a unit root}, author={Dickey, David A. and Fuller, Wayne A.}, journal={Journal of the American Statistical Association}, year={1979}, volume={74}, number={366}, pages={427--431}}
+@article{granger1974spurious, title={Spurious regressions in econometrics}, author={Granger, Clive W. J. and Newbold, Paul}, journal={Journal of Econometrics}, year={1974}, volume={2}, number={2}, pages={111--120}}
+@book{box1970time, title={Time Series Analysis: Forecasting and Control}, author={Box, George E. P. and Jenkins, Gwilym M.}, year={1970}, publisher={Holden-Day}}
+
+% --- Non parametrique, RDD ---
+@book{fan1996local, title={Local Polynomial Modelling and Its Applications}, author={Fan, Jianqing and Gijbels, Ir{\`e}ne}, year={1996}, publisher={Chapman and Hall}}
+@article{imbens2008regression, title={Regression discontinuity designs: a guide to practice}, author={Imbens, Guido W. and Lemieux, Thomas}, journal={Journal of Econometrics}, year={2008}, volume={142}, number={2}, pages={615--635}}
+
+% --- MCMC, tests multiples ---
+@article{metropolis1953equation, title={Equation of state calculations by fast computing machines}, author={Metropolis, Nicholas and Rosenbluth, Arianna W. and Rosenbluth, Marshall N. and Teller, Augusta H. and Teller, Edward}, journal={Journal of Chemical Physics}, year={1953}, volume={21}, number={6}, pages={1087--1092}}
+@article{gelman1992inference, title={Inference from iterative simulation using multiple sequences}, author={Gelman, Andrew and Rubin, Donald B.}, journal={Statistical Science}, year={1992}, volume={7}, number={4}, pages={457--472}}
+@article{benjamini1995controlling, title={Controlling the false discovery rate: a practical and powerful approach to multiple testing}, author={Benjamini, Yoav and Hochberg, Yosef}, journal={Journal of the Royal Statistical Society: Series B}, year={1995}, volume={57}, number={1}, pages={289--300}}
+
+% --- Reproductibilite, application ---
+@article{lalonde1986evaluating, title={Evaluating the econometric evaluations of training programs with experimental data}, author={LaLonde, Robert J.}, journal={American Economic Review}, year={1986}, volume={76}, number={4}, pages={604--620}}
+@book{vandervaart1998asymptotic, title={Asymptotic Statistics}, author={van der Vaart, Aad W.}, year={1998}, publisher={Cambridge University Press}}

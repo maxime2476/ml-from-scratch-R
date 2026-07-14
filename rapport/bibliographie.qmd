@@ -1,0 +1,16 @@
+---
+title: "Bibliographie"
+bibliography: ../references.bib
+nocite: |
+  @*
+format:
+  html: {toc: false}
+---
+
+Bibliographie consolidée des œuvres pivots référencées par les modules. Les
+entrées sont regroupées automatiquement à partir de
+[`references.bib`](../references.bib) ; chaque module renvoie en outre à ses
+sources spécifiques.
+
+::: {#refs}
+:::

@@ -57,6 +57,14 @@ book:
         - derivations/26_double_descent.qmd
         - derivations/27_gaussian_process.qmd
         - derivations/28_autodiff.qmd
+    - part: "Compléments économétriques et statistiques"
+      chapters:
+        - derivations/29_diagnostics.qmd
+        - derivations/30_limited_dependent.qmd
+        - derivations/31_time_series.qmd
+        - derivations/32_nonparametric.qmd
+        - derivations/33_mcmc.qmd
+        - derivations/34_inference_tools.qmd
     - part: "Applications et études"
       chapters:
         - applications/lalonde.qmd
@@ -71,10 +79,13 @@ book:
         - rapport/capstone.qmd
         - rapport/rapport.qmd
         - rapport/appendix_synthese.qmd
+        - rapport/glossaire.qmd
+        - rapport/bibliographie.qmd
   reader-mode: true
   repo-url: https://github.com/mgourguechon/ml-from-scratch-R
   search: true
 
+bibliography: references.bib
 lang: fr
 
 format:

@@ -15,6 +15,7 @@
 ^run_all\.R$
 ^run_tests\.R$
 ^CITATION\.cff$
+^references\.bib$
 ^\.github$
 ^renv$
 ^renv\.lock$

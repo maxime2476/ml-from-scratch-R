@@ -1,0 +1,66 @@
+---
+title: "Module 36 — Réseaux convolutifs (CNN)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Un MLP (Module 12) connecte chaque pixel à chaque neurone : pour une image, le
+nombre de poids explose et la structure spatiale est ignorée. Le **réseau
+convolutif** la respecte par deux idées : le **partage de poids** local (un petit
+noyau balaie l'image) et le **sous-échantillonnage** (pooling). On reconstruit
+ici la convolution et le max-pooling, avec leur rétropropagation.
+
+## La convolution {#sec-conv}
+
+Un **noyau** $K^f$ ($k_h\times k_w$) balaie l'image ; à chaque position il produit
+$$
+Y_{ij}^f = b_f + \sum_{a=1}^{k_h}\sum_{b=1}^{k_w} X_{i+a-1,\,j+b-1}\,K_{ab}^f.
+\tag{36.1}
+$$
+Le **même** noyau est appliqué partout : c'est le **partage de poids**. Deux
+conséquences majeures :
+
+- **Peu de paramètres** : un noyau $3\times3$ a 9 poids, indépendamment de la
+  taille de l'image (vs des milliers pour une couche dense).
+- **Équivariance à la translation** : décaler l'entrée décale la sortie à
+  l'identique — le détecteur trouve le motif *où qu'il soit*. *(Vérifié en MC.)*
+
+### Rétropropagation {#sec-conv-back}
+
+Comme (36.1) est linéaire, les gradients sont des convolutions/corrélations :
+$\bar b_f=\sum_{ij}\bar Y_{ij}^f$, $\bar K_{ab}^f=\sum_{ij}\bar Y_{ij}^f X_{i+a-1,j+b-1}$,
+et $\bar X$ accumule $\bar Y_{ij}^f K_{ab}^f$ aux positions correspondantes.
+*(Vérifié contre `numDeriv` à $10^{-7}$.)*
+
+## Le max-pooling {#sec-pool}
+
+$$
+Y_{ij}=\max_{(a,b)\in\text{bloc}(i,j)} X_{ab}.
+\tag{36.2}
+$$
+Il réduit la résolution (moins de calcul, invariance locale) ; sa
+rétropropagation **route le gradient vers la position du maximum** de chaque bloc,
+les autres recevant zéro. *(Vérifié contre `numDeriv`.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/36_cnn.R`) |
+|---|---|
+| (36.1) convolution 2D | `conv2d(X, K, b)` |
+| rétropropagation conv | `conv2d_backward(dout, cache)` |
+| (36.2) max-pooling | `max_pool2d(X, pool)` |
+| rétropropagation pool | `max_pool2d_backward(dout, cache)` |
+
+Validation : convolution et pooling coïncident avec leur définition ; leurs
+rétropropagations coïncident avec `numDeriv` ($10^{-7}$). Monte Carlo :
+équivariance à la translation, et apprentissage par descente de gradient d'un
+noyau **détecteur de contour**.
+
+## Références {.unnumbered}
+
+- LeCun et al. (1998), « Gradient-based learning applied to document recognition ».
+- Goodfellow, Bengio & Courville (2016), *Deep Learning*, ch. 9.

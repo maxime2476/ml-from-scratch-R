@@ -1,0 +1,83 @@
+---
+title: "Module 26 — Double descente : quand plus de paramètres aident"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le compromis biais-variance (Module 6) enseigne une courbe de risque en **U** :
+trop simple → biais, trop complexe → variance. La théorie de l'apprentissage
+(Module 13) borne le risque par la complexité (VC, Rademacher). Or les modèles
+modernes **sur-paramétrés** ($D\gg n$), qui **interpolent** les données (erreur
+d'apprentissage nulle), généralisent souvent **mieux**. Ce module reproduit le
+phénomène — la **double descente** (Belkin et al. 2019) — et montre *pourquoi* la
+théorie classique ne le contredit pas.
+
+## Le seuil d'interpolation {#sec-threshold}
+
+On apprend une régression à $D$ **caractéristiques aléatoires** $\varphi(x)\in\mathbb R^D$
+(approximation d'un noyau, éq. 26.1) : $\hat y=\varphi(x)^\top\hat\beta$. $D$ est
+le curseur de complexité. Trois régimes :
+
+- $D<n$ (**sous-paramétré**) : moindres carrés ordinaires ; courbe en U classique.
+- $D=n$ (**seuil d'interpolation**) : la matrice $\Phi$ ($n\times D$) devient carrée
+  et quasi singulière — sa plus petite valeur singulière $\to 0$.
+- $D>n$ (**sur-paramétré**) : une infinité d'interpolants ; on choisit celui de
+  **norme minimale** $\hat\beta=\Phi^+ y$ (pseudo-inverse SVD, Module 0).
+
+> **Proposition 26.1 (pic de variance).** Près de $D=n$, la variance de
+> $\hat\beta$ est gouvernée par $\sum_k \sigma^2/s_k^2$ où $s_k$ sont les valeurs
+> singulières de $\Phi$. Comme $s_{\min}\to 0$, $\|\hat\beta\|\to\infty$ et le
+> risque **explose** : c'est le **pic** de la double descente.
+
+*(MC : au seuil, l'EQM de test bondit d'un facteur $\sim 100$–$500$.)*
+
+## La seconde descente {#sec-second}
+
+Pour $D\gg n$, l'interpolant de **norme minimale** est **implicitement régularisé** :
+parmi tous les interpolants, il prend le plus « lisse ». À mesure que $D$ croît,
+$\|\hat\beta\|$ **décroît** (plus de directions pour répartir le poids), la variance
+retombe, et le risque **redescend** — souvent **sous** le minimum du régime
+sous-paramétré.
+
+> **Proposition 26.2 (régularisation explicite = pas de pic).** Le ridge (Module 4)
+> remplace $s_k^2$ par $s_k^2+\lambda$ dans la variance : la division par
+> $s_{\min}\to 0$ disparaît. Avec un $\lambda>0$ adapté, la courbe de risque
+> devient **monotone** — la double descente est un **artefact de l'interpolation
+> non régularisée**.
+
+*(MC : avec ridge, le pic au seuil disparaît.)*
+
+## Réconciliation avec la théorie de l'apprentissage {#sec-slt}
+
+Il n'y a **pas** de contradiction avec le Module 13 : les bornes uniformes (VC,
+Rademacher) majorent le risque *pour le pire élément* de la classe et deviennent
+**vacantes** ($\ge 1$) dès $D\ge n$. Elles ne décrivent pas l'estimateur
+**particulier** sélectionné (norme minimale), dont le biais implicite est la clé.
+La double descente motive une théorie **dépendante de l'algorithme** (biais
+implicite), au-delà de la complexité de la classe.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/26_double_descent.R`) |
+|---|---|
+| (26.1) caractéristiques de Fourier aléatoires | `random_features(X, D, gamma)` |
+| interpolant de norme minimale ($\Phi^+ y$, M0) | `fit_rff(..., lambda = 0)` |
+| ridge sur caractéristiques (M4) | `fit_rff(..., lambda > 0)` |
+| courbe de risque train/test vs $D$ | `double_descent_curve(...)` |
+
+Validation : pour $D<n$, l'interpolant de norme minimale = OLS (`lm`) à $10^{-8}$ ;
+pour $D>n$, l'erreur d'apprentissage est nulle (interpolation) ; l'EQM de test
+présente un **pic à $D\approx n$** puis **redescend** ; le ridge **supprime** le
+pic. Monte Carlo : courbe de double descente moyennée.
+
+## Références {.unnumbered}
+
+- Belkin, Hsu, Ma & Mandal (2019, *PNAS*) — « Reconciling modern machine learning
+  and the bias-variance trade-off ».
+- Hastie, Montanari, Rosset & Tibshirani (2022, *Annals of Statistics*) — régression
+  linéaire sur-paramétrée.
+- Bartlett, Long, Lugosi & Tsigler (2020, *PNAS*) — « benign overfitting ».

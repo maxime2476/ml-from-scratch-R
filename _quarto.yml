@@ -9,6 +9,7 @@ book:
   date: today
   chapters:
     - index.qmd
+    - rapport/memoire.qmd
     - part: "Fondations : moindres carrés et inférence"
       chapters:
         - derivations/00_linalg.qmd

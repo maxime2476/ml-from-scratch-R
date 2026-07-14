@@ -1,0 +1,179 @@
+---
+title: "ML from Scratch in R — Mémoire"
+subtitle: "Une déconstruction unifiée des modèles d'apprentissage, entre statistique et économétrie"
+author: "Maxime Gourguechon"
+date: today
+lang: fr
+format:
+  html: {toc: true, toc-depth: 2, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true, documentclass: scrartcl}
+---
+
+## Résumé {.unnumbered}
+
+Ce mémoire réimplémente en **R base**, à partir de leurs dérivations
+mathématiques complètes, vingt-neuf modules d'apprentissage automatique et
+d'économétrie — des moindres carrés à la différentiation automatique, en passant
+par la causalité en haute dimension, les processus gaussiens et la double
+descente. Chaque implémentation est **validée numériquement** contre son package
+de référence (souvent à la précision machine) et **étudiée par simulation Monte
+Carlo**. Mais l'objet du mémoire n'est pas la collection : c'est la **thèse**
+qu'elle démontre — que le *machine learning*, l'*économétrie* et la *statistique*
+ne sont pas trois disciplines, mais **trois vocabulaires pour quatre idées**
+(projection, fonction d'influence, compromis biais-variance, optimisation). La
+contribution originale est un **diagramme de phase des estimateurs** d'effet
+causal, carte de décision « quelle méthode dans quel régime » produite par la
+boîte à outils complète.
+
+> **Abstract.** This thesis reimplements, in base R and from complete mathematical
+> derivations, twenty-nine modules spanning machine learning and econometrics —
+> from least squares to automatic differentiation, through high-dimensional
+> causal inference, Gaussian processes and double descent. Each implementation is
+> validated numerically against its reference package, often to machine precision,
+> and studied by Monte Carlo simulation. The thesis it defends is that machine
+> learning, econometrics and statistics are not three fields but **three
+> vocabularies for four ideas**. Its original contribution is a **phase diagram of
+> causal estimators** — a "which method, which regime" decision map.
+
+## Question et positionnement {#sec-intro}
+
+L'apprentissage automatique et l'économétrie se sont longtemps ignorés, puis
+brutalement rejoints : le *Double Machine Learning* (Chernozhukov et al. 2018),
+le lasso débiaisé (Zhang-Zhang 2014 ; van de Geer et al. 2014), la double
+sélection (Belloni-Chernozhukov-Hansen 2014), la nouvelle vague des
+différences-de-différences (Callaway-Sant'Anna 2021 ; Sun-Abraham 2021), la
+double descente (Belkin et al. 2019) — autant de ponts jetés en une décennie. Le
+prix de cette convergence est un **éclatement du vocabulaire** : le même objet
+mathématique porte trois noms selon la tribu.
+
+Ce mémoire prend le parti inverse de la spécialisation. **Question directrice :**
+*peut-on reconstruire, depuis les premiers principes et dans un seul langage, la
+chaîne complète qui va de la régression linéaire à l'inférence causale moderne, et
+en exhiber l'unité ?* La réponse — oui — passe par un choix méthodologique
+austère : tout réimplémenter à la main.
+
+## Méthode : pourquoi réimplémenter à la main {#sec-methode}
+
+Appeler `glmnet` ou `DoubleML` prouve qu'on sait *utiliser* un outil. Le
+réimplémenter prouve qu'on en comprend le *fondement*. La méthode, imposée à
+chaque module, tient en quatre livrables produits dans cet ordre :
+
+1. une **dérivation** rédigée depuis les premiers principes (vraisemblance,
+   moindres carrés, conditions d'optimalité), hypothèses numérotées ;
+2. une **implémentation en R base** lisible, chaque fonction renvoyant à son
+   équation ;
+3. une **validation numérique** contre le package de référence (cible $10^{-8}$,
+   ou justification documentée) ;
+4. une **étude Monte Carlo** à DGP connu, mesurant biais, variance, couverture et
+   puissance, **avec erreurs de simulation**.
+
+Les packages de ML ne servent **jamais** à l'implémentation, uniquement à la
+validation. Le résultat n'est pas du code performant — il est plus lent que
+LAPACK, et l'assume — mais du code **compris**, dont chaque étape est traçable
+jusqu'à une ligne de mathématiques.
+
+## La thèse : quatre idées, vingt-neuf masques {#sec-these}
+
+Lu comme un tout, le projet révèle qu'un petit nombre d'idées, déguisées,
+gouvernent l'ensemble. (Le détail est développé dans le chapitre de synthèse ; on
+en donne ici l'ossature argumentative.)
+
+**Idée 1 — la projection orthogonale.** Les moindres carrés projettent $y$ sur
+l'espace des colonnes (M1) ; Frisch-Waugh-Lovell résidualise (M1) ; le *within*
+des panels (M21), le TWFE (M25), le lasso débiaisé (M22) et l'orthogonalisation
+de Neyman (M16) sont *la même opération*. « Contrôler pour $X$ », c'est projeter.
+
+**Idée 2 — la fonction d'influence.** Presque tout estimateur est
+asymptotiquement linéaire (M24) ; sa variance est le sandwich (M2, M14), que le
+bootstrap (M17) et le jackknife estiment autrement. La correction « en un pas »
+est la forme abstraite du lasso débiaisé (M22) et du DML (M16) ; le score
+orthogonal de Neyman **est** la fonction d'influence efficace (démontré au
+chapitre de théorie approfondie). L'inférence de tout le projet est *une seule*
+démonstration.
+
+**Idée 3 — le compromis biais-variance et sa régularisation.** De la
+décomposition (M6) aux bornes de généralisation (M13), du ridge (M4) aux
+processus gaussiens (M27), c'est partout le même curseur — jusqu'à la **double
+descente** (M26), qui montre que ce curseur a un second régime que la théorie
+classique décrit mal.
+
+**Idée 4 — l'optimisation comme substrat.** Rien ne tourne sans savoir minimiser
+(M0) : l'IRLS est Newton (M3), le boosting une descente fonctionnelle (M10), la
+rétropropagation un cas de la différentiation automatique (M28).
+
+C'est la thèse : **ces quatre idées, et leurs entrelacements, épuisent
+l'essentiel de la statistique de l'apprentissage.**
+
+## Contribution originale : le diagramme de phase {#sec-contrib}
+
+Reproduire des résultats connus démontre la maîtrise ; en produire un nouveau est
+d'un autre ordre. La boîte à outils complète permet une synthèse qu'aucun module
+isolé n'autorise : confronter cinq estimateurs d'un effet causal (OLS, sélection
+simple, double sélection, lasso débiaisé, DML) sur une **grille de régimes**
+(dimension $p/n$ × densité des contrôles) et en tirer une **carte de décision**.
+
+Le résultat (chapitre dédié) est net et, à ma connaissance, rarement présenté
+sous cette forme unifiée :
+
+- **sous parcimonie, la double sélection domine partout**, y compris $p>n$ ;
+- les autres méthodes, appliquées *naïvement*, héritent de la confusion quand les
+  contrôles pèsent sur le traitement mais faiblement sur le résultat ;
+- **sous densité (parcimonie violée), tout s'effondre** : l'OLS sauve la mise si
+  $p<n$, mais **aucune** méthode n'est fiable si $p\ge n$ — une limite
+  fondamentale, pas un défaut de code.
+
+La valeur n'est pas un classement absolu mais l'explicitation du **couplage
+méthode↔régime** : *étant donné mon $p/n$ et ce que je crois de la parcimonie,
+que choisir, et à quel risque de sous-couverture ?*
+
+## Honnêteté scientifique {#sec-honnete}
+
+Le mémoire revendique ses échecs comme des résultats. Trois exemples :
+
+- L'inférence post-sélection naïve (M14) **sur-rejette** à 24 % sous $H_0$ ; on ne
+  le cache pas, on le *répare* (M22) puis on le *quantifie* (M23).
+- Une première étude méthodologique sur le cross-fitting a donné un effet
+  **au signe opposé** à la théorie (le cross-fitting *nuisait*, faute d'un
+  apprenant qui sur-apprenne) : plutôt que de publier une conclusion fausse, elle
+  a été remplacée par un résultat au signe garanti (la double sélection).
+- Le diagramme de phase inclut une cellule où **aucune méthode ne marche** ; c'est
+  reporté tel quel.
+
+Cette discipline — reporter ce qui rate, chiffrer l'incertitude de simulation,
+distinguer une limite fondamentale d'un bug — est ce qui sépare une démonstration
+d'un argument publicitaire.
+
+## Limites et prolongements {#sec-limites}
+
+Le projet suppose des panels équilibrés (M25), des noyaux stationnaires (M27), et
+son autodiff ne couvre pas l'indexation ni le contrôle de flot (M28). Les études
+Monte Carlo, bien que dotées d'erreurs de simulation, restent limitées à des DGP
+gaussiens. Les prolongements naturels : identification partielle (bornes de
+Manski), estimation ciblée (TMLE) en pendant du DML, DiD à traitement continu, et
+une théorie de la double descente dépendante de l'algorithme. Chacun s'insérerait
+dans l'architecture des quatre idées.
+
+## Reproduction {#sec-repro}
+
+Le dépôt est un **compendium citable** : versions figées (`renv.lock`), pipeline à
+dépendances suivies (`_targets.R`), environnement conteneurisé (`Dockerfile`),
+métadonnées de citation (`CITATION.cff`). La suite complète — **375+ vérifications
+de conformité et de propriétés, 0 échec** — s'exécute par `Rscript run_tests.R`
+(un processus par fichier, pour isoler les conflits entre packages de référence).
+
+## Conclusion {#sec-conclusion}
+
+Vingt-neuf modules, une centaine de fonctions, des milliers de réplications Monte
+Carlo — mais, au fond, **quatre idées**. Le mémoire aura atteint son but s'il
+convainc que la frontière entre *machine learning*, *statistique* et
+*économétrie* est une frontière de vocabulaire, non de substance : projeter,
+influencer, arbitrer, optimiser. Reconstruire chaque méthode à la main n'était pas
+une contrainte d'exercice, mais le seul chemin pour *voir* cette unité — et,
+peut-être, pour la faire voir.
+
+## Références {.unnumbered}
+
+Voir les références de chaque module et des chapitres d'étude. Œuvres pivots :
+Chernozhukov et al. (2018) ; Belloni, Chernozhukov & Hansen (2014) ; Zhang & Zhang
+(2014) ; Callaway & Sant'Anna (2021) ; Sun & Abraham (2021) ; Belkin et al.
+(2019) ; Rasmussen & Williams (2006) ; Hahn (1998).

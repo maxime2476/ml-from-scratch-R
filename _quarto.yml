@@ -45,10 +45,17 @@ book:
         - derivations/19_conformal.qmd
         - derivations/20_quantile.qmd
         - derivations/21_panel.qmd
-    - part: "Inférence en haute dimension"
+    - part: "Inférence en haute dimension et causalité"
       chapters:
         - derivations/22_debiased_lasso.qmd
         - derivations/23_sensitivity.qmd
+        - derivations/24_influence.qmd
+        - derivations/25_did.qmd
+    - part: "Frontières : sur-paramétrisation, noyaux, autodiff"
+      chapters:
+        - derivations/26_double_descent.qmd
+        - derivations/27_gaussian_process.qmd
+        - derivations/28_autodiff.qmd
     - part: "Applications et études"
       chapters:
         - applications/lalonde.qmd
@@ -56,6 +63,7 @@ book:
         - rapport/benchmark.qmd
     - part: "Synthèse"
       chapters:
+        - rapport/capstone.qmd
         - rapport/rapport.qmd
         - rapport/appendix_synthese.qmd
   reader-mode: true

@@ -1,0 +1,90 @@
+---
+title: "Synthèse — Quatre idées qui traversent tout le projet"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 2, number-sections: true}
+---
+
+Vingt-neuf modules, mais **peu d'idées**. Ce projet n'est pas un catalogue de
+méthodes juxtaposées : les mêmes quelques principes reviennent, déguisés. Cette
+synthèse rend explicite l'architecture cachée — c'est le fil qui relie l'algèbre
+linéaire du Module 0 à la différentiation automatique du Module 28.
+
+## Idée 1 — La projection orthogonale
+
+Tout commence par **projeter** $y$ sur un espace de colonnes.
+
+- **Moindres carrés** (M1) : $\hat y = P_X y$, résidus orthogonaux aux régresseurs.
+- **Frisch-Waugh-Lovell** (M1) : « contrôler pour $X$ » = résidualiser. On le
+  retrouve dans le **within** des panels (M21), le **TWFE** (M25), le **lasso
+  débiaisé** (M22) et le **DML** (M16).
+- **Régularisation** (M4) : projection *rétrécie* ; le noyau (M27) la porte dans
+  un espace de dimension infinie ; la SVD (M0) en donne la géométrie (valeurs
+  singulières), qui explique aussi la **double descente** (M26).
+- **Orthogonalité de Neyman** (M16) : rendre l'estimation *insensible au premier
+  ordre* aux nuisances — une projection, encore.
+
+> Résidualiser, projeter, orthogonaliser : la même opération, du OLS à la
+> causalité en haute dimension.
+
+## Idée 2 — La fonction d'influence
+
+Presque tout estimateur est **asymptotiquement linéaire** :
+$\sqrt n(\hat\theta-\theta_0)=\frac1{\sqrt n}\sum_i \mathrm{IC}(z_i)+o_p(1)$ (M24).
+
+- Sa variance est le **sandwich** (M2, M14) ; le **bootstrap** (M17) la simule ;
+  le **jackknife** l'approche — trois visages d'un même second moment.
+- La **loi asymptotique** (M1), la **M-estimation** (M14), le **GMM** (M18) en
+  sont des instances.
+- La correction « en un pas » (M24) est la forme abstraite du **lasso débiaisé**
+  (M22) et du **DML** (M16) ; la **fonction d'influence efficace** donne la
+  **borne semiparamétrique** de l'ATE.
+- L'**analyse de sensibilité** (M23) chiffre ce qui reste hors du modèle.
+
+> Une fois qu'on voit la fonction d'influence, l'inférence de tout le projet est
+> *une seule* démonstration.
+
+## Idée 3 — Le compromis biais-variance et sa régularisation
+
+La tension centrale de l'apprentissage.
+
+- **Décomposition** biais²+variance (M6) ; bornes de généralisation (M13).
+- **Ridge/lasso** (M4) échangent un peu de biais contre beaucoup de variance ;
+  le **GP** (M27) le fait via une échelle choisie par vraisemblance marginale.
+- Le **KNN** (M7), la **profondeur** des arbres (M8), le **learning rate** du
+  boosting (M10), la **largeur** du MLP (M12) : partout le même curseur.
+- La **double descente** (M26) révèle que ce curseur a un *second* régime — la
+  théorie classique (M13) n'est pas fausse, elle est *incomplète*.
+
+> Le même arbitrage, sous vingt formes ; la régularisation en est le langage commun.
+
+## Idée 4 — L'optimisation comme substrat
+
+Aucune de ces idées ne « tourne » sans savoir **minimiser**.
+
+- Le Module 0 pose les briques : descente de gradient, Newton, coordinate
+  descent, SGD, Nesterov, L-BFGS — avec leurs **preuves de convergence**.
+- L'**IRLS** (M3) est Newton ; le **coordinate descent** résout le lasso (M4) ;
+  le **boosting** est une descente *fonctionnelle* (M10) ; l'**EM** (M11) monte
+  la vraisemblance ; le **scaled lasso** (M22) itère.
+- La **rétropropagation** (M12) — puis sa généralisation, la **différentiation
+  automatique** (M28) — fournit les gradients mécaniquement.
+
+> Derrière chaque estimateur, un problème d'optimisation ; derrière chaque
+> gradient, la règle de la chaîne.
+
+## Le tissu complet
+
+| Fil | Modules |
+|---|---|
+| Projection / orthogonalité | 0, 1, 4, 5, 16, 21, 22, 25, 27 |
+| Fonction d'influence / inférence | 1, 2, 14, 17, 18, 22, 23, 24 |
+| Biais-variance / régularisation | 4, 6, 7, 8, 10, 12, 13, 26, 27 |
+| Optimisation / autodiff | 0, 3, 4, 10, 11, 12, 22, 28 |
+| Causalité | 5, 15, 16, 23, 24, 25 |
+
+Chaque module a été **dérivé** depuis les premiers principes, **implémenté** en R
+base, **validé** contre sa référence à la précision requise, et **étudié** par
+Monte Carlo. Mais lu comme un tout, le projet raconte que le *machine learning*,
+l'*économétrie* et la *statistique* ne sont pas trois disciplines : ce sont trois
+vocabulaires pour les **mêmes** quatre idées.

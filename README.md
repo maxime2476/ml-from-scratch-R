@@ -122,6 +122,23 @@ Le Module 22 **répare** l'inférence post-sélection cassée du Module 14 ; le
 Module 23 **quantifie** la fragilité des hypothèses d'identification des Modules
 15–16 et 22 (aucune hypothèse remplaçant la randomisation).
 
+### Unification, frontière et fondements (modules 24–28)
+
+| Fichier | Module | Points clés | Réf. de validation |
+|:-------:|--------|-------------|--------------------|
+| `24` | **Fonctions d'influence** | IC asymptotiquement linéaire ; IC-OLS = sandwich ; = jackknife = bootstrap ; one-step ; EIF de l'ATE + borne semiparamétrique | `sandwich`, M17 |
+| `25` | **DiD à adoption échelonnée** | biais du TWFE, poids négatifs (dCDH), Callaway-Sant'Anna, Sun-Abraham | `fixest`, `did` |
+| `26` | **Double descente** | seuil d'interpolation, min-norm, seconde descente, ridge monotonise | *phénomène / M0, M4* |
+| `27` | **Processus gaussiens & noyaux** | théorème de représentation, GP = kernel ridge, vraisemblance marginale | `DiceKriging` |
+| `28` | **Différentiation automatique** | graphe de calcul, mode inverse, backprop (M12) comme cas particulier | `numDeriv` |
+
+Le Module 24 est la **colonne vertébrale** : il montre que M2/M14 (sandwich),
+M17 (bootstrap), M16 (Neyman) et M22 (débiaisé) sont une seule idée (la fonction
+d'influence). Le Module 25 porte la **frontière économétrique** ; les Modules
+26–28 relient sur-paramétrisation, RKHS et la machinerie des frameworks modernes.
+La **[synthèse capstone](rapport/capstone.qmd)** tisse les quatre idées qui
+traversent les 29 modules.
+
 ### Applications, études et outils
 
 - **`applications/lalonde.R`** — la boîte à outils causale (OLS, IPW, DML, lasso

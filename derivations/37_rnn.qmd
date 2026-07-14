@@ -1,0 +1,70 @@
+---
+title: "Module 37 — Réseaux récurrents (RNN, LSTM)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Pour une **séquence** ($x_1,\dots,x_T$), on veut un modèle dont la sortie dépend
+du *passé*. Le **réseau récurrent** maintient un **état caché** $h_t$ qui résume
+l'historique et se propage dans le temps. On le reconstruit, ainsi que sa
+rétropropagation *dans le temps* (BPTT), puis on montre pourquoi la **LSTM** le
+supplante sur les longues dépendances.
+
+## Le RNN simple et la BPTT {#sec-rnn}
+
+$$
+h_t=\tanh(W_{xh}x_t+W_{hh}h_{t-1}+b_h),\qquad y_t=W_{hy}h_t+b_y.
+\tag{37.1}
+$$
+Les **mêmes** poids servent à chaque pas (partage temporel, comme le partage
+spatial du CNN). Le gradient se propage à rebours **dans le temps** : chaque $h_t$
+influence tous les $y_{s\ge t}$, d'où (BPTT)
+$$
+\bar h_t = W_{hy}^\top\bar y_t + W_{hh}^\top\bar a_{t+1},\qquad
+\bar a_t=\bar h_t\odot(1-h_t^2),
+$$
+et l'on accumule $\bar W_{hh},\bar W_{xh},\dots$ sur tous les pas. *(Vérifié
+contre `numDeriv` à $10^{-10}$.)*
+
+## Le gradient qui s'évanouit {#sec-vanish}
+
+Le gradient à travers $k$ pas fait intervenir $\prod W_{hh}^\top\mathrm{diag}(1-h^2)$.
+Comme $|1-h^2|\le 1$ et si le rayon spectral de $W_{hh}<1$, ce produit **décroît
+exponentiellement** : le RNN **oublie** le passé lointain — il ne peut apprendre
+de dépendances longues. *(Démontré en MC.)*
+
+## La LSTM : une autoroute de mémoire {#sec-lstm}
+
+La LSTM ajoute un **état de cellule** $c_t$ et trois **portes** :
+$$
+i=\sigma(\cdot),\ f=\sigma(\cdot),\ o=\sigma(\cdot),\ g=\tanh(\cdot),\qquad
+c_t=f\odot c_{t-1}+i\odot g,\quad h_t=o\odot\tanh(c_t).
+\tag{37.2}
+$$
+Le point clé : $c_t=f\odot c_{t-1}+\dots$ est une récurrence **additive**. Quand
+la porte d'oubli $f\approx 1$, $c_t\approx c_{t-1}$ : le gradient traverse le temps
+**sans facteur multiplicatif** qui l'écrase. C'est l'**autoroute** qui permet
+d'apprendre des dépendances longues. *(MC : la sensibilité au passé lointain
+persiste, là où le RNN l'oublie.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/37_rnn.R`) |
+|---|---|
+| (37.1) RNN (avant) | `rnn_forward(X, ...)` |
+| BPTT (arrière) | `rnn_backward(dY, cache)` |
+| (37.2) cellule LSTM | `lstm_forward(X, ...)` |
+
+Validation : la BPTT coïncide avec `numDeriv` ($10^{-10}$) ; la LSTM produit des
+états et des portes valides. Monte Carlo : le gradient temporel s'évanouit dans le
+RNN simple mais persiste dans la LSTM (autoroute de l'état de cellule).
+
+## Références {.unnumbered}
+
+- Elman (1990) ; Werbos (1990, BPTT).
+- Hochreiter & Schmidhuber (1997), « Long short-term memory ».
+- Bengio, Simard & Frasconi (1994) — difficulté des dépendances longues.

@@ -1,0 +1,76 @@
+---
+title: "Module 32 — Régression non paramétrique et discontinuité de régression"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Au lieu d'imposer une forme fonctionnelle ($m(x)=X\beta$), on estime
+$m(x)=\mathbb E[Y\mid X=x]$ **localement** : la valeur en $x_0$ est une moyenne des
+$y_i$ dont les $x_i$ sont proches de $x_0$, pondérée par un **noyau**. On y adosse
+un design causal majeur — la **discontinuité de régression (RDD)**.
+
+## Estimation de densité par noyau {#sec-kde}
+
+$$
+\hat f(x)=\frac1{nh}\sum_{i=1}^n K\!\Bigl(\frac{x-x_i}h\Bigr),
+\tag{32.1}
+$$
+$K$ noyau (gaussien), $h$ **fenêtre** (le curseur biais-variance : $h$ petit =
+variance ; $h$ grand = biais). *(= `stats::density`.)*
+
+## Régression à noyau {#sec-reg}
+
+**Nadaraya-Watson** (local constant) :
+$$
+\hat m(x_0)=\frac{\sum_i K_h(x_0-x_i)\,y_i}{\sum_i K_h(x_0-x_i)}.
+\tag{32.2}
+$$
+Biais $O(h^2)$ à l'intérieur, mais **biais de bord** $O(h)$ (la moyenne locale est
+asymétrique aux extrémités).
+
+**Régression locale linéaire** : ajuster en $x_0$ une **droite** pondérée par le
+noyau (WLS locale) et lire l'ordonnée à l'origine. Elle **corrige le biais de
+bord** (biais $O(h^2)$ uniforme) — d'où sa préférence, en particulier pour le RDD.
+
+**Fenêtre par validation croisée** : $h$ minimise $\sum_i(y_i-\hat m_{-i}(x_i))^2$
+(leave-one-out), rejoignant l'arbitrage biais-variance des Modules 6 et 27.
+
+## Discontinuité de régression (RDD) {#sec-rdd}
+
+Un traitement est assigné selon qu'une **variable de forçage** $x$ franchit un
+**seuil** $c$ (score à un examen, revenu d'éligibilité…). Sous continuité de
+$\mathbb E[Y(0)\mid X=x]$ et $\mathbb E[Y(1)\mid X=x]$ en $c$, l'effet causal
+**local** au seuil est le **saut** :
+$$
+\tau = \lim_{x\downarrow c}\mathbb E[Y\mid X=x]-\lim_{x\uparrow c}\mathbb E[Y\mid X=x].
+\tag{32.3}
+$$
+On l'estime par **deux régressions locales linéaires** (une de chaque côté de $c$,
+noyau triangulaire) et l'on prend la différence des ordonnées à l'origine. C'est
+un design **quasi-expérimental** : près du seuil, l'assignation est « comme
+aléatoire ». *(Récupère le saut vrai ; $\approx$ `rdrobust`.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/32_nonparametric.R`) | Référence |
+|---|---|---|
+| (32.1) KDE | `kde(x, grid, bw)` | `stats::density` |
+| (32.2) Nadaraya-Watson | `nadaraya_watson(x, y, x0, bw)` | `stats::ksmooth` |
+| régression locale linéaire | `local_linear(x, y, x0, bw)` | *WLS locale* |
+| fenêtre par LOO-CV | `bw_loocv(x, y, bws)` | — |
+| (32.3) RDD | `rdd(y, x, cutoff, bw)` | `rdrobust` |
+
+Validation : KDE = `stats::density`, Nadaraya-Watson = `stats::ksmooth` (à la
+précision de leur *binning*), régression locale = définition WLS ; RDD récupère le
+saut vrai et coïncide avec `rdrobust`. Monte Carlo : arbitrage biais-variance de
+la fenêtre, et le biais de bord Nadaraya-Watson vs local linéaire.
+
+## Références {.unnumbered}
+
+- Nadaraya (1964) ; Watson (1964) ; Fan & Gijbels (1996), *Local Polynomial Modelling*.
+- Thistlethwaite & Campbell (1960) ; Imbens & Lemieux (2008) ; Calonico,
+  Cattaneo & Titiunik (2014) — RDD robuste.

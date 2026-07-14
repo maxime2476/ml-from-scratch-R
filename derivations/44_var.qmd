@@ -1,0 +1,65 @@
+---
+title: "Module 44 — Modèles vectoriels autorégressifs (VAR)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le Module 31 modélisait **une** série. En macroéconométrie, plusieurs séries
+(PIB, inflation, taux…) interagissent : ce que fait l'une aujourd'hui dépend du
+passé de **toutes**. Le **VAR** les modélise conjointement, ouvrant deux analyses
+majeures : la **causalité de Granger** et les **fonctions de réponse
+impulsionnelle**.
+
+## Le modèle VAR(p) {#sec-var}
+
+$$
+Y_t=c+A_1 Y_{t-1}+\dots+A_p Y_{t-p}+\varepsilon_t,\qquad \varepsilon_t\sim(0,\Sigma).
+\tag{44.1}
+$$
+Chaque équation régresse une variable sur la constante et **les retards de toutes
+les variables** — c'est un OLS équation par équation (efficace car les régresseurs
+sont identiques). *(Vérifié : coefficients = `vars::VAR` à $10^{-16}$.)*
+
+## Causalité de Granger {#sec-granger}
+
+$x$ **cause au sens de Granger** $y$ si le passé de $x$ **améliore la prédiction**
+de $y$ au-delà du passé de $y$. On teste par un **F** l'équation de $y$ **avec**
+vs **sans** les retards de $x$. Ce n'est *pas* de la causalité au sens contrefactuel
+(Modules 16, 25) mais de la **précédence prédictive**. *(= `vars::causality`.)*
+
+## Réponses impulsionnelles {#sec-irf}
+
+Comment un **choc** dans une variable se propage-t-il dans le système au fil du
+temps ? On inverse le VAR en sa représentation **moyenne mobile**
+$Y_t=\sum_{i\ge0}\Phi_i\varepsilon_{t-i}$ (récurrence $\Phi_i=\sum_l A_l\Phi_{i-l}$),
+puis on **orthogonalise** les chocs par la factorisation de Cholesky
+$\Sigma=PP^\top$ :
+$$
+\mathrm{IRF}_i = \Phi_i\,P.
+\tag{44.2}
+$$
+$\mathrm{IRF}_i[j,m]$ = réponse de la variable $j$ à un choc unitaire dans $m$,
+$i$ périodes plus tard. La stationnarité fait **décroître** ces réponses.
+*(Vérifié : = `vars::irf` à $10^{-16}$.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/44_var.R`) | Référence |
+|---|---|---|
+| (44.1) VAR(p) | `var_fit(Y, p)` | `vars::VAR` |
+| causalité de Granger | `granger_test(object, cause, effect)` | `vars::causality` |
+| (44.2) IRF orthogonalisées | `var_irf(object, h)` | `vars::irf` |
+
+Validation : coefficients, statistique de Granger et IRF coïncident avec le package
+`vars` à la précision machine. Monte Carlo : le test de Granger détecte la vraie
+direction de causalité (taille/puissance) et les IRF montrent la propagation puis
+la décroissance des chocs.
+
+## Références {.unnumbered}
+
+- Sims (1980), « Macroeconomics and reality », *Econometrica*.
+- Granger (1969) ; Lütkepohl (2005), *New Introduction to Multiple Time Series*.

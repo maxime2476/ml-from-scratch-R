@@ -60,6 +60,7 @@ Suggests:
     car,
     sampleSelection,
     tseries,
+    vars,
     rdrobust,
     e1071,
     dbscan,

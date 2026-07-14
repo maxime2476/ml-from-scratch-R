@@ -7,9 +7,13 @@
 rdd(y, x, cutoff = 0, bw, kernel = c("tri", "gauss"))
 }
 \arguments{
-\item{y}{resultat ; @param x variable de forcage (running variable).}
+\item{y}{resultat}
 
-\item{cutoff}{seuil \eqn{c} ; @param bw fenetre (des deux cotes).}
+\item{x}{variable de forcage (running variable)}
+
+\item{cutoff}{seuil \eqn{c}}
+
+\item{bw}{fenetre (des deux cotes)}
 
 \item{kernel}{"tri" (triangulaire, defaut) ou "gauss".}
 }

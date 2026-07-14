@@ -17,7 +17,9 @@
 #' ponderes iteres (IRLS, Module 3) avec lien probit : poids
 #' \eqn{w=\phi^2/[\Phi(1-\Phi)]}, reponse de travail \eqn{z=\eta+(y-\Phi)/\phi}.
 #'
-#' @param formula formule ; @param data data.frame ; @param maxit iterations max.
+#' @param formula formule 
+#' @param data data.frame 
+#' @param maxit iterations max
 #' @return liste : `coefficients`, `vcov`, `se`, `fitted`, `loglik`.
 #' @export
 probit <- function(formula, data, maxit = 50L) {
@@ -41,7 +43,9 @@ probit <- function(formula, data, maxit = 50L) {
 #' \mathcal N(0,\sigma^2)}, observe \eqn{y=\max(L,y^*)}. Vraisemblance : densite
 #' normale pour les non censures, \eqn{\Phi((L-X\beta)/\sigma)} pour les censures.
 #'
-#' @param formula formule ; @param data data.frame ; @param left seuil de censure.
+#' @param formula formule 
+#' @param data data.frame 
+#' @param left seuil de censure
 #' @return liste : `coefficients`, `sigma`, `se`, `loglik`.
 #' @export
 tobit_fit <- function(formula, data, left = 0) {

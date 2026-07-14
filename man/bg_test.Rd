@@ -7,7 +7,9 @@
 bg_test(formula, data, order = 1)
 }
 \arguments{
-\item{formula, data}{cf. \code{bp_test} ; @param order ordre du retard.}
+\item{formula, data}{cf. \code{bp_test}}
+
+\item{order}{ordre du retard}
 }
 \value{
 liste : \code{statistic}, \code{df}, \code{p_value}.

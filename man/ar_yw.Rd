@@ -7,7 +7,9 @@
 ar_yw(x, order = 1L)
 }
 \arguments{
-\item{x}{serie ; @param order ordre p.}
+\item{x}{serie}
+
+\item{order}{ordre p}
 }
 \value{
 liste : \code{ar} (coefficients), \code{var_pred} (variance d'innovation), \code{mean}.

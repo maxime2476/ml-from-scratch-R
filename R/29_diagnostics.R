@@ -28,7 +28,8 @@
 #' carre sur les regresseurs. \eqn{H_0} : homoscedasticite. Statistique
 #' \eqn{\sim \chi^2_{p-1}}.
 #'
-#' @param formula formule du modele. @param data data.frame.
+#' @param formula formule du modele
+#' @param data data.frame
 #' @return liste : `statistic`, `df`, `p_value`.
 #' @export
 bp_test <- function(formula, data) {
@@ -74,7 +75,8 @@ dw_test <- function(formula, data) {
 #' \eqn{n R^2 \sim \chi^2_p}. Plus general que Durbin-Watson (ordre eleve,
 #' regresseurs retardes admis).
 #'
-#' @param formula,data cf. `bp_test` ; @param order ordre du retard.
+#' @param formula,data cf. `bp_test` 
+#' @param order ordre du retard
 #' @return liste : `statistic`, `df`, `p_value`.
 #' @export
 bg_test <- function(formula, data, order = 1) {
@@ -93,7 +95,8 @@ bg_test <- function(formula, data, order = 1) {
 #' modele et teste (F) leur significativite jointe. Rejet = non-linearite
 #' negligee.
 #'
-#' @param formula,data cf. `bp_test` ; @param powers puissances de \eqn{\hat y}.
+#' @param formula,data cf. `bp_test` 
+#' @param powers puissances de \eqn{\hat y}
 #' @return liste : `statistic` (F), `df1`, `df2`, `p_value`.
 #' @export
 reset_test <- function(formula, data, powers = 2:3) {
@@ -127,7 +130,8 @@ jarque_bera <- function(x) {
 #' les ajoute a l'OLS et teste leur significativite jointe (F). Rejet = OLS
 #' biaise, l'IV (Module 5) est requis.
 #'
-#' @param y reponse ; @param X design (constante + regresseurs, endogenes inclus).
+#' @param y reponse 
+#' @param X design (constante + regresseurs, endogenes inclus)
 #' @param Z instruments (constante + exogenes + exclus).
 #' @param endog indices des colonnes ENDOGENES de X.
 #' @return liste : `statistic` (F), `df1`, `df2`, `p_value`.
@@ -149,7 +153,9 @@ dwh_test <- function(y, X, Z, endog) {
 #' \eqn{\sim\chi^2_{q-k}} (q instruments, k regresseurs). Rejet = instruments
 #' invalides (correles au terme d'erreur).
 #'
-#' @param y reponse ; @param X design (endogenes inclus) ; @param Z instruments.
+#' @param y reponse 
+#' @param X design (endogenes inclus) 
+#' @param Z instruments
 #' @return liste : `statistic`, `df`, `p_value`.
 #' @export
 sargan_test <- function(y, X, Z) {

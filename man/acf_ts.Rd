@@ -7,7 +7,9 @@
 acf_ts(x, lag.max = 10L)
 }
 \arguments{
-\item{x}{serie ; @param lag.max retard maximal.}
+\item{x}{serie}
+
+\item{lag.max}{retard maximal}
 }
 \value{
 vecteur des autocorrelations (retards 0 a \code{lag.max}).

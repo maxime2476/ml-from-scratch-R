@@ -7,7 +7,13 @@
 gibbs_linreg(X, y, n_iter = 5000L, burn = 1000L)
 }
 \arguments{
-\item{X}{design ; @param y reponse ; @param n_iter iterations ; @param burn rodage.}
+\item{X}{design}
+
+\item{y}{reponse}
+
+\item{n_iter}{iterations}
+
+\item{burn}{rodage}
 }
 \value{
 liste : \code{beta} (echantillons apres burn), \code{sigma2}.

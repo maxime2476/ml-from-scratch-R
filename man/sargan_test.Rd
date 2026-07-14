@@ -7,7 +7,11 @@
 sargan_test(y, X, Z)
 }
 \arguments{
-\item{y}{reponse ; @param X design (endogenes inclus) ; @param Z instruments.}
+\item{y}{reponse}
+
+\item{X}{design (endogenes inclus)}
+
+\item{Z}{instruments}
 }
 \value{
 liste : \code{statistic}, \code{df}, \code{p_value}.

@@ -7,7 +7,9 @@
 ljung_box(x, lag = 10L, fitdf = 0L)
 }
 \arguments{
-\item{x}{serie (ou residus) ; @param lag nombre de retards K.}
+\item{x}{serie (ou residus)}
+
+\item{lag}{nombre de retards K}
 
 \item{fitdf}{degres de liberte du modele ajuste (a soustraire).}
 }

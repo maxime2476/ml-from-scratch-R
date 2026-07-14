@@ -7,7 +7,9 @@
 pacf_ts(x, lag.max = 10L)
 }
 \arguments{
-\item{x}{serie ; @param lag.max retard maximal.}
+\item{x}{serie}
+
+\item{lag.max}{retard maximal}
 }
 \value{
 vecteur des autocorrelations partielles (retards 1 a \code{lag.max}).

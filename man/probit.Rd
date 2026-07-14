@@ -7,7 +7,11 @@
 probit(formula, data, maxit = 50L)
 }
 \arguments{
-\item{formula}{formule ; @param data data.frame ; @param maxit iterations max.}
+\item{formula}{formule}
+
+\item{data}{data.frame}
+
+\item{maxit}{iterations max}
 }
 \value{
 liste : \code{coefficients}, \code{vcov}, \code{se}, \code{fitted}, \code{loglik}.

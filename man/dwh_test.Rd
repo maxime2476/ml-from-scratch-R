@@ -7,7 +7,9 @@
 dwh_test(y, X, Z, endog)
 }
 \arguments{
-\item{y}{reponse ; @param X design (constante + regresseurs, endogenes inclus).}
+\item{y}{reponse}
+
+\item{X}{design (constante + regresseurs, endogenes inclus)}
 
 \item{Z}{instruments (constante + exogenes + exclus).}
 

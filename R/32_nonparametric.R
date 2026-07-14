@@ -13,7 +13,9 @@
 #'
 #' \eqn{\hat f(x)=\frac1{nh}\sum_i K\!\bigl(\frac{x-x_i}{h}\bigr)}, noyau gaussien.
 #'
-#' @param x donnees ; @param grid points d'evaluation ; @param bw fenetre h.
+#' @param x donnees 
+#' @param grid points d'evaluation 
+#' @param bw fenetre h
 #' @return vecteur des densites estimees sur `grid`.
 #' @export
 kde <- function(x, grid, bw) {
@@ -25,7 +27,9 @@ kde <- function(x, grid, bw) {
 #' \eqn{\hat m(x_0)=\sum_i K_h(x_0-x_i)\,y_i/\sum_i K_h(x_0-x_i)} : moyenne locale
 #' ponderee par le noyau. Biais d'ordre \eqn{h^2}, mais biais de bord marque.
 #'
-#' @param x,y donnees ; @param x0 points d'evaluation ; @param bw fenetre.
+#' @param x,y donnees 
+#' @param x0 points d'evaluation 
+#' @param bw fenetre
 #' @return vecteur des valeurs ajustees en `x0`.
 #' @export
 nadaraya_watson <- function(x, y, x0, bw) {
@@ -38,7 +42,9 @@ nadaraya_watson <- function(x, y, x0, bw) {
 #' renvoie l'ordonnee a l'origine. Corrige le **biais de bord** du Nadaraya-Watson
 #' (biais d'ordre \eqn{h^2} uniforme jusqu'aux bords).
 #'
-#' @param x,y donnees ; @param x0 points d'evaluation ; @param bw fenetre ;
+#' @param x,y donnees 
+#' @param x0 points d'evaluation 
+#' @param bw fenetre 
 #' @param kernel "gauss" ou "tri" (triangulaire).
 #' @return vecteur des valeurs ajustees en `x0`.
 #' @export
@@ -56,7 +62,8 @@ local_linear <- function(x, y, x0, bw, kernel = c("gauss", "tri")) {
 #' Minimise \eqn{\sum_i (y_i-\hat m_{-i}(x_i))^2}, ou \eqn{\hat m_{-i}} exclut
 #' l'observation \eqn{i} (formule du residu : retirer le poids diagonal).
 #'
-#' @param x,y donnees ; @param bws fenetres candidates.
+#' @param x,y donnees 
+#' @param bws fenetres candidates
 #' @return liste : `bw` (optimale), `cv` (erreurs CV par fenetre).
 #' @export
 bw_loocv <- function(x, y, bws) {
@@ -75,8 +82,10 @@ bw_loocv <- function(x, y, bws) {
 #' estime le **saut** \eqn{\tau=\lim_{x\downarrow c}m(x)-\lim_{x\uparrow c}m(x)},
 #' l'effet causal local (design quasi-experimental de Thistlethwaite-Campbell).
 #'
-#' @param y resultat ; @param x variable de forcage (running variable).
-#' @param cutoff seuil \eqn{c} ; @param bw fenetre (des deux cotes).
+#' @param y resultat 
+#' @param x variable de forcage (running variable)
+#' @param cutoff seuil \eqn{c} 
+#' @param bw fenetre (des deux cotes)
 #' @param kernel "tri" (triangulaire, defaut) ou "gauss".
 #' @return liste : `tau` (saut), `mu_left`, `mu_right`, `n_left`, `n_right`.
 #' @export

@@ -7,7 +7,9 @@
 arma_css(x, p = 1L, q = 1L)
 }
 \arguments{
-\item{x}{serie ; @param p,q ordres AR et MA.}
+\item{x}{serie}
+
+\item{p, q}{ordres AR et MA}
 }
 \value{
 liste : \code{ar}, \code{ma}, \code{mean}, \code{sigma2}.

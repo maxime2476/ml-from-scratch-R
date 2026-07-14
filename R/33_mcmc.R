@@ -36,7 +36,10 @@ metropolis_hastings <- function(log_target, init, proposal_sd, n_iter = 10000L) 
 #' et \eqn{\sigma^2\mid\beta,y\sim\text{Inv-Gamma}(n/2,\;\|y-X\beta\|^2/2)}. La loi
 #' stationnaire est le posterieur joint ; sa moyenne coincide avec l'OLS (M1).
 #'
-#' @param X design ; @param y reponse ; @param n_iter iterations ; @param burn rodage.
+#' @param X design 
+#' @param y reponse 
+#' @param n_iter iterations 
+#' @param burn rodage
 #' @return liste : `beta` (echantillons apres burn), `sigma2`.
 #' @export
 gibbs_linreg <- function(X, y, n_iter = 5000L, burn = 1000L) {

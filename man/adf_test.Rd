@@ -7,7 +7,9 @@
 adf_test(x, lags = trunc((length(x) - 1)^(1/3)))
 }
 \arguments{
-\item{x}{serie ; @param lags nombre de retards \eqn{k} (defaut : Schwert).}
+\item{x}{serie}
+
+\item{lags}{nombre de retards \eqn{k} (defaut : Schwert)}
 }
 \value{
 liste : \code{statistic}, \code{lags}.

@@ -7,7 +7,9 @@
 bp_test(formula, data)
 }
 \arguments{
-\item{formula}{formule du modele. @param data data.frame.}
+\item{formula}{formule du modele}
+
+\item{data}{data.frame}
 }
 \value{
 liste : \code{statistic}, \code{df}, \code{p_value}.

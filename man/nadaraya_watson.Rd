@@ -7,7 +7,11 @@
 nadaraya_watson(x, y, x0, bw)
 }
 \arguments{
-\item{x, y}{donnees ; @param x0 points d'evaluation ; @param bw fenetre.}
+\item{x, y}{donnees}
+
+\item{x0}{points d'evaluation}
+
+\item{bw}{fenetre}
 }
 \value{
 vecteur des valeurs ajustees en \code{x0}.

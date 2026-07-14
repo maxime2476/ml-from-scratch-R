@@ -7,7 +7,11 @@
 kde(x, grid, bw)
 }
 \arguments{
-\item{x}{donnees ; @param grid points d'evaluation ; @param bw fenetre h.}
+\item{x}{donnees}
+
+\item{grid}{points d'evaluation}
+
+\item{bw}{fenetre h}
 }
 \value{
 vecteur des densites estimees sur \code{grid}.

@@ -7,7 +7,11 @@
 local_linear(x, y, x0, bw, kernel = c("gauss", "tri"))
 }
 \arguments{
-\item{x, y}{donnees ; @param x0 points d'evaluation ; @param bw fenetre ;}
+\item{x, y}{donnees}
+
+\item{x0}{points d'evaluation}
+
+\item{bw}{fenetre}
 
 \item{kernel}{"gauss" ou "tri" (triangulaire).}
 }

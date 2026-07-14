@@ -7,7 +7,11 @@
 tobit_fit(formula, data, left = 0)
 }
 \arguments{
-\item{formula}{formule ; @param data data.frame ; @param left seuil de censure.}
+\item{formula}{formule}
+
+\item{data}{data.frame}
+
+\item{left}{seuil de censure}
 }
 \value{
 liste : \code{coefficients}, \code{sigma}, \code{se}, \code{loglik}.

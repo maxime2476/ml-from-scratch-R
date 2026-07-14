@@ -7,7 +7,9 @@
 bw_loocv(x, y, bws)
 }
 \arguments{
-\item{x, y}{donnees ; @param bws fenetres candidates.}
+\item{x, y}{donnees}
+
+\item{bws}{fenetres candidates}
 }
 \value{
 liste : \code{bw} (optimale), \code{cv} (erreurs CV par fenetre).

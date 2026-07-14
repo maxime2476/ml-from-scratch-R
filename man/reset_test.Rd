@@ -7,7 +7,9 @@
 reset_test(formula, data, powers = 2:3)
 }
 \arguments{
-\item{formula, data}{cf. \code{bp_test} ; @param powers puissances de \eqn{\hat y}.}
+\item{formula, data}{cf. \code{bp_test}}
+
+\item{powers}{puissances de \eqn{\hat y}}
 }
 \value{
 liste : \code{statistic} (F), \code{df1}, \code{df2}, \code{p_value}.

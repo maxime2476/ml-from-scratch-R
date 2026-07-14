@@ -11,7 +11,8 @@
 #' \eqn{\hat\rho_k = \hat\gamma_k/\hat\gamma_0}, \eqn{\hat\gamma_k=\frac1n\sum_{t}
 #' (x_t-\bar x)(x_{t-k}-\bar x)}.
 #'
-#' @param x serie ; @param lag.max retard maximal.
+#' @param x serie 
+#' @param lag.max retard maximal
 #' @return vecteur des autocorrelations (retards 0 a `lag.max`).
 #' @export
 acf_ts <- function(x, lag.max = 10L) {
@@ -21,7 +22,8 @@ acf_ts <- function(x, lag.max = 10L) {
 
 #' Fonction d'autocorrelation partielle (PACF, recursion de Durbin-Levinson)
 #'
-#' @param x serie ; @param lag.max retard maximal.
+#' @param x serie 
+#' @param lag.max retard maximal
 #' @return vecteur des autocorrelations partielles (retards 1 a `lag.max`).
 #' @export
 pacf_ts <- function(x, lag.max = 10L) {
@@ -40,7 +42,8 @@ pacf_ts <- function(x, lag.max = 10L) {
 #' Resout \eqn{R\phi=r} (R matrice de Toeplitz des autocorrelations). Estimateur
 #' de moments, coherent et rapide.
 #'
-#' @param x serie ; @param order ordre p.
+#' @param x serie 
+#' @param order ordre p
 #' @return liste : `ar` (coefficients), `var_pred` (variance d'innovation), `mean`.
 #' @export
 ar_yw <- function(x, order = 1L) {
@@ -55,7 +58,8 @@ ar_yw <- function(x, order = 1L) {
 #' \sum \phi_i(x_{t-i}-\mu)-\sum\theta_j\hat\varepsilon_{t-j}} est calcule
 #' recursivement (erreurs initiales nulles). Optimisation via `optim`.
 #'
-#' @param x serie ; @param p,q ordres AR et MA.
+#' @param x serie 
+#' @param p,q ordres AR et MA
 #' @return liste : `ar`, `ma`, `mean`, `sigma2`.
 #' @export
 arma_css <- function(x, p = 1L, q = 1L) {
@@ -80,7 +84,8 @@ arma_css <- function(x, p = 1L, q = 1L) {
 #' \eqn{Q=n(n+2)\sum_{k=1}^{K}\hat\rho_k^2/(n-k)\sim\chi^2_K} sous absence
 #' d'autocorrelation. Utilise sur les residus d'un modele ajuste.
 #'
-#' @param x serie (ou residus) ; @param lag nombre de retards K.
+#' @param x serie (ou residus) 
+#' @param lag nombre de retards K
 #' @param fitdf degres de liberte du modele ajuste (a soustraire).
 #' @return liste : `statistic`, `df`, `p_value`.
 #' @export
@@ -98,7 +103,8 @@ ljung_box <- function(x, lag = 10L, fitdf = 0L) {
 #' \eqn{H_0:\gamma=0} (racine unitaire, NON stationnaire). Valeurs critiques de
 #' Dickey-Fuller (non gaussiennes) : rejet si la stat est TRES negative.
 #'
-#' @param x serie ; @param lags nombre de retards \eqn{k} (defaut : Schwert).
+#' @param x serie 
+#' @param lags nombre de retards \eqn{k} (defaut : Schwert)
 #' @return liste : `statistic`, `lags`.
 #' @export
 adf_test <- function(x, lags = trunc((length(x) - 1)^(1 / 3))) {

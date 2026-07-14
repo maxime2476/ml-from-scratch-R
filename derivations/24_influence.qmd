@@ -1,0 +1,121 @@
+---
+title: "Module 24 — Fonctions d'influence : le fil unificateur"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Ce module n'ajoute pas une méthode : il **révèle la structure commune** de presque
+toutes les précédentes. L'objet central est la **fonction d'influence** $\mathrm{IC}$.
+Un estimateur est *asymptotiquement linéaire* s'il s'écrit
+$$
+\sqrt n\,(\hat\theta-\theta_0) = \frac1{\sqrt n}\sum_{i=1}^n \mathrm{IC}(z_i) + o_p(1),
+\qquad \mathbb E[\mathrm{IC}]=0.
+\tag{24.1}
+$$
+Tout en découle : la loi asymptotique ($\mathcal N(0,\mathbb E[\mathrm{IC}\,\mathrm{IC}^\top])$),
+le sandwich (Modules 2, 14), le bootstrap (Module 17), le jackknife, la correction
+« un pas » (Modules 16, 22) et la borne d'efficacité semiparamétrique.
+
+## La fonction d'influence de l'OLS {#sec-ols}
+
+Pour $\hat\beta=(X^\top X)^{-1}X^\top y$, un développement donne
+$\hat\beta-\beta=(X^\top X)^{-1}\sum_i x_i\varepsilon_i$, soit (24.1) avec
+$$
+\mathrm{IC}_i = \Bigl(\tfrac{X^\top X}{n}\Bigr)^{-1} x_i\,\varepsilon_i .
+\tag{24.2}
+$$
+
+> **Proposition 24.1 (l'influence EST le sandwich).** L'estimateur « plug-in » de
+> la variance par (24.1),
+> $\widehat{\operatorname{Var}}(\hat\beta)=\frac1{n^2}\sum_i \mathrm{IC}_i\mathrm{IC}_i^\top$,
+> est **exactement** l'estimateur sandwich HC0 :
+> $(X^\top X)^{-1}\bigl(\sum_i x_ix_i^\top\hat\varepsilon_i^2\bigr)(X^\top X)^{-1}$.
+
+*Preuve.* Substituer (24.2) : les facteurs $n$ s'annulent et il reste la forme
+HC0 (Module 2). $\blacksquare$ *(Vérifié numériquement à $10^{-16}$.)*
+
+## Le MLE, le M-estimateur {#sec-mle}
+
+Pour un M-estimateur défini par $\sum_i\psi(z_i,\hat\theta)=0$, un développement
+autour de $\theta_0$ donne
+$$
+\mathrm{IC}_i = A^{-1}\psi(z_i,\theta_0),\qquad A=\mathbb E[-\partial_\theta\psi].
+\tag{24.3}
+$$
+La variance $\frac1{n^2}\sum\mathrm{IC}_i\mathrm{IC}_i^\top = A^{-1}BA^{-1}$ (sandwich,
+Module 14). Pour le **MLE** (score $\psi=$ score, $A=\mathcal I$ Fisher), elle se
+réduit à $\mathcal I^{-1}$ **si le modèle est correct** (identité de Bartlett) —
+sinon on obtient le sandwich robuste.
+
+## Trois estimateurs de $\operatorname{Var}(\mathrm{IC})$ coïncident {#sec-three}
+
+- **Sandwich** : plug-in analytique de (24.1) (Modules 2, 14).
+- **Bootstrap** (Module 17) : rééchantillonne $z_i$ ; sa variance estime
+  $\operatorname{Var}(\mathrm{IC})/n$ (le bootstrap *simule* (24.1)).
+- **Jackknife** : $\hat\theta_{(-i)}-\hat\theta\approx-\mathrm{IC}_i/n$ (**le
+  jackknife infinitésimal est la fonction d'influence**), d'où
+  $\widehat{\operatorname{Var}}_{\text{jack}}=\frac{n-1}{n}\sum_i(\hat\theta_{(-i)}-\bar\theta)^2
+  \approx\frac1{n^2}\sum\mathrm{IC}_i^2$.
+
+Les trois estiment la même quantité $\operatorname{Var}(\mathrm{IC})$. *(MC : les
+trois variances coïncident.)*
+
+## L'estimateur « en un pas » {#sec-onestep}
+
+Étant donné un initial $\hat\theta_0$ **$\sqrt n$-consistant** (mais possiblement
+inefficace),
+$$
+\tilde\theta = \hat\theta_0 + \frac1n\sum_i \mathrm{IC}_i(\hat\theta_0)
+\tag{24.4}
+$$
+est **asymptotiquement efficace** : $\tilde\theta = \hat\theta_{\text{MLE}}+o_p(n^{-1/2})$.
+C'est un pas de Newton-scoring, et c'est **exactement** la forme abstraite de :
+
+- la **correction du lasso débiaisé** (Module 22) : $\hat\beta^d_j=\hat\beta_j+
+  \frac1n\sum_i\mathrm{IC}_i$, avec $\mathrm{IC}$ construite par le score orthogonal ;
+- l'**orthogonalisation de Neyman / DML** (Module 16) : le score orthogonal EST
+  une fonction d'influence, insensible au premier ordre aux nuisances.
+
+*(MC : depuis un init dans un voisinage $\sqrt n$, un pas contracte
+quadratiquement vers le MLE.)*
+
+## La fonction d'influence efficace et la borne semiparamétrique {#sec-eif}
+
+Pour l'**ATE** $\tau=\mathbb E[Y(1)-Y(0)]$ sous ignorabilité, la **fonction
+d'influence efficace** (EIF) est
+$$
+\psi_i = \mu_1(x_i)-\mu_0(x_i) + \frac{d_i(y_i-\mu_1)}{e(x_i)}
+- \frac{(1-d_i)(y_i-\mu_0)}{1-e(x_i)} - \tau,
+\tag{24.5}
+$$
+où $\mu_a(x)=\mathbb E[Y\mid X=x,D=a]$ et $e(x)=P(D=1\mid X=x)$. Son second moment
+$\mathbb E[\psi^2]$ est la **borne d'efficacité semiparamétrique** : aucun estimateur
+régulier de $\tau$ ne peut faire mieux. L'estimateur AIPW / doublement robuste
+$\hat\tau=\frac1n\sum(\dots)$ **atteint** cette borne — c'est le DML du Module 16,
+vu sous l'angle de l'influence. La **double robustesse** est immédiate sur (24.5) :
+si $\mu_a$ *ou* $e$ est correct, $\mathbb E[\psi]=0$.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/24_influence.R`) |
+|---|---|
+| (24.2) IC de l'OLS = HC0 | `influence_ols(X, y)` |
+| (24.3) IC du MLE | `influence_mle(fit)` |
+| jackknife = IC | `jackknife(data, stat_fn)` |
+| (24.4) estimateur en un pas | `onestep(theta0, ic_at)` |
+| (24.5) EIF de l'ATE + borne | `eif_ate(y, d, mu1, mu0, e)` |
+
+Validation : IC-OLS = sandwich HC0 (Module 2) à $10^{-16}$ ; variance IC =
+jackknife = bootstrap (Module 17) ; IC-MLE = variance du GLM (Module 3) ; le
+one-step contracte vers le MLE ; l'EIF-ATE couvre à 95 %.
+
+## Références {.unnumbered}
+
+- Hampel (1974) ; Huber & Ronchetti (2009), *Robust Statistics*.
+- Newey (1990), « Semiparametric efficiency bounds », *J. Applied Econometrics*.
+- Bickel, Klaassen, Ritov & Wellner (1993), *Efficient and Adaptive Estimation*.
+- Tsiatis (2006), *Semiparametric Theory and Missing Data*.

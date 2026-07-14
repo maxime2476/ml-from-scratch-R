@@ -1,0 +1,83 @@
+url: https://mgourguechon.github.io/ml-from-scratch-R
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#00798c"
+
+home:
+  title: "ML from Scratch in R"
+  description: >-
+    Déconstruction mathématique de 29 modules d'apprentissage et d'économétrie,
+    en R base, validés contre les packages de référence et étudiés par Monte Carlo.
+
+navbar:
+  structure:
+    left: [intro, reference, articles]
+    right: [search, github]
+  components:
+    articles:
+      text: Livre (dérivations)
+      href: https://mgourguechon.github.io/ml-from-scratch-R/book/
+    github:
+      icon: fab fa-github
+      href: https://github.com/mgourguechon/ml-from-scratch-R
+
+reference:
+- title: "Fondations : algèbre, OLS, inférence"
+  desc: "Moindres carrés, factorisations, robustesse, GLM."
+  contents:
+  - starts_with("solve_ls")
+  - starts_with("qr_")
+  - starts_with("ols_")
+  - starts_with("vcov_")
+  - starts_with("glm_")
+  - matches("householder|chol_|svd_tools|back_substitution|forward_substitution")
+  - matches("coeftest_hc|sandwich_vcov|fwl_beta2|wald_test|lr_test|score_test")
+
+- title: "Optimisation"
+  desc: "Optimiseurs génériques avec preuves de convergence (Module 0)."
+  contents:
+  - starts_with("optim_")
+
+- title: "Régularisation et haute dimension"
+  desc: "Ridge, lasso, lasso débiaisé, sensibilité."
+  contents:
+  - matches("ridge|lasso|soft_threshold|debiased|partial_r2|robustness_value|adjusted_estimate|sensitivity")
+
+- title: "Fonctions d'influence et rééchantillonnage"
+  desc: "Le fil unificateur de l'inférence (Modules 17, 24)."
+  contents:
+  - starts_with("influence_")
+  - matches("jackknife|onestep|eif_ate|bootstrap|boot_")
+
+- title: "Causalité"
+  desc: "IV, DML, DiD moderne, arbres causaux."
+  contents:
+  - matches("tsls|first_stage|dml_plr|t_learner|causal_tree|predict_causal|twfe|att_gt|aggregate_att|sunab")
+
+- title: "Non linéaire, non supervisé, réseaux"
+  desc: "KNN, CART, forêts, boosting, PCA/k-means/EM, MLP, autodiff."
+  contents:
+  - matches("knn|cart|forest|bagging|boost|impurity|prune|kmeans|pca|em_gmm|mlp|adnode|ad_|^mm$|backward|Ops.adnode|Math.adnode|Summary.adnode|best_split|n_leaves")
+
+- title: "Noyaux et processus gaussiens"
+  contents:
+  - matches("rbf_kernel|gp_|kernel_ridge|random_features|fit_rff|double_descent")
+
+- title: "Interprétabilité et validation"
+  contents:
+  - matches("pdp|ice|shapley|permutation_importance|loocv|kfold|gcv|info_criteria|mallows|conformal|pinball|qreg")
+
+- title: "Économétrie : GMM, panel, quantile"
+  contents:
+  - matches("gmm|fe_within|wls_fit|gls_fit")
+
+- title: "Outils Monte Carlo et théorie de l'apprentissage"
+  contents:
+  - matches("mc_|coverage_mc|reject_mc|convergence_study|rmse_rate|hoeffding|rademacher|shatter|separable|concentration|edge_length|gaussian_loglik|ridge_posterior|m_estimation|ols_psi|bias_variance_mc")
+
+- title: "Package"
+  contents:
+  - matches("mlfromscratch")

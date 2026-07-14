@@ -165,6 +165,8 @@ Le dépôt est un **compendium de recherche citable** :
 - **`Dockerfile`** — environnement bit-à-bit (R épinglé + Quarto + LaTeX, renv
   restauré) : `make docker`.
 - **`CITATION.cff`** — métadonnées de citation (prêtes pour un DOI Zenodo).
+- **`_pkgdown.yml`** + workflow — **site de documentation** auto-déployé sur
+  GitHub Pages (référence des 133 fonctions organisée par thème).
 - **`run_tests.R`** — suite complète en processus isolés (cf. ci-dessous).
 
 ## Prérequis

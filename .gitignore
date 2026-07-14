@@ -27,6 +27,10 @@ Thumbs.db
 *.Rcheck/
 *.tar.gz
 /_book/
+/docs/
+
+# targets
+_targets/
 
 # renv (garder renv.lock, ignorer la lib)
 renv/library/

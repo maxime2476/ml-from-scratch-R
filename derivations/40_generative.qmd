@@ -1,0 +1,70 @@
+---
+title: "Module 40 — Classifieurs génératifs (LDA, QDA, Naive Bayes)"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Les classifieurs **discriminatifs** (GLM au Module 3, SVM au Module 39) modélisent
+directement $P(y\mid x)$. Les **génératifs** prennent le chemin inverse : modéliser
+la **génération** $P(x\mid y)$ et le prior $P(y)$, puis **inverser par Bayes**
+$$
+P(y=k\mid x)\propto \underbrace{P(x\mid y=k)}_{\text{vraisemblance}}\underbrace{P(y=k)}_{\pi_k}.
+\tag{40.1}
+$$
+Selon les hypothèses sur $P(x\mid y)$, on obtient des frontières linéaires (LDA),
+quadratiques (QDA) ou « naïves » (Naive Bayes).
+
+## LDA : covariance commune, frontière linéaire {#sec-lda}
+
+Hypothèse : $x\mid y=k\sim\mathcal N(\mu_k,\Sigma)$ avec **la même** $\Sigma$ pour
+toutes les classes. En prenant le log de (40.1), les termes quadratiques
+$x^\top\Sigma^{-1}x$ **se simplifient** entre classes, laissant un **discriminant
+linéaire**
+$$
+\delta_k(x)=x^\top\Sigma^{-1}\mu_k-\tfrac12\mu_k^\top\Sigma^{-1}\mu_k+\log\pi_k,\qquad
+\hat y=\arg\max_k\delta_k(x).
+\tag{40.2}
+$$
+*(= `MASS::lda`.)*
+
+## QDA : covariances propres, frontière quadratique {#sec-qda}
+
+Si chaque classe a sa **propre** $\Sigma_k$, les termes quadratiques ne se
+simplifient plus :
+$$
+\delta_k(x)=-\tfrac12\log|\Sigma_k|-\tfrac12(x-\mu_k)^\top\Sigma_k^{-1}(x-\mu_k)+\log\pi_k.
+\tag{40.3}
+$$
+Plus flexible (frontière courbe) mais estime **plus de paramètres** — arbitrage
+biais-variance : QDA gagne si les covariances diffèrent vraiment, LDA si elles
+sont proches (moins de variance). *(= `MASS::qda` ; MC : QDA bat LDA sous
+covariances hétérogènes.)*
+
+## Naive Bayes : indépendance conditionnelle {#sec-nb}
+
+Hypothèse **naïve** : les features sont indépendantes *sachant la classe*,
+$P(x\mid y=k)=\prod_j P(x_j\mid y=k)$ (ici gaussiennes univariées). Cela réduit
+$\Sigma_k$ à ses **diagonales** — très peu de paramètres, donc excellent en haute
+dimension et robuste, au prix d'un biais si les features sont corrélées.
+*(= `e1071::naiveBayes`.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Modèle | Frontière | Fonction R (`R/40_generative.R`) | Référence |
+|---|---|---|---|
+| (40.2) LDA | linéaire | `lda_fit`, `lda_predict` | `MASS::lda` |
+| (40.3) QDA | quadratique | `qda_fit`, `qda_predict` | `MASS::qda` |
+| Naive Bayes | axes-alignée | `naive_bayes_fit`, `naive_bayes_predict` | `e1071::naiveBayes` |
+
+Validation : les **prédictions sont identiques** aux références. Monte Carlo :
+l'arbitrage LDA/QDA (covariances homogènes vs hétérogènes) et l'effet de la
+corrélation des features sur Naive Bayes.
+
+## Références {.unnumbered}
+
+- Fisher (1936) — analyse discriminante.
+- Hastie, Tibshirani & Friedman (2009), *ESL*, ch. 4.

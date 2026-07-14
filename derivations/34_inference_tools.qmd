@@ -1,0 +1,62 @@
+---
+title: "Module 34 — Méthode delta et tests multiples"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Deux outils d'inférence transversaux, utiles à presque tous les modules : (a)
+propager l'incertitude à une **fonction** d'un estimateur (méthode delta) ; (b)
+contrôler les **faux positifs** quand on teste *beaucoup* d'hypothèses.
+
+## Méthode delta {#sec-delta}
+
+Si $\sqrt n(\hat\theta-\theta)\xrightarrow{d}\mathcal N(0,\Sigma)$ et $g$ est
+différentiable en $\theta$ avec $\nabla g(\theta)\neq 0$, alors un développement
+de Taylor $g(\hat\theta)\approx g(\theta)+\nabla g(\theta)^\top(\hat\theta-\theta)$
+donne
+$$
+\sqrt n\,(g(\hat\theta)-g(\theta))\xrightarrow{d}\mathcal N\bigl(0,\ \nabla g(\theta)^\top\Sigma\,\nabla g(\theta)\bigr).
+\tag{34.1}
+$$
+D'où l'erreur standard $\widehat{\operatorname{se}}(g(\hat\theta))=
+\sqrt{\nabla g^\top\hat\Sigma\nabla g}$ (gradient par différences finies). C'est
+ce qui donne l'écart-type d'un **ratio** de coefficients, d'un **effet marginal**,
+d'une **élasticité**… *(= `car::deltaMethod`.)*
+
+## Tests multiples {#sec-multiple}
+
+Tester $m$ hypothèses au seuil $\alpha$ chacune gonfle les faux positifs : sous
+$H_0$ globale, on en attend $\alpha m$. Deux garanties, deux philosophies :
+
+- **Bonferroni** (contrôle du **FWER**, *family-wise error rate*) :
+  $\tilde p_i=\min(1,m\,p_i)$. Borne la probabilité d'**au moins un** faux positif
+  par $\alpha$. Simple mais **conservateur**.
+- **Benjamini-Hochberg** (contrôle du **FDR**, *false discovery rate*) : trie les
+  p-valeurs et pose $\tilde p_{(i)}=\min_{j\ge i} m\,p_{(j)}/j$. Contrôle la
+  **proportion attendue de faux positifs parmi les rejets** — bien plus
+  **puissant** quand de nombreuses hypothèses sont réellement fausses (génomique,
+  sélection de variables…).
+
+*(Les deux = `stats::p.adjust` ; MC : BH contrôle le FDR à $\alpha$ tout en
+rejetant plus que Bonferroni.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/34_inference_tools.R`) | Référence |
+|---|---|---|
+| (34.1) méthode delta | `delta_method(theta, vcov, g)` | `car::deltaMethod` |
+| Bonferroni (FWER) | `p_adjust_bonferroni(p)` | `p.adjust(., "bonferroni")` |
+| Benjamini-Hochberg (FDR) | `p_adjust_bh(p)` | `p.adjust(., "BH")` |
+
+Validation : méthode delta = `car::deltaMethod` ; corrections = `stats::p.adjust`
+à la précision machine. Monte Carlo : Bonferroni contrôle le FWER, BH contrôle le
+FDR à sa cible tout en étant plus puissant.
+
+## Références {.unnumbered}
+
+- Benjamini & Hochberg (1995), « Controlling the false discovery rate », *JRSS-B*.
+- van der Vaart (1998), *Asymptotic Statistics* (méthode delta).

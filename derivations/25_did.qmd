@@ -1,0 +1,102 @@
+---
+title: "Module 25 — Différences-de-différences à adoption échelonnée"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+La régression **two-way fixed effects** (TWFE),
+$$
+y_{it} = \alpha_i + \gamma_t + \delta\,D_{it} + \varepsilon_{it},
+\tag{25.1}
+$$
+est le cheval de bataille de l'évaluation de politiques. Avec un traitement
+**binaire, absorbant, à adoption simultanée**, $\hat\delta$ estime bien l'ATT.
+Mais dès que l'adoption est **échelonnée** (les unités sont traitées à des dates
+différentes) **et** que les effets sont **hétérogènes/dynamiques**, $\hat\delta$
+devient **biaisé** — parfois de signe opposé à *tous* les effets individuels. Ce
+module démontre le problème puis présente les deux estimateurs corrects de la
+littérature 2020-2021.
+
+## Le TWFE et ses poids négatifs {#sec-twfe}
+
+Par Frisch-Waugh-Lovell (M1), $\hat\delta=\sum_{it}\tilde D_{it}y_{it}/\sum_{it}
+\tilde D_{it}^2$, où $\tilde D=D-\bar D_{i\cdot}-\bar D_{\cdot t}+\bar D$ est le
+traitement résidualisé des effets fixes (double démean, M21).
+
+> **Proposition 25.1 (poids négatifs ; de Chaisemartin & D'Haultfœuille 2020).**
+> Sous des effets hétérogènes $\tau_{it}$,
+> $$
+> \hat\delta = \sum_{(i,t):D_{it}=1} w_{it}\,\tau_{it},\qquad
+> w_{it}=\frac{\tilde D_{it}}{\sum_{(i,t)}\tilde D_{it}^2},\qquad \sum w_{it}=1,
+> \tag{25.2}
+> $$
+> et **certains $w_{it}<0$**. $\hat\delta$ n'est donc **pas** une moyenne convexe
+> des effets : il peut être négatif alors que tous les $\tau_{it}>0$.
+
+*Idée.* Les poids négatifs frappent les unités **déjà traitées** utilisées comme
+« contrôles » pour les unités traitées plus tard : leur variation de résultat
+inclut l'évolution de *leur propre* effet de traitement, qui est soustraite à
+tort. C'est la **comparaison interdite**. *(Vérifié : $\sum w=1$, ~17 % de poids
+négatifs dans notre DGP ; $\hat\delta_{\text{TWFE}}=2{,}06$ contre un vrai ATT
+$\approx 2{,}94$.)* $\blacksquare$
+
+## Callaway & Sant'Anna (2021) : ATT groupe-temps {#sec-cs}
+
+On définit un paramètre **par cohorte $g$ (date de premier traitement) et
+période $t$**, estimé par une DiD propre contre un groupe de contrôle **jamais
+traité** (ou **pas encore traité**), avec la période de base $g-1$ :
+$$
+\widehat{\mathrm{ATT}}(g,t) = \bigl[\bar Y_{g,t}-\bar Y_{g,g-1}\bigr]
+- \bigl[\bar Y_{C,t}-\bar Y_{C,g-1}\bigr].
+\tag{25.3}
+$$
+Aucune unité traitée ne sert de contrôle : **pas de comparaison interdite**. On
+agrège ensuite les $\mathrm{ATT}(g,t)$ selon la question :
+$$
+\mathrm{ATT}^{\text{dyn}}(e)=\!\!\sum_{g}\!\frac{n_g\,\mathbb 1\{g+e\le T\}}{\sum_{g'}n_{g'}}\,\mathrm{ATT}(g,g+e)
+\quad(\text{event-study par ancienneté }e),
+\tag{25.4}
+$$
+et l'ATT global pondère les $\mathrm{ATT}(g,t)$ post-traitement par les tailles de
+cohorte. *(Vérifié : $\mathrm{ATT}(g,t)$ identiques à `did::att_gt` à $10^{-16}$.)*
+
+## Sun & Abraham (2021) : event-study « interaction-weighted » {#sec-sa}
+
+L'event-study TWFE naïf (régresser $y$ sur des indicatrices d'ancienneté) souffre
+du **même** biais : chaque coefficient d'ancienneté « contamine » les autres
+cohortes. Le remède : régression **saturée** en interactions cohorte×ancienneté,
+$$
+y_{it}=\alpha_i+\gamma_t+\sum_{g}\sum_{e\neq -1}\beta_{g,e}\,\mathbb 1\{G_i=g\}\mathbb 1\{t-g=e\}+\varepsilon_{it},
+\tag{25.5}
+$$
+puis **agrégation** des $\hat\beta_{g,e}$ par ancienneté $e$, pondérée par les parts
+de cohorte : $\widehat{\mathrm{ATT}}^{\text{SA}}(e)=\sum_g \pi_{g}(e)\,\hat\beta_{g,e}$.
+Chaque interaction est identifiée **au sein d'une cohorte** : pas de contamination.
+*(Vérifié : ATT global et coefficients d'ancienneté identiques à `fixest::sunab`
+à $10^{-13}$.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/25_did.R`) |
+|---|---|
+| (25.1) TWFE (double démean, FWL) | `twfe(data)` |
+| (25.2) poids négatifs (dCDH) | `twfe_weights(data)` |
+| (25.3) ATT(g,t) Callaway-Sant'Anna | `att_gt(data, control)` |
+| (25.4) agrégations | `aggregate_att(attgt, type)` |
+| (25.5) event-study Sun-Abraham | `sunab(data)` |
+
+Validation : TWFE = `fixest::feols` ; ATT(g,t) = `did::att_gt` ; Sun-Abraham =
+`fixest::sunab`, à la précision machine. Monte Carlo : sous adoption échelonnée à
+effets dynamiques, le TWFE est **biaisé** (et peut inverser le signe) tandis que
+Callaway-Sant'Anna et Sun-Abraham **récupèrent** l'ATT vrai.
+
+## Références {.unnumbered}
+
+- de Chaisemartin & D'Haultfœuille (2020, *AER*) — poids négatifs du TWFE.
+- Goodman-Bacon (2021, *J. Econometrics*) — décomposition du TWFE.
+- Callaway & Sant'Anna (2021, *J. Econometrics*) — ATT groupe-temps.
+- Sun & Abraham (2021, *J. Econometrics*) — event-study interaction-weighted.

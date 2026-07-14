@@ -1,0 +1,84 @@
+---
+title: "Module 28 — Différentiation automatique en mode inverse"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+La rétropropagation du Module 12 calculait *à la main* le gradient d'un perceptron.
+Ce module en donne la **généralisation mécanique** : la **différentiation
+automatique en mode inverse**, la machinerie qui alimente *tous* les frameworks
+modernes (PyTorch, JAX, TensorFlow). L'idée : enregistrer chaque opération
+élémentaire sur une **bande** (tape), puis appliquer la règle de la chaîne en
+**une seule passe arrière** pour obtenir *tous* les gradients d'un coup.
+
+## Ce que l'AD n'est pas {#sec-notwhat}
+
+- Ce n'est **pas** la différentiation **numérique** (différences finies) : celle-ci
+  est approchée ($O(h)$ ou $O(h^2)$) et instable. L'AD est **exacte** (à l'arrondi).
+- Ce n'est **pas** la différentiation **symbolique** : pas d'explosion
+  d'expressions ; l'AD travaille sur le **graphe de calcul** numérique.
+
+## Le graphe de calcul et la règle de la chaîne {#sec-graph}
+
+Toute fonction $L=f(x)$ écrite en opérations élémentaires est un **graphe orienté
+acyclique** : les nœuds sont des valeurs intermédiaires $v_k$, les arêtes des
+dépendances. La règle de la chaîne se propage des sorties vers les entrées :
+$$
+\bar v_k \equiv \frac{\partial L}{\partial v_k} = \sum_{j\,:\,k\to j}\bar v_j\,\frac{\partial v_j}{\partial v_k}.
+\tag{28.1}
+$$
+En **mode inverse**, on parcourt le graphe **à rebours** (ordre topologique
+inverse) : chaque nœud, une fois son $\bar v_j$ accumulé, **pousse** sa
+contribution vers ses parents. Une passe suffit pour **toutes** les dérivées
+partielles — d'où l'efficacité pour $f:\mathbb R^n\to\mathbb R$ (une sortie, $n$
+entrées), le cas du machine learning.
+
+## Les règles locales {#sec-rules}
+
+Chaque opération connaît sa **dérivée locale** (le « backward ») :
+
+| Opération | Valeur | Rétropropagation vers les parents |
+|---|---|---|
+| $c=a+b$ | $a+b$ | $\bar a\mathrel{+}=\bar c,\ \bar b\mathrel{+}=\bar c$ |
+| $c=a\odot b$ | $a\,b$ | $\bar a\mathrel{+}=\bar c\,b,\ \bar b\mathrel{+}=\bar c\,a$ |
+| $c=\exp(a)$ | $e^a$ | $\bar a\mathrel{+}=\bar c\,e^a$ |
+| $c=\tanh(a)$ | $\tanh a$ | $\bar a\mathrel{+}=\bar c\,(1-\tanh^2 a)$ |
+| $c=\sum a$ | $\sum_i a_i$ | $\bar a\mathrel{+}=\bar c\ (\text{diffusé})$ |
+| $C=AB$ | $AB$ | $\bar A\mathrel{+}=\bar C B^\top,\ \bar B\mathrel{+}=A^\top\bar C$ |
+
+La règle du **produit matriciel** est la clé : elle encapsule *toute* la
+rétropropagation d'une couche dense.
+
+## La rétropropagation comme cas particulier {#sec-backprop}
+
+Un MLP à une couche cachée, $L=\tfrac1n\|\,\tanh(XW_1)W_2 - y\,\|^2$, se dérive
+**automatiquement** en composant les règles du tableau : `mm`, `tanh`, `-`, `*`,
+`sum`. Le gradient obtenu est **identique** à la rétropropagation codée à la main
+(Module 12) — et à la différentiation numérique. La backprop n'est qu'une
+**instance** de l'AD en mode inverse appliquée à l'architecture d'un réseau.
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/28_autodiff.R`) |
+|---|---|
+| nœud enregistré (valeur, grad, backward) | `adnode(value)` |
+| opérateurs et fonctions (28.1) | `Ops.adnode`, `Math.adnode`, `Summary.adnode` |
+| produit matriciel | `mm(a, b)` ; biais : `ad_cbind1(a)` |
+| passe arrière (règle de la chaîne) | `backward(node)` |
+| gradient d'une fonction scalaire | `ad_grad(f, x)` |
+
+Validation : gradients **identiques** à `numDeriv::grad` ($\sim 10^{-10}$) pour
+une fonction scalaire, une perte de régression, et un **MLP** complet ; le
+gradient AD du MLP coïncide avec la rétropropagation du Module 12. Monte Carlo :
+une descente de gradient pilotée par l'AD minimise la perte d'un MLP.
+
+## Références {.unnumbered}
+
+- Griewank & Walther (2008), *Evaluating Derivatives*.
+- Baydin, Pearlmutter, Radul & Siskind (2018), « Automatic differentiation in
+  machine learning: a survey », *JMLR*.
+- Rumelhart, Hinton & Williams (1986) — rétropropagation (Module 12).

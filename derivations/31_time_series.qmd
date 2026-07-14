@@ -1,0 +1,82 @@
+---
+title: "Module 31 — Séries temporelles"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Les modules précédents supposent des observations **indépendantes**. Une série
+temporelle viole cette hypothèse : $x_t$ dépend de son passé. Ce module modélise
+cette dépendance (AR/MA/ARMA), la teste (Ljung-Box), et distingue une série
+**stationnaire** d'une série à **racine unitaire** (Dickey-Fuller) — distinction
+cruciale, car ignorer une racine unitaire mène à des **régressions fallacieuses**.
+
+## Autocorrélation : ACF et PACF {#sec-acf}
+
+L'**ACF** $\hat\rho_k=\hat\gamma_k/\hat\gamma_0$ mesure la corrélation à distance
+$k$ ; la **PACF** $\hat\phi_{kk}$ (récursion de Durbin-Levinson) la mesure *nette*
+des retards intermédiaires. Elles **identifient** l'ordre : un AR($p$) a une PACF
+qui se coupe après $p$ ; un MA($q$) une ACF qui se coupe après $q$.
+
+## Modèles AR, MA, ARMA {#sec-arma}
+
+$$
+\underbrace{x_t=\textstyle\sum_{i=1}^p\phi_i x_{t-i}+\varepsilon_t}_{\text{AR}(p)},\qquad
+\underbrace{x_t=\varepsilon_t+\textstyle\sum_{j=1}^q\theta_j\varepsilon_{t-j}}_{\text{MA}(q)},\qquad
+\text{ARMA}(p,q)\ \text{les deux.}
+$$
+
+- **AR par Yule-Walker** : les équations $R\phi=r$ (Toeplitz des autocorrélations)
+  donnent un estimateur de moments explicite. *(= `stats::ar`.)*
+- **ARMA par moindres carrés conditionnels (CSS)** : on calcule récursivement
+  $\hat\varepsilon_t$ (erreurs initiales nulles) et l'on minimise $\sum\hat
+  \varepsilon_t^2$. *(Récupère les vrais paramètres ; $\approx$ `arima(CSS)`.)*
+
+## Diagnostic : Ljung-Box {#sec-lb}
+
+Sur les résidus d'un modèle ajusté, $Q=n(n+2)\sum_{k=1}^K\hat\rho_k^2/(n-k)\sim
+\chi^2_{K-\text{fitdf}}$ teste l'**absence d'autocorrélation résiduelle**. Rejet =
+le modèle n'a pas capté toute la dynamique. *(= `Box.test`.)*
+
+## Racine unitaire : Dickey-Fuller augmenté {#sec-adf}
+
+Une **racine unitaire** ($x_t=x_{t-1}+\varepsilon_t$, marche aléatoire) rend la
+série **non stationnaire**. On régresse
+$$
+\Delta x_t=\alpha+\beta t+\gamma\,x_{t-1}+\textstyle\sum_{i=1}^k\delta_i\Delta x_{t-i}+\varepsilon_t,
+\tag{31.1}
+$$
+et l'on teste $H_0:\gamma=0$ (racine unitaire) par le $t$ de $\hat\gamma$. Sous
+$H_0$ ce $t$ **n'est pas gaussien** : ses valeurs critiques (Dickey-Fuller) sont
+bien plus **négatives** (~$-3.4$ à 5 % avec tendance). *(= `tseries::adf.test`.)*
+
+> **Pourquoi c'est crucial — la régression fallacieuse (Granger-Newbold 1974).**
+> Régresser deux marches aléatoires **indépendantes** l'une sur l'autre produit un
+> $t$ « significatif » dans ~**75 %** des cas au lieu de 5 % : une relation
+> **fallacieuse**. Tester la stationnarité (ADF) *avant* de régresser évite ce
+> piège. *(Démontré en Monte Carlo.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/31_time_series.R`) | Référence |
+|---|---|---|
+| ACF / PACF | `acf_ts`, `pacf_ts` | `stats::acf`, `stats::pacf` |
+| AR (Yule-Walker) | `ar_yw` | `stats::ar` |
+| ARMA (CSS) | `arma_css` | `stats::arima` |
+| Ljung-Box | `ljung_box` | `stats::Box.test` |
+| (31.1) Dickey-Fuller augmenté | `adf_test` | `tseries::adf.test` |
+
+Validation : ACF, PACF, Yule-Walker, Ljung-Box et la statistique ADF coïncident
+avec leur référence à la précision machine ; ARMA-CSS récupère les vrais
+paramètres. Monte Carlo : la **régression fallacieuse** (rejet ~75 %) et la
+puissance de l'ADF.
+
+## Références {.unnumbered}
+
+- Box & Jenkins (1970) ; Brockwell & Davis (1991).
+- Dickey & Fuller (1979) ; Said & Dickey (1984).
+- Granger & Newbold (1974), « Spurious regressions in econometrics ».
+- Ljung & Box (1978).

@@ -1,0 +1,154 @@
+---
+title: "Théorie approfondie — L'efficacité semiparamétrique du Double ML"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Les modules ont souvent donné des théorèmes en *esquisse*. Ce chapitre en mène **un**
+jusqu'au bout, avec toutes ses étapes : l'estimateur **AIPW / Double ML** de
+l'effet moyen du traitement (ATE) est **asymptotiquement efficace** — il atteint
+la borne de variance la plus basse possible pour *tout* estimateur régulier dans
+un modèle où les nuisances sont non paramétriques. C'est le point de rencontre
+des Modules 16 (DML), 22 (débiaisé) et 24 (fonctions d'influence).
+
+## Cadre et paramètre {#sec-setup}
+
+On observe $W=(Y,D,X)$ avec $D\in\{0,1\}$ et les résultats potentiels
+$Y=DY(1)+(1-D)Y(0)$. On suppose :
+
+- **(H1) Non-confusion :** $\{Y(0),Y(1)\}\perp D\mid X$.
+- **(H2) Recouvrement :** $0<\underline e\le e(X)\le\bar e<1$ p.s., où
+  $e(x)=P(D=1\mid X=x)$.
+
+Le paramètre d'intérêt est l'**ATE** $\tau=\mathbb E[Y(1)-Y(0)]$. Sous (H1)-(H2),
+il est identifié par $\tau=\mathbb E[\mu_1(X)-\mu_0(X)]$, avec
+$\mu_a(x)=\mathbb E[Y\mid X=x,D=a]$. Les **nuisances** $\eta=(\mu_0,\mu_1,e)$ sont
+**non paramétriques**.
+
+## La fonction d'influence efficace {#sec-eif}
+
+Considérons le **moment doublement robuste** (AIPW)
+$$
+\psi(W;\tau,\eta)=\mu_1(X)-\mu_0(X)-\tau+\frac{D\,(Y-\mu_1(X))}{e(X)}
+-\frac{(1-D)(Y-\mu_0(X))}{1-e(X)}.
+\tag{T.1}
+$$
+
+> **Lemme T.1 (identification et double robustesse).** Si *soit* les $\mu_a$
+> *soit* $e$ sont corrects (l'autre pouvant être faux), alors
+> $\mathbb E[\psi(W;\tau,\eta)]=0\iff \tau=\mathbb E[Y(1)-Y(0)]$.
+
+*Preuve.* Écrivons $\mathbb E[\psi]+\tau = \mathbb E[\mu_1-\mu_0] +
+\mathbb E\!\left[\tfrac{D(Y-\mu_1)}{e}\right]-\mathbb E\!\left[\tfrac{(1-D)(Y-\mu_0)}{1-e}\right]$.
+Conditionnons sur $X$ le deuxième terme :
+$\mathbb E\!\left[\tfrac{D(Y-\mu_1)}{e}\,\middle|\,X\right]
+=\tfrac1{e}\,\mathbb E[D(Y-\mu_1)\mid X]$. Or, par (H1),
+$\mathbb E[D(Y-\mu_1(X))\mid X]=e(X)\,\mathbb E[Y-\mu_1(X)\mid X,D=1]=e(X)(\mu_1^{\text{vrai}}-\mu_1)$.
+Si $\mu_1$ est correct, ce terme s'annule ; s'il est faux mais $e$ correct, il
+compense exactement le biais de $\mathbb E[\mu_1]$. Le symétrique vaut pour le
+contrôle. Dans les deux cas $\mathbb E[\psi]+\tau=\tau^{\text{vrai}}$. $\blacksquare$
+
+## Orthogonalité de Neyman {#sec-neyman}
+
+Le cœur de la robustesse : $\psi$ est **insensible au premier ordre** aux erreurs
+de nuisance.
+
+> **Théorème T.2 (orthogonalité de Neyman).** À nuisances vraies $\eta$, la
+> dérivée de Gateaux de $\tau\mapsto\mathbb E[\psi]$ par rapport à chaque
+> composante de $\eta$, dans toute direction, est **nulle** :
+> $\partial_\eta\,\mathbb E[\psi(W;\tau,\eta)]\big|_{\eta}=0.$
+
+*Preuve.* On dérive (T.1) dans les directions $h_1,h_0,h_e$.
+
+**Par rapport à $\mu_1$** (direction $h_1$) :
+$\partial_{\mu_1}\psi[h_1]=h_1-\tfrac{D}{e}h_1=h_1\bigl(1-\tfrac{D}{e}\bigr)$.
+En espérance conditionnelle,
+$\mathbb E\!\left[h_1(X)\bigl(1-\tfrac{D}{e(X)}\bigr)\middle|X\right]
+=h_1(X)\bigl(1-\tfrac{e(X)}{e(X)}\bigr)=0.$
+
+**Par rapport à $\mu_0$** (direction $h_0$) :
+$\partial_{\mu_0}\psi[h_0]=-h_0+\tfrac{1-D}{1-e}h_0$, d'espérance conditionnelle
+$-h_0(X)+h_0(X)\tfrac{1-e(X)}{1-e(X)}=0.$
+
+**Par rapport à $e$** (direction $h_e$) :
+$\partial_{e}\psi[h_e]=\Bigl(-\tfrac{D(Y-\mu_1)}{e^2}+\tfrac{(1-D)(Y-\mu_0)}{(1-e)^2}\Bigr)h_e$.
+Or $\mathbb E[D(Y-\mu_1(X))\mid X]=0$ et $\mathbb E[(1-D)(Y-\mu_0(X))\mid X]=0$
+(argument du Lemme T.1 à nuisances vraies), donc l'espérance est nulle.
+
+Les trois dérivées directionnelles ont une espérance nulle : $\psi$ est
+Neyman-orthogonale. $\blacksquare$
+
+$\psi$ est en fait la **fonction d'influence efficace** (le gradient canonique) du
+modèle ; sa variance $\mathbb E[\psi^2]$ est la **borne d'efficacité
+semiparamétrique** de $\tau$ (Hahn 1998) — aucun estimateur régulier ne peut faire
+mieux.
+
+## Attainment par le Double ML (cross-fitting) {#sec-attain}
+
+On estime $\hat\eta$ sur un pli, on évalue $\psi$ sur l'autre (cross-fitting,
+$K$ plis), et $\hat\tau=\frac1n\sum_i\psi(W_i;\hat\tau,\hat\eta_{-k(i)})$ résout le
+moment empirique.
+
+> **Théorème T.3 (normalité efficace).** Sous (H1)-(H2), si les nuisances sont
+> estimées à une vitesse $L_2$ telle que
+> $\|\hat\mu_a-\mu_a\|\cdot\|\hat e-e\| = o_p(n^{-1/2})$ (par ex. chacune
+> $o_p(n^{-1/4})$), alors
+> $$\sqrt n(\hat\tau-\tau)=\frac1{\sqrt n}\sum_{i=1}^n\psi(W_i;\tau,\eta)+o_p(1)
+> \ \xrightarrow{d}\ \mathcal N\!\bigl(0,\ \mathbb E[\psi^2]\bigr),$$
+> et $\hat\tau$ **atteint la borne d'efficacité**.
+
+*Preuve (décomposition).* Écrivons $\sqrt n(\hat\tau-\tau)=A_n+B_n+C_n$ avec
+$$
+A_n=\frac1{\sqrt n}\sum_i\psi(W_i;\tau,\eta),\quad
+B_n=\frac1{\sqrt n}\sum_i\bigl[\psi(W_i;\tau,\hat\eta)-\psi(W_i;\tau,\eta)-\mathbb E_{W}\{\psi(W;\tau,\hat\eta)-\psi(W;\tau,\eta)\}\bigr],
+$$
+$$
+C_n=\sqrt n\,\mathbb E_{W}\{\psi(W;\tau,\hat\eta)-\psi(W;\tau,\eta)\}.
+$$
+
+- **$A_n$** est une somme i.i.d. de moyenne nulle : par le TCL,
+  $A_n\xrightarrow{d}\mathcal N(0,\mathbb E[\psi^2])$.
+- **$B_n$ (terme d'empirical process).** Le **cross-fitting** rend $\hat\eta_{-k}$
+  indépendant du pli d'évaluation : conditionnellement, $B_n$ est une somme
+  centrée dont la variance est $O(\mathbb E\|\psi(\cdot;\hat\eta)-\psi(\cdot;\eta)\|^2)\to0$
+  dès que $\hat\eta\to\eta$ en $L_2$. Donc $B_n=o_p(1)$ — **sans** condition de
+  classe de Donsker (c'est l'apport du cross-fitting).
+- **$C_n$ (biais de régularisation).** Par l'**orthogonalité de Neyman** (Th. T.2),
+  la dérivée première de $\eta\mapsto\mathbb E[\psi]$ s'annule ; un développement
+  de Taylor au **second ordre** donne
+  $\mathbb E_W\{\psi(\cdot;\hat\eta)-\psi(\cdot;\eta)\}=O\bigl(\|\hat\mu-\mu\|\,\|\hat e-e\|\bigr)$.
+  Explicitement, le reste croisé est
+  $\mathbb E\!\left[\bigl(\tfrac1{\hat e}-\tfrac1{e}\bigr)(\hat\mu_1-\mu_1)\,e\right]$
+  et son symétrique — un **produit** d'erreurs. D'où
+  $C_n=\sqrt n\cdot O_p\bigl(\|\hat\mu-\mu\|\|\hat e-e\|\bigr)=o_p(1)$ sous la
+  condition de vitesse.
+
+Donc $\sqrt n(\hat\tau-\tau)=A_n+o_p(1)$, ce qui donne la loi annoncée. Comme la
+variance limite égale la borne $\mathbb E[\psi^2]$, $\hat\tau$ est efficace. $\blacksquare$
+
+## Lecture {#sec-read}
+
+Trois ingrédients, trois rôles :
+
+1. **La forme AIPW (T.1)** rend le moment **doublement robuste** (Lemme T.1).
+2. **L'orthogonalité de Neyman (T.2)** tue le biais de régularisation au premier
+   ordre : c'est *pourquoi* on peut brancher des estimateurs ML lents ($n^{-1/4}$)
+   sans casser l'inférence en $\sqrt n$.
+3. **Le cross-fitting** élimine le terme d'empirical process sans hypothèse de
+   complexité (Donsker), autorisant des apprenants arbitrairement flexibles.
+
+C'est la justification théorique complète du Module 16, et l'aboutissement du fil
+« fonction d'influence » du Module 24 : le score orthogonal de Neyman **est** la
+fonction d'influence efficace.
+
+## Références {.unnumbered}
+
+- Hahn (1998, *Econometrica*) — borne d'efficacité de l'ATE.
+- Robins, Rotnitzky & Zhao (1994) — estimation AIPW / doublement robuste.
+- Chernozhukov et al. (2018, *Econometrics Journal*) — Double/Debiased ML,
+  orthogonalité de Neyman et cross-fitting.
+- Newey (1990, 1994) ; Bickel, Klaassen, Ritov & Wellner (1993).

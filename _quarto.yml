@@ -60,7 +60,11 @@ book:
       chapters:
         - applications/lalonde.qmd
         - rapport/etude_double_selection.qmd
+        - rapport/etude_phase_diagram.qmd
         - rapport/benchmark.qmd
+    - part: "Théorie approfondie"
+      chapters:
+        - rapport/theory_efficiency.qmd
     - part: "Synthèse"
       chapters:
         - rapport/capstone.qmd

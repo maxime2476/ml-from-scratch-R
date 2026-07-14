@@ -1,0 +1,79 @@
+---
+title: "Contribution — Un diagramme de phase des estimateurs d'effet causal"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 2, number-sections: true}
+---
+
+*Étude de simulation cadrée. Code :*
+[`simulations/study_phase_diagram.R`](../simulations/study_phase_diagram.R).
+
+## Motivation
+
+La littérature offre une profusion d'estimateurs d'un effet causal $\theta$ en
+présence de nombreux contrôles : OLS, sélection simple, **double sélection**
+(Belloni-Chernozhukov-Hansen), **lasso débiaisé** (Zhang-Zhang, M22), **DML**
+(Chernozhukov et al., M16). Chacun a ses garanties — *sous ses hypothèses*. La
+question pratique n'est pas « lequel marche ? » mais **« lequel, dans quel
+régime ? »**. Cette étude y répond par une **carte de décision** : sur une grille
+de régimes de DGP, on désigne dans chaque cellule la méthode à la plus faible
+**RMSE parmi celles dont l'IC couvre** (couverture $\ge 0.90$), chaque chiffre
+étant assorti de son erreur Monte Carlo.
+
+## Dispositif
+
+Modèle partiellement linéaire $y=\theta d + X'\beta+\varepsilon$,
+$d=X'\gamma+v$, $\theta=1$, $n=150$, $R=300$. Deux axes :
+
+- **dimension** : $p\in\{40,150,400\}$, soit $p<n$, $p\approx n$, $p>n$ ;
+- **structure des contrôles** : *creux* ($s=3$ confondeurs) vs *dense* ($s=20$,
+  la parcimonie est alors violée).
+
+Cinq estimateurs de $\theta$, chacun rendant $(\hat\theta,\widehat{\mathrm{se}})$.
+
+## La carte de décision
+
+![Quel estimateur selon le régime ?](../simulations/output/study_phase_diagram.png)
+
+| Régime | Contrôles creux ($s=3$) | Contrôles denses ($s=20$) |
+|---|---|---|
+| $p<n$ | **double sélection** (RMSE 0.079, couv 0.96) | **OLS complet** (0.096, 0.95) |
+| $p\approx n$ | **double sélection** (0.090, 0.92) | *aucune* (couv $<0.90$) |
+| $p>n$ | **double sélection** (0.084, 0.95) | *aucune* (couv $<0.90$) |
+
+## Trois enseignements
+
+1. **Sous parcimonie, la double sélection domine partout** — y compris en
+   $p>n$ : biais $\approx 0$, couverture nominale, RMSE minimale. C'est le seul
+   estimateur robuste sur *toute* la colonne creuse.
+
+2. **La sélection simple, le lasso débiaisé et le DML *naïfs* héritent de la
+   confusion.** Dans notre design, les confondeurs pèsent fortement sur le
+   traitement mais **faiblement sur le résultat une fois $d$ inclus**. Le lasso
+   principal les écarte ; les corriger coordonnée par coordonnée (débiaisé) ou par
+   simple résidualisation ne suffit pas — biais $\approx +0.2$–$0.3$, couverture
+   effondrée. **La double sélection règle précisément ce cas** en forçant la
+   sélection depuis l'équation du traitement (cf. l'étude sur la double sélection).
+
+3. **Quand la parcimonie est violée (contrôles denses), tout s'effondre.** Les
+   cinq méthodes fondées sur le lasso sont massivement biaisées ($\approx +0.6$).
+   Si $p<n$, l'**OLS complet** — qui ne suppose *pas* la parcimonie — reste
+   valide. Si $p\ge n$, **aucune** méthode n'est fiable : c'est une **limite
+   fondamentale** (pas de repas gratuit), pas un défaut d'implémentation. La
+   sagesse pratique : *vérifier la plausibilité de la parcimonie avant de faire
+   confiance à un estimateur haute dimension.*
+
+## Portée
+
+Cette carte n'est pas un classement absolu : elle **rend explicite le couplage
+méthode↔régime** que la théorie garantit séparément. Sa valeur est décisionnelle
+— *étant donné mon $p/n$ et ce que je crois de la parcimonie, que choisir, et à
+quel risque de sous-couverture ?* C'est la synthèse que la boîte à outils complète
+de ce projet permet, et qu'un module isolé ne pourrait produire.
+
+![Couverture par méthode et régime](../simulations/output/study_phase_coverage.png)
+
+## Références {.unnumbered}
+
+- Belloni, Chernozhukov & Hansen (2014) ; Chernozhukov et al. (2018) ;
+  Zhang & Zhang (2014). Voir les Modules 16, 22 et l'étude sur la double sélection.

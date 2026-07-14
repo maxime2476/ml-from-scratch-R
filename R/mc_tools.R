@@ -104,4 +104,8 @@ convergence_study <- function(sim_fn, ns, R, truth, seed = NULL) {
 #' @param conv data.frame issu de `convergence_study`.
 #' @return la pente estimée (idéalement ~ -0.5).
 #' @export
-rmse_rate <- function(conv) unname(coef(lm(log(rmse) ~ log(n), data = conv))[2])
+rmse_rate <- function(conv)
+  # NB : on régresse sur les vecteurs `conv$rmse`/`conv$n` (et non les variables
+  # de formule `rmse`/`n` avec `data=`) pour éviter toute ambiguïté de nommage si
+  # un package attaché exporte un objet `rmse` (p. ex. Metrics::rmse).
+  as.numeric(stats::coef(stats::lm(log(conv$rmse) ~ log(conv$n)))[2])

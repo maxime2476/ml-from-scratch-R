@@ -20,6 +20,7 @@ Thumbs.db
 
 # Sorties de simulation
 /simulations/output/
+/applications/output/
 *.rds
 
 # Artefacts de build package

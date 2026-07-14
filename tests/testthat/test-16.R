@@ -26,16 +26,25 @@ test_that("DML (forêt, cross-fit) récupère theta ~ vrai, l'OLS naïf est biai
 test_that("DML reproduit DoubleML (qualitativement)", {
   skip_if_not_installed("DoubleML")
   skip_if_not_installed("ranger")
-  suppressMessages({library(DoubleML); library(mlr3); library(mlr3learners)})
-  lgr::get_logger("mlr3")$set_threshold("error")
+  skip_if_not_installed("callr")
   dd <- make_causal()
   fit <- dml_plr(dd$y, dd$d, dd$X, K = 5, nuisance = "forest", crossfit = TRUE, seed = 1, B = 100)
-  dml_data <- DoubleML::double_ml_data_from_matrix(X = dd$X, y = dd$y, d = dd$d)
-  lrn <- mlr3::lrn("regr.ranger", num.trees = 100)
-  obj <- DoubleML::DoubleMLPLR$new(dml_data, ml_l = lrn$clone(), ml_m = lrn$clone(), n_folds = 5)
-  invisible(obj$fit())
-  expect_lt(abs(fit$theta - obj$coef), 0.10)                       # thetas proches
-  expect_lt(abs(fit$se - obj$se), 0.05)                            # se proches
+  # DoubleML est exécuté dans un SOUS-PROCESSUS isolé : au runtime, son ajustement
+  # (mlr3 + ranger + future) attache dynamiquement de nombreux packages (future,
+  # data.table, Metrics, S7...) qui masqueraient `coef`/`mean` et casseraient les
+  # tests suivants de la suite. L'isolation par callr fait mourir cette pollution
+  # avec le sous-processus. (cf. `simulations/` : mêmes précautions ailleurs.)
+  ref <- callr::r(function(X, y, d) {
+    suppressMessages({ library(DoubleML); library(mlr3); library(mlr3learners) })
+    lgr::get_logger("mlr3")$set_threshold("error")
+    dml_data <- DoubleML::double_ml_data_from_matrix(X = X, y = y, d = d)
+    lrn <- mlr3::lrn("regr.ranger", num.trees = 100)
+    obj <- DoubleML::DoubleMLPLR$new(dml_data, ml_l = lrn$clone(), ml_m = lrn$clone(), n_folds = 5)
+    invisible(obj$fit())
+    c(coef = as.numeric(obj$coef), se = as.numeric(obj$se))
+  }, args = list(X = dd$X, y = dd$y, d = dd$d))
+  expect_lt(abs(fit$theta - ref[["coef"]]), 0.10)                  # thetas proches
+  expect_lt(abs(fit$se - ref[["se"]]), 0.05)                       # se proches
 })
 
 test_that("cross-fitting réduit le biais de sur-ajustement vs sans", {

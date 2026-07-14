@@ -152,12 +152,23 @@ Module 23 **quantifie** la fragilité des hypothèses d'identification des Modul
 # Charger les implémentations
 for (f in list.files("R", full.names = TRUE)) source(f)
 
-# Lancer les tests de conformité
-testthat::test_dir("tests/testthat")
+# Lancer TOUTE la suite de conformité (337 tests) — un processus par fichier
+# Rscript run_tests.R
 
 # Reproduire une étude Monte Carlo
 source("simulations/mc_ols_gauss_markov.R")
 ```
+
+> **Exécution des tests.** La suite valide chaque module contre son package de
+> référence (`glmnet`, `AER`, `gmm`, `DoubleML`, `grf`, `iml`, `hdm`,
+> `sensemakr`…). Chargés *ensemble* dans un même processus R, ces packages lourds
+> entrent en conflit (p. ex. `setGeneric` S4 sur `coef`/`mean`, symboles
+> exportés, état C accumulé) et corrompent l'environnement — faisant échouer des
+> tests **sans rapport** avec le code, alors que chaque fichier passe seul. Le
+> script **`run_tests.R`** exécute donc chaque fichier dans un **sous-processus R
+> frais** (via `callr`), garantissant l'isolation : `Rscript run_tests.R` →
+> *337 pass, 0 fail*. (`testthat::test_dir` en un seul processus reste utilisable
+> module par module.)
 
 Compiler une dérivation :
 

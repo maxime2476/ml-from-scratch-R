@@ -36,7 +36,7 @@
   switch(family,
     binomial = .family_binomial,
     poisson  = .family_poisson,
-    stop("family doit être 'binomial' ou 'poisson'."))
+    stop("family doit etre 'binomial' ou 'poisson'."))
 }
 
 #' Ajustement d'un GLM par IRLS
@@ -85,7 +85,7 @@ glm_irls <- function(formula, data, family = c("binomial", "poisson"),
     if (abs(dev - devold) / (abs(dev) + 0.1) < epsilon) { conv <- TRUE; break }
     devold <- dev
   }
-  if (!conv) warning("IRLS n'a pas convergé en ", maxit, " itérations.")
+  if (!conv) warning("IRLS n'a pas converge en ", maxit, " iterations.")
 
   # Information de Fisher et variance (éq. 3.10), depuis le facteur R de la
   # dernière itération IRLS (convention de `glm` : poids au mu pré-mise-à-jour).

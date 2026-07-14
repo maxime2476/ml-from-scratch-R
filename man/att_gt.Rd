@@ -16,6 +16,9 @@ att_gt(
 \arguments{
 \item{data}{data.frame du panel ; noms comme \code{twfe}.}
 
+\item{yname, idname, tname, gname}{noms des colonnes (résultat, unité, temps,
+cohorte de premier traitement ; jamais-traités = Inf ou 0).}
+
 \item{control}{"never" (jamais-traités) ou "notyet" (pas encore traités en t).}
 }
 \value{

@@ -46,12 +46,13 @@ Ops.adnode <- function(e1, e2) {
     "*" = function(g) { a$grad <- a$grad + .unbroadcast(g * bv, av);   b$grad <- b$grad + .unbroadcast(g * av, bv) },
     "/" = function(g) { a$grad <- a$grad + .unbroadcast(g / bv, av);   b$grad <- b$grad + .unbroadcast(-g * av / bv^2, bv) },
     "^" = function(g) { a$grad <- a$grad + .unbroadcast(g * bv * av^(bv - 1), av) },
-    stop("opérateur non supporté : ", op))
+    stop("operateur non supporte : ", op))
   out
 }
 
 #' Fonctions élémentaires enregistrées (exp, log, sqrt, sin, cos, tanh)
 #' @param x `adnode`.
+#' @param ... arguments additionnels (ignorés).
 #' @return `adnode`.
 #' @export
 Math.adnode <- function(x, ...) {
@@ -59,15 +60,18 @@ Math.adnode <- function(x, ...) {
   val <- get(fn)(av)
   d <- switch(fn, exp = val, log = 1 / av, sqrt = 0.5 / sqrt(av),
               sin = cos(av), cos = -sin(av), tanh = 1 - tanh(av)^2,
-              stop("fonction non supportée : ", fn))
+              stop("fonction non supportee : ", fn))
   out <- adnode(val); out$backward <- function(g) a$grad <- a$grad + g * d
   out
 }
 
 #' Somme enregistrée (réduction scalaire)
+#' @param ... un unique `adnode` à sommer.
+#' @param na.rm ignoré (présent pour la signature du générique).
+#' @return `adnode` scalaire.
 #' @export
 Summary.adnode <- function(..., na.rm = FALSE) {
-  if (.Generic != "sum") stop("seul `sum` est supporté")
+  if (.Generic != "sum") stop("seul `sum` est supporte")
   a <- ..1; av <- a$value
   out <- adnode(sum(av)); out$backward <- function(g) a$grad <- a$grad + g   # g scalaire diffusé
   out

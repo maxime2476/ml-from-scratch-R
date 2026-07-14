@@ -9,7 +9,9 @@ fit_rff(X, y, D, gamma = 1, seed = 1, lambda = 0)
 \arguments{
 \item{X, y}{données d'apprentissage.}
 
-\item{D}{dimension des caractéristiques ; @param gamma,seed cf. \code{random_features}.}
+\item{D}{dimension des caractéristiques.}
+
+\item{gamma, seed}{cf. \code{random_features}.}
 
 \item{lambda}{pénalité ridge (0 = interpolation de norme minimale).}
 }

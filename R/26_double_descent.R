@@ -31,7 +31,8 @@ random_features <- function(X, D, gamma = 1, seed = 1) {
 #' caractéristiques. Renvoie un prédicteur.
 #'
 #' @param X,y données d'apprentissage.
-#' @param D dimension des caractéristiques ; @param gamma,seed cf. `random_features`.
+#' @param D dimension des caractéristiques.
+#' @param gamma,seed cf. `random_features`.
 #' @param lambda pénalité ridge (0 = interpolation de norme minimale).
 #' @return fonction `newX -> prédictions`.
 #' @export
@@ -56,9 +57,11 @@ fit_rff <- function(X, y, D, gamma = 1, seed = 1, lambda = 0) {
 #' `lambda = 0`, le test présente un **pic à \eqn{D\approx n}** (seuil
 #' d'interpolation) puis **redescend** — la double descente.
 #'
-#' @param Xtr,ytr apprentissage ; @param Xte,yte test.
+#' @param Xtr,ytr apprentissage.
+#' @param Xte,yte test.
 #' @param Ds vecteur des dimensions à essayer.
-#' @param gamma,seed cf. `random_features` ; @param lambda pénalité ridge.
+#' @param gamma,seed cf. `random_features`.
+#' @param lambda pénalité ridge.
 #' @return data.frame : `D`, `train_mse`, `test_mse`.
 #' @export
 double_descent_curve <- function(Xtr, ytr, Xte, yte, Ds, gamma = 1, seed = 1, lambda = 0) {

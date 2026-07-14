@@ -41,6 +41,7 @@ twfe <- function(data, yname = "y", idname = "id", tname = "t", gname = "g") {
 #' être de signe opposé à tous les effets individuels.
 #'
 #' @param data data.frame du panel ; noms de colonnes comme `twfe`.
+#' @inheritParams twfe
 #' @return liste : `weights` (sur cellules traitées), `share_negative`, `sum`.
 #' @export
 twfe_weights <- function(data, yname = "y", idname = "id", tname = "t", gname = "g") {
@@ -58,6 +59,7 @@ twfe_weights <- function(data, yname = "y", idname = "id", tname = "t", gname = 
 #' « comparaisons interdites » du TWFE.
 #'
 #' @param data data.frame du panel ; noms comme `twfe`.
+#' @inheritParams twfe
 #' @param control "never" (jamais-traités) ou "notyet" (pas encore traités en t).
 #' @return data.frame : `g`, `t`, `att`, `n_treat`.
 #' @export
@@ -111,6 +113,7 @@ aggregate_att <- function(attgt, type = c("simple", "dynamic", "group")) {
 #' dynamiques hétérogènes, contrairement au TWFE.
 #'
 #' @param data data.frame du panel ; noms comme `twfe`.
+#' @inheritParams twfe
 #' @return liste : `es` (data.frame `e`, `att` — event-study) et `att` (ATT global
 #'   post-traitement, pondéré par les tailles de cellule).
 #' @export

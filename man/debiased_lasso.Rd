@@ -26,6 +26,8 @@ debiased_lasso(
 \item{targets}{indices des coordonnées à débiaiser (défaut : toutes).}
 
 \item{sigma}{écart-type du bruit (défaut : estimé sur les résidus du lasso).}
+
+\item{level}{niveau de confiance des intervalles (défaut 0.95).}
 }
 \value{
 liste : \code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{beta_lasso}, \code{sigma}.

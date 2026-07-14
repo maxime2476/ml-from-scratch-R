@@ -97,7 +97,7 @@ info_criteria <- function(fit) {
   } else if (inherits(fit, "ols")) {
     n <- fit[["n"]]; k <- fit[["p"]] + 1L        # +1 pour sigma^2 (comme lm)
     ll <- gaussian_loglik(fit[["rss"]], n)
-  } else stop("fit doit être de classe 'ols' ou 'glm_irls'.")
+  } else stop("fit doit etre de classe 'ols' ou 'glm_irls'.")
   list(aic = -2 * ll + 2 * k, bic = -2 * ll + log(n) * k,
        loglik = ll, k = k, n = n)
 }

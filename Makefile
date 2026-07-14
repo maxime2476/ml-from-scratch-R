@@ -5,7 +5,7 @@
 RSCRIPT ?= Rscript
 QUARTO  ?= quarto
 
-.PHONY: all tests sims derivations rapport book check clean help pipeline docker
+.PHONY: all tests sims derivations rapport book check clean help pipeline docker memoire site
 
 help:            ## Affiche les cibles disponibles
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -21,6 +21,12 @@ pipeline:        ## Reproduction à dépendances suivies (targets::tar_make)
 
 docker:          ## Construit l'image Docker reproductible
 	docker build -t mlfromscratch .
+
+memoire:         ## Rend le mémoire (manuscrit) en PDF (prêt pour dépôt/arXiv)
+	$(QUARTO) render rapport/memoire.qmd --to pdf
+
+site:            ## Construit le site de documentation pkgdown
+	$(RSCRIPT) -e "pkgdown::build_site()"
 
 sims:            ## Toutes les études Monte Carlo
 	$(RSCRIPT) run_all.R sims

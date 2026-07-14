@@ -7,7 +7,9 @@
 gp_optimize(X, y, init = c(1, 1, 0.1))
 }
 \arguments{
-\item{X, y}{données ; @param init valeurs initiales (échelle, signal, bruit).}
+\item{X, y}{données.}
+
+\item{init}{valeurs initiales (échelle, signal, bruit).}
 }
 \value{
 objet \code{gp} optimisé (avec les hyperparamètres retenus).

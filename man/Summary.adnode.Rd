@@ -6,6 +6,14 @@
 \usage{
 \method{Summary}{adnode}(..., na.rm = FALSE)
 }
+\arguments{
+\item{...}{un unique \code{adnode} à sommer.}
+
+\item{na.rm}{ignoré (présent pour la signature du générique).}
+}
+\value{
+\code{adnode} scalaire.
+}
 \description{
 Somme enregistrée (réduction scalaire)
 }

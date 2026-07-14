@@ -16,7 +16,7 @@ robustness_value(t, df, q = 1, alpha = 1)
 \item{alpha}{seuil de significativité (1 = point seulement).}
 }
 \value{
-la robustness value dans \link{0,1}.
+la robustness value dans \verb{[0,1]}.
 }
 \description{
 Force minimale (en R² partiel) qu'un confondeur inobservé — supposé aussi

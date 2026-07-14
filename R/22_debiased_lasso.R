@@ -24,6 +24,7 @@
 #' @param lambda_node pénalité des lasso nodewise (défaut : théorique).
 #' @param targets indices des coordonnées à débiaiser (défaut : toutes).
 #' @param sigma écart-type du bruit (défaut : estimé sur les résidus du lasso).
+#' @param level niveau de confiance des intervalles (défaut 0.95).
 #' @return liste : `estimate`, `se`, `lower`, `upper`, `beta_lasso`, `sigma`.
 #' @export
 debiased_lasso <- function(X, y, lambda = NULL, lambda_node = NULL,

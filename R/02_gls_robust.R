@@ -145,7 +145,7 @@ gls_fit <- function(formula, data, Omega) {
   y  <- as.numeric(model.response(mf))
   X  <- model.matrix(tt, mf)
   n <- nrow(X); p <- ncol(X)
-  if (!all(dim(Omega) == n)) stop("Omega doit être n x n.")
+  if (!all(dim(Omega) == n)) stop("Omega doit etre n x n.")
 
   P  <- chol_crout(Omega)                    # Omega = P P^T (P triangulaire inf.)
   # Transformation P^{-1} par descente triangulaire (colonne par colonne).

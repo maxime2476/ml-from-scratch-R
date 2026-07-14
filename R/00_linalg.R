@@ -126,7 +126,7 @@ solve_ls_qr <- function(X, y) {
   c2  <- if (n > p) Qty[(p + 1L):n] else numeric(0)
   dR <- abs(diag(R1))
   if (any(dR < .Machine$double.eps * max(dR) * max(n, p)))
-    stop("X colinéaire (R1 singulière) : utiliser solve_ls_svd().")
+    stop("X colineaire (R1 singuliere) : utiliser solve_ls_svd().")
   beta <- back_substitution(R1, c1)
   fitted <- as.numeric(X %*% beta)
   list(coefficients = beta, fitted = fitted, residuals = y - fitted,
@@ -146,12 +146,12 @@ solve_ls_qr <- function(X, y) {
 chol_crout <- function(A) {
   A <- as.matrix(A)
   p <- nrow(A)
-  if (ncol(A) != p) stop("A doit être carrée.")
+  if (ncol(A) != p) stop("A doit etre carree.")
   L <- matrix(0, p, p)
   for (j in seq_len(p)) {
     prev <- seq_len(j - 1L)
     s <- A[j, j] - sum(L[j, prev]^2)
-    if (s <= 0) stop("A non définie positive (pivot <= 0).")
+    if (s <= 0) stop("A non definie positive (pivot <= 0).")
     L[j, j] <- sqrt(s)
     if (j < p) for (i in (j + 1L):p) {
       L[i, j] <- (A[i, j] - sum(L[i, prev] * L[j, prev])) / L[j, j]

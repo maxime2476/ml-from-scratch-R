@@ -24,7 +24,7 @@ partial_r2 <- function(t, df) t^2 / (t^2 + df)
 #' @param df degrés de liberté résiduels.
 #' @param q fraction de réduction visée (1 = ramener à 0).
 #' @param alpha seuil de significativité (1 = point seulement).
-#' @return la robustness value dans [0,1].
+#' @return la robustness value dans `[0,1]`.
 #' @export
 robustness_value <- function(t, df, q = 1, alpha = 1) {
   fq <- q * abs(t) / sqrt(df)

@@ -87,7 +87,8 @@ onestep <- function(theta0, ic_at) {
 #' - \frac{(1-d_i)(y_i-\mu_0)}{1-e_i} - \tau}. Son second moment est la **borne
 #' d'efficacité semiparamétrique** de l'ATE ; l'AIPW/DML (Module 16) l'atteint.
 #'
-#' @param y résultat ; @param d traitement (0/1).
+#' @param y résultat.
+#' @param d traitement (0/1).
 #' @param mu1,mu0 espérances conditionnelles estimées \eqn{E[Y|X,D=1/0]}.
 #' @param e score de propension estimé \eqn{P(D=1|X)}.
 #' @return liste : `ate`, `eif`, `se` (= sqrt(borne d'efficacité / n)).

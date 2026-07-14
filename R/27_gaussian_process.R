@@ -67,7 +67,9 @@ gp_predict <- function(object, Xnew) {
 #' \eqn{\hat f(x)=k(x)^\top(K+\lambda I)^{-1}y}. **Identique** à la moyenne a
 #' posteriori du GP avec \eqn{\lambda=\sigma_n^2} (pont bayésien/fréquentiste).
 #'
-#' @param X,y données ; @param lengthscale,sigma_f noyau ; @param lambda pénalité.
+#' @param X,y données.
+#' @param lengthscale,sigma_f paramètres du noyau.
+#' @param lambda pénalité.
 #' @return fonction `newX -> prédictions`.
 #' @export
 kernel_ridge <- function(X, y, lengthscale = 1, sigma_f = 1, lambda = 0.01) {
@@ -82,7 +84,8 @@ kernel_ridge <- function(X, y, lengthscale = 1, sigma_f = 1, lambda = 0.01) {
 #' \eqn{(\ell,\sigma_f,\sigma_n)} — le rasoir d'Occam bayésien automatique.
 #' Optimisation sur l'échelle log (positivité) via `optim` (L-BFGS-B).
 #'
-#' @param X,y données ; @param init valeurs initiales (échelle, signal, bruit).
+#' @param X,y données.
+#' @param init valeurs initiales (échelle, signal, bruit).
 #' @return objet `gp` optimisé (avec les hyperparamètres retenus).
 #' @export
 gp_optimize <- function(X, y, init = c(1, 1, 0.1)) {

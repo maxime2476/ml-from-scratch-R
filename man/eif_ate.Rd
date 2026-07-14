@@ -7,7 +7,9 @@
 eif_ate(y, d, mu1, mu0, e)
 }
 \arguments{
-\item{y}{résultat ; @param d traitement (0/1).}
+\item{y}{résultat.}
+
+\item{d}{traitement (0/1).}
 
 \item{mu1, mu0}{espérances conditionnelles estimées \eqn{E[Y|X,D=1/0]}.}
 

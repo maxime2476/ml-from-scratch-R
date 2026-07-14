@@ -7,7 +7,11 @@
 kernel_ridge(X, y, lengthscale = 1, sigma_f = 1, lambda = 0.01)
 }
 \arguments{
-\item{X, y}{données ; @param lengthscale,sigma_f noyau ; @param lambda pénalité.}
+\item{X, y}{données.}
+
+\item{lengthscale, sigma_f}{paramètres du noyau.}
+
+\item{lambda}{pénalité.}
 }
 \value{
 fonction \code{newX -> prédictions}.

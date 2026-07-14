@@ -27,7 +27,7 @@ ols_fit <- function(formula, data) {
   y  <- as.numeric(model.response(mf))
   X  <- model.matrix(tt, mf)
   n <- nrow(X); p <- ncol(X)
-  if (n <= p) stop("n <= p : degrés de liberté résiduels insuffisants.")
+  if (n <= p) stop("n <= p : degres de liberte residuels insuffisants.")
 
   fit <- solve_ls_qr(X, y)                 # éq. (1.3) via QR (Module 0)
   R1  <- fit$R                              # bloc triangulaire p x p, X'X = R1'R1

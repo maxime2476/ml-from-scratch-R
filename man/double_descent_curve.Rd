@@ -7,11 +7,15 @@
 double_descent_curve(Xtr, ytr, Xte, yte, Ds, gamma = 1, seed = 1, lambda = 0)
 }
 \arguments{
-\item{Xtr, ytr}{apprentissage ; @param Xte,yte test.}
+\item{Xtr, ytr}{apprentissage.}
+
+\item{Xte, yte}{test.}
 
 \item{Ds}{vecteur des dimensions à essayer.}
 
-\item{gamma, seed}{cf. \code{random_features} ; @param lambda pénalité ridge.}
+\item{gamma, seed}{cf. \code{random_features}.}
+
+\item{lambda}{pénalité ridge.}
 }
 \value{
 data.frame : \code{D}, \code{train_mse}, \code{test_mse}.

@@ -25,7 +25,7 @@ tsls_fit <- function(y, X, Z) {
   X <- as.matrix(X); Z <- as.matrix(Z); y <- as.numeric(y)
   n <- nrow(X); k <- ncol(X)
   if (nrow(Z) != n) stop("Z et X doivent avoir n lignes.")
-  if (ncol(Z) < k) stop("Condition d'ordre violée : ncol(Z) < ncol(X).")
+  if (ncol(Z) < k) stop("Condition d'ordre violee : ncol(Z) < ncol(X).")
 
   # Étape 1 : Xhat = P_Z X (valeurs ajustées de X régressé sur Z, colonne par colonne)
   Xhat <- apply(X, 2, function(col) solve_ls_qr(Z, col)$fitted)

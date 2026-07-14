@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{\code{adnode}.}
+
+\item{...}{arguments additionnels (ignorés).}
 }
 \value{
 \code{adnode}.

@@ -11,6 +11,15 @@ automatique, adossée à leurs dérivations mathématiques et validée contre le
 packages de référence. Voir les dérivations dans \verb{derivations/} et le rapport
 de synthèse dans \verb{rapport/}.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://mgourguechon.github.io/ml-from-scratch-R}
+  \item \url{https://github.com/mgourguechon/ml-from-scratch-R}
+  \item Report bugs at \url{https://github.com/mgourguechon/ml-from-scratch-R/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Maxime Gourguechon \email{maxime.gourguechon76@gmail.com}
 

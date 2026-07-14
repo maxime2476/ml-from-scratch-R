@@ -8,6 +8,9 @@ sunab(data, yname = "y", idname = "id", tname = "t", gname = "g")
 }
 \arguments{
 \item{data}{data.frame du panel ; noms comme \code{twfe}.}
+
+\item{yname, idname, tname, gname}{noms des colonnes (résultat, unité, temps,
+cohorte de premier traitement ; jamais-traités = Inf ou 0).}
 }
 \value{
 liste : \code{es} (data.frame \code{e}, \code{att} — event-study) et \code{att} (ATT global

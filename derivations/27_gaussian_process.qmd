@@ -1,0 +1,87 @@
+---
+title: "Module 27 — Processus gaussiens et méthodes à noyaux"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Le ridge (Module 4) régularise une régression **linéaire**. Ce module l'étend à
+un espace de caractéristiques de **dimension infinie** via le **truc du noyau**,
+et montre que la version **bayésienne** — les **processus gaussiens** (GP) —
+donne *exactement* le même prédicteur, plus une quantification d'incertitude. Un
+pont entre régularisation, RKHS et inférence bayésienne.
+
+## Le truc du noyau et le théorème de représentation {#sec-repr}
+
+On régresse $y$ sur $\varphi(x)$ (caractéristiques, éventuellement de dimension
+infinie) avec pénalité ridge : $\min_\beta\sum_i(y_i-\varphi(x_i)^\top\beta)^2+
+\lambda\|\beta\|^2$. On ne manipule jamais $\varphi$ explicitement, seulement le
+**noyau** $k(x,x')=\varphi(x)^\top\varphi(x')$ (ici RBF, éq. 27.1).
+
+> **Théorème 27.1 (représentation).** La solution s'écrit
+> $\hat f(x)=\sum_i\alpha_i k(x,x_i)$ avec $\alpha=(K+\lambda I)^{-1}y$, où
+> $K_{ij}=k(x_i,x_j)$. La régression dans un espace de dimension infinie se
+> ramène à un système $n\times n$.
+
+*Preuve.* Le minimiseur vit dans le sous-espace engendré par les $\varphi(x_i)$
+(toute composante orthogonale augmente la pénalité sans changer l'ajustement) ;
+en posant $\beta=\sum_i\alpha_i\varphi(x_i)$ et en réinjectant, on obtient
+$(K+\lambda I)\alpha=y$. $\blacksquare$
+
+C'est la **régression ridge à noyau** — le ridge du Module 4 dans un RKHS.
+
+## Le point de vue processus gaussien {#sec-gp}
+
+On place un **a priori** $f\sim\mathcal{GP}(0,k)$ et $y_i=f(x_i)+\varepsilon_i$,
+$\varepsilon\sim\mathcal N(0,\sigma_n^2)$. La loi **a posteriori** de $f$ en des
+points $X_*$ est gaussienne (conditionnement gaussien) :
+$$
+\bar f_* = K_*^\top(K+\sigma_n^2 I)^{-1}y,\qquad
+\operatorname{Cov}[f_*] = K_{**}-K_*^\top(K+\sigma_n^2 I)^{-1}K_*.
+\tag{27.2}
+$$
+
+> **Proposition 27.2 (équivalence).** La **moyenne a posteriori** du GP (27.2) est
+> **identique** à la régression ridge à noyau (Th. 27.1) avec $\lambda=\sigma_n^2$.
+
+Deux chemins — régularisation dans un RKHS, ou inférence bayésienne — mènent au
+**même prédicteur**. Le GP ajoute gratuitement une **covariance a posteriori**
+(incertitude calibrée), que le ridge ne fournit pas. *(Vérifié : moyenne GP =
+kernel ridge à $10^{-15}$ ; moyenne et variance = `DiceKriging::km`.)*
+
+## Vraisemblance marginale : le rasoir d'Occam automatique {#sec-ml}
+
+En intégrant $f$, la **vraisemblance marginale** est fermée :
+$$
+\log p(y\mid X,\theta) = -\tfrac12 y^\top(K_\theta+\sigma_n^2 I)^{-1}y
+-\tfrac12\log|K_\theta+\sigma_n^2 I| -\tfrac n2\log 2\pi.
+\tag{27.3}
+$$
+La maximiser sur les hyperparamètres $\theta=(\ell,\sigma_f,\sigma_n)$ **arbitre
+automatiquement** ajustement (1er terme) et complexité (2e terme, le
+$\log$-déterminant) : c'est le **rasoir d'Occam** bayésien, une alternative
+principielle à la validation croisée (Module 6) pour choisir l'échelle $\ell$
+(donc le compromis biais-variance). *(Vérifié : (27.3) = calcul direct à $10^{-12}$.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/27_gaussian_process.R`) |
+|---|---|
+| (27.1) noyau RBF | `rbf_kernel(X1, X2, lengthscale, variance)` |
+| (27.2) GP a posteriori (moyenne, variance) | `gp_fit(...)`, `gp_predict(...)` |
+| (Th. 27.1) régression ridge à noyau | `kernel_ridge(...)` |
+| (27.3) vraisemblance marginale + optimisation | `gp_fit(...)$loglik`, `gp_optimize(...)` |
+
+Validation : moyenne et variance du GP = `DiceKriging::km` (covariance gauss) à la
+précision machine ; moyenne GP = régression ridge à noyau ; (27.3) = calcul
+direct. Monte Carlo : couverture des intervalles a posteriori et sélection de
+$\ell$ par vraisemblance marginale.
+
+## Références {.unnumbered}
+
+- Rasmussen & Williams (2006), *Gaussian Processes for Machine Learning*.
+- Schölkopf & Smola (2002), *Learning with Kernels* (théorème de représentation).
+- Kimeldorf & Wahba (1971) — représentation, splines et RKHS.

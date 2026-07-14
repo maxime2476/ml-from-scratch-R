@@ -1,0 +1,74 @@
+---
+title: "Module 43 — Bandits et apprentissage par renforcement"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Jusqu'ici on apprenait d'un jeu de données *fixe*. Ici on apprend en **agissant** :
+chaque action rapporte une récompense et influence ce qu'on observe. Le dilemme
+central est l'arbitrage **exploration** (essayer pour apprendre) vs **exploitation**
+(choisir le meilleur connu). On traite le cas à un état (**bandits**) puis les
+**MDP** (états, transitions) par Q-learning.
+
+## Bandits à plusieurs bras {#sec-bandits}
+
+$K$ bras, de moyennes inconnues $\mu_a$. À chaque tour on en joue un et l'on
+observe une récompense. On mesure le **regret** $\mathrm{Reg}(T)=T\mu^\*-\sum_t
+\mu_{a_t}$ (perte vs le meilleur bras). Un bon algorithme a un regret **sous-
+linéaire** ($\mathrm{Reg}(T)/T\to 0$).
+
+- **UCB1** : jouer $\arg\max_a\hat\mu_a+\sqrt{2\log t/n_a}$ — l'**optimisme face à
+  l'incertitude** (un bras peu essayé a un bonus). Regret $O(\log T)$.
+- **Thompson sampling** : prior Beta par bras, tirer $\theta_a\sim$ posterieure et
+  jouer $\arg\max\theta_a$ (*probability matching* bayésien). Souvent le meilleur
+  en pratique.
+
+*(MC : regret $\sim20$–$150$ à $T=5000$ contre $\sim1050$ pour le hasard.)*
+
+## Processus de décision markoviens {#sec-mdp}
+
+Avec des **états**, une action mène à un nouvel état selon $P(s'\mid s,a)$ et
+rapporte $R(s,a)$. On cherche une politique maximisant la récompense **actualisée**
+$\sum_t\gamma^t r_t$. La valeur optimale satisfait l'**équation de Bellman** :
+$$
+Q^\*(s,a)=R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)\max_{a'}Q^\*(s',a').
+\tag{43.1}
+$$
+Si $P,R$ sont **connus**, l'**itération sur les valeurs** (application répétée de
+l'opérateur de Bellman, une contraction de facteur $\gamma$) converge vers $Q^\*$.
+
+## Q-learning : apprendre sans modèle {#sec-ql}
+
+Quand $P,R$ sont **inconnus**, on apprend $Q^\*$ par **interaction** : politique
+$\varepsilon$-greedy et mise à jour par **différence temporelle**
+$$
+Q(s,a)\leftarrow Q(s,a)+\alpha\bigl[\underbrace{r+\gamma\max_{a'}Q(s',a')}_{\text{cible}}-Q(s,a)\bigr].
+\tag{43.2}
+$$
+C'est **off-policy** (on apprend l'optimum en explorant) et cela **converge vers
+$Q^\*$** sous des conditions standard. *(Vérifié : même politique optimale que
+l'itération sur les valeurs.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Résultat | Fonction R (`R/43_bandits_rl.R`) |
+|---|---|
+| UCB1 | `bandit_ucb(means, horizon)` |
+| Thompson sampling | `bandit_thompson(means, horizon)` |
+| (43.1) itération sur les valeurs | `value_iteration(P, R, gamma)` |
+| (43.2) Q-learning | `q_learning(P, R, gamma)` |
+
+Validation : les bandits ont un regret **sous-linéaire** ($\mathrm{Reg}/T\to0$),
+bien inférieur au hasard, et convergent vers le meilleur bras ; le Q-learning
+retrouve la **politique optimale** de l'itération sur les valeurs. Monte Carlo :
+courbes de regret et convergence de $Q$ vers $Q^\*$.
+
+## Références {.unnumbered}
+
+- Lai & Robbins (1985) ; Auer, Cesa-Bianchi & Fischer (2002, UCB1).
+- Thompson (1933) ; Watkins & Dayan (1992, Q-learning).
+- Sutton & Barto (2018), *Reinforcement Learning: An Introduction*.

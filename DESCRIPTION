@@ -63,6 +63,8 @@ Suggests:
     rdrobust,
     e1071,
     dbscan,
+    kernlab,
+    fastICA,
     coda
 VignetteBuilder: knitr
 Config/testthat/edition: 3

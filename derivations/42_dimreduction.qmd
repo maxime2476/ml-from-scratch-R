@@ -1,0 +1,69 @@
+---
+title: "Module 42 — Réduction de dimension non linéaire"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+La PCA (Module 11) trouve les directions de **variance maximale** — mais elle est
+**linéaire** et ne cherche que la décorrélation. Quatre extensions lèvent chacune
+une limite : la PCA à **noyau** (structure courbe), l'**ICA** (indépendance, pas
+seulement décorrélation), la **NMF** (parts additives) et **t-SNE** (visualisation
+préservant le voisinage).
+
+## PCA à noyau {#sec-kpca}
+
+On applique la PCA dans l'espace de caractéristiques d'un **noyau** (Module 27),
+sans l'expliciter : on centre la matrice de noyau $K_c=HKH$ ($H=I-\frac1n\mathbf 1
+\mathbf 1^\top$), on la diagonalise, et l'on projette sur ses vecteurs propres.
+Les composantes suivent des **directions non linéaires** — elles « déplient » par
+exemple des cercles concentriques en une coordonnée radiale. *(= `kernlab::kpca` ;
+MC : la 1ʳᵉ composante sépare les cercles.)*
+
+## ICA : indépendance {#sec-ica}
+
+La PCA décorrèle (moments d'ordre 2). L'**ICA** va plus loin : elle sépare un
+mélange $X=SA^\top$ en sources **statistiquement indépendantes** $S$, en
+maximisant la **non-gaussianité** (une somme de variables indépendantes tend vers
+une gaussienne — TCL — donc s'éloigner du gaussien = démélanger). **FastICA**
+blanchit puis itère un point fixe avec le contraste $g=\tanh$. Résout le **cocktail
+party** (séparer des voix mélangées). *(Vérifié : récupère les sources, $|\rho|
+\approx1$.)*
+
+## NMF : parts additives {#sec-nmf}
+
+Sous contrainte $W,H\ge 0$, $V\approx WH$ décompose les données en **parts
+purement additives** (mises à jour multiplicatives de Lee-Seung) — interprétables
+(visages = somme de traits, textes = mélange de thèmes), là où la PCA peut
+**soustraire**. *(Vérifié : reconstruction exacte, non-négativité.)*
+
+## t-SNE : préserver le voisinage {#sec-tsne}
+
+Pour **visualiser**, t-SNE convertit les distances en probabilités de voisinage
+(gaussiennes en haute dimension, **Student-t** en basse — queues lourdes pour
+éviter l'encombrement) et minimise la **divergence KL** par descente de gradient.
+Il préserve la structure **locale** : les clusters se séparent nettement, même
+quand la direction discriminante est de **faible variance** (invisible à la PCA).
+*(MC : t-SNE sépare des clusters que la PCA à 2 composantes mélange.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Méthode | Idée | Fonction R (`R/42_dimreduction.R`) | Référence |
+|---|---|---|---|
+| PCA à noyau | variance non linéaire | `kernel_pca(X, k, gamma)` | `kernlab::kpca` |
+| ICA (FastICA) | indépendance | `ica_fastica(X, n_comp)` | `fastICA` |
+| NMF | parts additives | `nmf(V, k)` | *reconstruction* |
+| t-SNE | voisinage local | `tsne(X, dims, perplexity)` | *séparation de clusters* |
+
+Validation : PCA à noyau = `kernlab` ; FastICA récupère les sources ; NMF
+reconstruit exactement ; t-SNE préserve les clusters. Monte Carlo : t-SNE bat la
+PCA quand la structure est portée par une direction de faible variance.
+
+## Références {.unnumbered}
+
+- Schölkopf, Smola & Müller (1998) — kernel PCA.
+- Hyvärinen & Oja (2000) — FastICA. Lee & Seung (1999) — NMF.
+- van der Maaten & Hinton (2008) — t-SNE.

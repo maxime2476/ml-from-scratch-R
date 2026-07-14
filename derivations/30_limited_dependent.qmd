@@ -1,0 +1,76 @@
+---
+title: "Module 30 — Variables dépendantes limitées"
+subtitle: "ML from Scratch in R"
+format:
+  html: {toc: true, toc-depth: 3, number-sections: true, html-math-method: katex}
+  pdf: {toc: true, number-sections: true}
+---
+
+## Objet {#sec-intro}
+
+Quand la variable expliquée n'est pas continue et pleinement observée — elle est
+**binaire**, **censurée**, ou **observée seulement pour un sous-échantillon
+sélectionné** — l'OLS est biaisé. Il faut modéliser la **structure de la
+réponse** par maximum de vraisemblance. Trois modèles canoniques de la
+microéconométrie, tous issus d'une **variable latente gaussienne** $y^*=X\beta+
+\varepsilon$.
+
+## Probit : réponse binaire {#sec-probit}
+
+On observe $y=\mathbb 1\{y^*>0\}$, d'où $P(y=1\mid X)=\Phi(X\beta)$. La
+log-vraisemblance $\sum_i y_i\log\Phi(X_i\beta)+(1-y_i)\log(1-\Phi(X_i\beta))$ se
+maximise par **IRLS** (Module 3) avec le lien probit : poids
+$w=\phi^2/[\Phi(1-\Phi)]$, réponse de travail $z=\eta+(y-\Phi)/\phi$. *(Vérifié :
+coefficients et erreurs standard = `glm(binomial(probit))`.)*
+
+## Tobit : réponse censurée {#sec-tobit}
+
+La latente $y^*=X\beta+\varepsilon$, $\varepsilon\sim\mathcal N(0,\sigma^2)$, est
+observée seulement au-dessus d'un seuil : $y=\max(L,y^*)$. La vraisemblance
+combine **densité** (non censurés) et **masse** (censurés) :
+$$
+\ell(\beta,\sigma)=\sum_{y_i>L}\Bigl[\log\phi\bigl(\tfrac{y_i-X_i\beta}\sigma\bigr)-\log\sigma\Bigr]
++\sum_{y_i=L}\log\Phi\bigl(\tfrac{L-X_i\beta}\sigma\bigr).
+\tag{30.1}
+$$
+Ignorer la censure (OLS sur les $y$ observés) biaise $\beta$ vers 0. *(Vérifié :
+$\hat\beta,\hat\sigma$ = `AER::tobit`.)*
+
+## Heckman : biais de sélection {#sec-heckman}
+
+$y$ n'est observé que si une **équation de sélection** $d=\mathbb 1\{Z_s\gamma+u>0\}$
+vaut 1, et les erreurs $(\varepsilon,u)$ sont **corrélées** ($\rho$). Alors
+$$
+\mathbb E[y\mid X,d=1]=X\beta+\rho\sigma\,\lambda(Z_s\gamma),\qquad
+\lambda(a)=\frac{\phi(a)}{\Phi(a)}\ \text{(ratio de Mills inverse)}.
+\tag{30.2}
+$$
+Le terme $\rho\sigma\lambda$ omis par l'OLS **est** le biais de sélection. D'où
+l'estimation **en deux étapes** (Heckman 1979) :
+
+1. **probit** de $d$ sur $Z_s$ $\Rightarrow\hat\gamma$, puis
+   $\hat\lambda_i=\phi(Z_s\hat\gamma)/\Phi(Z_s\hat\gamma)$ ;
+2. **OLS** de $y$ sur $[X,\hat\lambda]$ sur les observations sélectionnées.
+
+Le coefficient de $\hat\lambda$ estime $\rho\sigma$ : **nul $\iff$ pas de biais de
+sélection** (test immédiat). *(Vérifié : coefficients = `sampleSelection::selection`
+à $10^{-6}$ ; MC : le coefficient de Mills détecte le biais.)*
+
+## Encadré — de la math au code {#sec-mathcode}
+
+| Modèle | Réponse | Fonction R (`R/30_limited_dependent.R`) | Référence |
+|---|---|---|---|
+| Probit (IRLS) | binaire | `probit(formula, data)` | `glm(probit)` |
+| (30.1) Tobit (MLE) | censurée | `tobit_fit(formula, data, left)` | `AER::tobit` |
+| (30.2) Heckman (2 étapes) | sélectionnée | `heckman(selection, outcome, data)` | `sampleSelection` |
+
+Validation : probit = `glm(binomial(probit))` ; Tobit = `AER::tobit` (dont
+$\sigma$) ; Heckman deux étapes = `sampleSelection::selection` à la précision
+machine. Monte Carlo : sans corrélation, le coefficient de Mills $\approx0$ ; avec
+biais de sélection, il est grand — le test de Heckman fonctionne.
+
+## Références {.unnumbered}
+
+- Tobin (1958) ; Amemiya (1984), *Tobit models: a survey*.
+- Heckman (1979), « Sample selection bias as a specification error », *Econometrica*.
+- Maddala (1983), *Limited-Dependent and Qualitative Variables in Econometrics*.

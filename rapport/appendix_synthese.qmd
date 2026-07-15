@@ -65,7 +65,7 @@ résidu-sur-résidu de FWL (M1), qui partiale linéairement les contrôles, devi
 Module 16 une résidualisation **non paramétrique** (ML) débiaisée par
 cross-fitting. C'est la même mécanique, du linéaire au ML — la boucle du projet.
 
-## Lecture optimisation transversale {#sec-optim}
+## Lecture optimisation transversale {#sec-optim-transversale}
 
 Le Module 0 fournit **un catalogue d'optimiseurs** ; chaque modèle en choisit un
 selon la structure de son problème :

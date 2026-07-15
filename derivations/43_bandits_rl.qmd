@@ -17,7 +17,7 @@ central est l'arbitrage **exploration** (essayer pour apprendre) vs **exploitati
 ## Bandits à plusieurs bras {#sec-bandits}
 
 $K$ bras, de moyennes inconnues $\mu_a$. À chaque tour on en joue un et l'on
-observe une récompense. On mesure le **regret** $\mathrm{Reg}(T)=T\mu^\*-\sum_t
+observe une récompense. On mesure le **regret** $\mathrm{Reg}(T)=T\mu^{*}-\sum_t
 \mu_{a_t}$ (perte vs le meilleur bras). Un bon algorithme a un regret **sous-
 linéaire** ($\mathrm{Reg}(T)/T\to 0$).
 
@@ -35,22 +35,22 @@ Avec des **états**, une action mène à un nouvel état selon $P(s'\mid s,a)$ e
 rapporte $R(s,a)$. On cherche une politique maximisant la récompense **actualisée**
 $\sum_t\gamma^t r_t$. La valeur optimale satisfait l'**équation de Bellman** :
 $$
-Q^\*(s,a)=R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)\max_{a'}Q^\*(s',a').
+Q^{*}(s,a)=R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)\max_{a'}Q^{*}(s',a').
 \tag{43.1}
 $$
 Si $P,R$ sont **connus**, l'**itération sur les valeurs** (application répétée de
-l'opérateur de Bellman, une contraction de facteur $\gamma$) converge vers $Q^\*$.
+l'opérateur de Bellman, une contraction de facteur $\gamma$) converge vers $Q^{*}$.
 
 ## Q-learning : apprendre sans modèle {#sec-ql}
 
-Quand $P,R$ sont **inconnus**, on apprend $Q^\*$ par **interaction** : politique
+Quand $P,R$ sont **inconnus**, on apprend $Q^{*}$ par **interaction** : politique
 $\varepsilon$-greedy et mise à jour par **différence temporelle**
 $$
 Q(s,a)\leftarrow Q(s,a)+\alpha\bigl[\underbrace{r+\gamma\max_{a'}Q(s',a')}_{\text{cible}}-Q(s,a)\bigr].
 \tag{43.2}
 $$
 C'est **off-policy** (on apprend l'optimum en explorant) et cela **converge vers
-$Q^\*$** sous des conditions standard. *(Vérifié : même politique optimale que
+$Q^{*}$** sous des conditions standard. *(Vérifié : même politique optimale que
 l'itération sur les valeurs.)*
 
 ## Encadré — de la math au code {#sec-mathcode}
@@ -65,7 +65,7 @@ l'itération sur les valeurs.)*
 Validation : les bandits ont un regret **sous-linéaire** ($\mathrm{Reg}/T\to0$),
 bien inférieur au hasard, et convergent vers le meilleur bras ; le Q-learning
 retrouve la **politique optimale** de l'itération sur les valeurs. Monte Carlo :
-courbes de regret et convergence de $Q$ vers $Q^\*$.
+courbes de regret et convergence de $Q$ vers $Q^{*}$.
 
 ## Références {.unnumbered}
 

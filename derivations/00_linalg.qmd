@@ -73,7 +73,7 @@ $\kappa_2$, faisant perdre $\log_{10}\kappa_2$ chiffres significatifs.
 
 - **(H0-1)** $X$ est de plein rang colonne, $\operatorname{rang}(X)=p$.
 
-### Proposition (le carré du conditionnement) {#prp-kappa}
+### Proposition (le carré du conditionnement) {#sec-kappa}
 
 > **Proposition 0.1.** Sous (H0-1), $\ \kappa_2(X^\top X) = \kappa_2(X)^2.$
 
@@ -230,7 +230,7 @@ $$
 L z = X^\top y \ \text{(descente)}, \qquad L^\top \hat\beta = z \ \text{(remontée)} .
 \tag{0.10}
 $$
-**Avertissement** cohérent avec @prp-kappa : cette voie subit le
+**Avertissement** cohérent avec la @sec-kappa : cette voie subit le
 conditionnement $\kappa_2(X)^2$. On l'emploie pour la vitesse quand on sait le
 problème bien conditionné (elle sert notamment au **ridge**, où l'ajout de
 $\lambda I$ garantit $X^\top X + \lambda I \succ 0$ et **améliore** le

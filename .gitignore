@@ -14,6 +14,14 @@
 /derivations/*.html
 /derivations/*.pdf
 
+# Intermediaires LaTeX laisses a la racine par le rendu PDF du livre
+/index.tex
+/index.aux
+/index.log
+/index.toc
+/index.out
+/index.pdf
+
 # OS
 .DS_Store
 Thumbs.db

@@ -22,8 +22,18 @@ pipeline:        ## Reproduction à dépendances suivies (targets::tar_make)
 docker:          ## Construit l'image Docker reproductible
 	docker build -t mlfromscratch .
 
-memoire:         ## Rend le mémoire (manuscrit) en PDF (prêt pour dépôt/arXiv)
-	$(QUARTO) render rapport/memoire.qmd --to pdf
+# memoire.qmd est aussi un chapitre du livre : le rendre depuis la racine
+# recompile tout le livre. Quarto remonte l'arborescence jusqu'au premier
+# _quarto.yml, d'où le dossier jetable avec son propre _quarto.yml qui masque
+# celui du projet et isole le manuscrit.
+memoire:         ## Rend le mémoire SEUL en PDF (manuscrit autonome, prêt pour arXiv)
+	@rm -rf .manuscrit && mkdir -p .manuscrit
+	@cp rapport/memoire.qmd references.bib .manuscrit/
+	@printf 'project:\n  type: default\n' > .manuscrit/_quarto.yml
+	$(QUARTO) render .manuscrit/memoire.qmd --to pdf
+	@mv .manuscrit/memoire.pdf rapport/memoire.pdf
+	@rm -rf .manuscrit
+	@echo "--> rapport/memoire.pdf"
 
 slides:          ## Rend le diaporama de soutenance (revealjs, HTML)
 	$(QUARTO) render rapport/slides.qmd

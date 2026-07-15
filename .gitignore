@@ -14,6 +14,9 @@
 /derivations/*.html
 /derivations/*.pdf
 
+# Dossier jetable du manuscrit autonome (cible `make memoire`)
+/.manuscrit/
+
 # Intermediaires LaTeX laisses a la racine par le rendu PDF du livre
 /index.tex
 /index.aux

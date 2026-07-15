@@ -5,10 +5,13 @@ format:
   html: {toc: true, toc-depth: 2, number-sections: true}
 ---
 
-Vingt-neuf modules, mais **peu d'idées**. Ce projet n'est pas un catalogue de
+Quarante-huit modules, mais **peu d'idées**. Ce projet n'est pas un catalogue de
 méthodes juxtaposées : les mêmes quelques principes reviennent, déguisés. Cette
 synthèse rend explicite l'architecture cachée — c'est le fil qui relie l'algèbre
-linéaire du Module 0 à la différentiation automatique du Module 28.
+linéaire du Module 0 au Transformer du Module 38 et au contrôle synthétique du
+Module 47. Épreuve de résistance de la thèse : les ajouts les plus modernes
+(attention, GARCH, RL, survie) devraient, s'ils sont bien vus, se ranger *sans
+forcer* sous les mêmes quatre idées. C'est le cas — on le montre ci-dessous.
 
 ## Idée 1 — La projection orthogonale
 
@@ -23,9 +26,14 @@ Tout commence par **projeter** $y$ sur un espace de colonnes.
   singulières), qui explique aussi la **double descente** (M26).
 - **Orthogonalité de Neyman** (M16) : rendre l'estimation *insensible au premier
   ordre* aux nuisances — une projection, encore.
+- **Noyaux et spectre** : le **SVM** (M39) sépare par un hyperplan dans l'espace
+  de caractéristiques — une projection linéaire *après* le noyau, exactement le
+  théorème de représentation du GP (M27) ; le **kernel PCA** (M42) projette sur
+  les axes principaux de cet espace ; le **clustering spectral** (M41) projette
+  sur les vecteurs propres du laplacien du graphe. Même geste, espace non linéaire.
 
-> Résidualiser, projeter, orthogonaliser : la même opération, du OLS à la
-> causalité en haute dimension.
+> Résidualiser, projeter, orthogonaliser — puis *changer d'espace par un noyau* :
+> la même opération, du OLS à la causalité en haute dimension et au SVM.
 
 ## Idée 2 — La fonction d'influence
 
@@ -40,9 +48,16 @@ $\sqrt n(\hat\theta-\theta_0)=\frac1{\sqrt n}\sum_i \mathrm{IC}(z_i)+o_p(1)$ (M2
   (M22) et du **DML** (M16) ; la **fonction d'influence efficace** donne la
   **borne semiparamétrique** de l'ATE.
 - L'**analyse de sensibilité** (M23) chiffre ce qui reste hors du modèle.
+- Les nouveaux estimateurs ne dérogent pas : le **Cox** (M46) maximise une
+  vraisemblance *partielle* dont le score est une somme de contributions
+  (M-estimation), le **GARCH** (M45) une quasi-vraisemblance, le **panel
+  dynamique** (M47) résout le biais de Nickell par un moment instrumental (GMM,
+  M18). La **méthode delta** (M34) propage la fonction d'influence à toute
+  transformation lisse ; les **tests multiples** (M34) contrôlent l'inflation du
+  risque quand ces influences s'accumulent.
 
-> Une fois qu'on voit la fonction d'influence, l'inférence de tout le projet est
-> *une seule* démonstration.
+> Une fois qu'on voit la fonction d'influence, l'inférence de tout le projet —
+> du OLS au Cox — est *une seule* démonstration.
 
 ## Idée 3 — Le compromis biais-variance et sa régularisation
 
@@ -55,8 +70,15 @@ La tension centrale de l'apprentissage.
   boosting (M10), la **largeur** du MLP (M12) : partout le même curseur.
 - La **double descente** (M26) révèle que ce curseur a un *second* régime — la
   théorie classique (M13) n'est pas fausse, elle est *incomplète*.
+- Les réseaux profonds ne font qu'ajouter des *dialectes* de régularisation :
+  **dropout** et **batch norm** (M35) contraignent implicitement la capacité, la
+  **marge** du SVM (M39) est un régularisateur $\ell_2$ déguisé, le **rang** de la
+  NMF et la **perplexité** de t-SNE (M42) fixent la complexité, la **profondeur**
+  de l'arbre de M8 devient le *nombre d'époques*. Même en génératif, **QDA vs LDA
+  vs Naive Bayes** (M40) est un curseur biais-variance : covariance libre,
+  partagée, ou diagonale.
 
-> Le même arbitrage, sous vingt formes ; la régularisation en est le langage commun.
+> Le même arbitrage, sous trente formes ; la régularisation en est le langage commun.
 
 ## Idée 4 — L'optimisation comme substrat
 
@@ -69,22 +91,44 @@ Aucune de ces idées ne « tourne » sans savoir **minimiser**.
   la vraisemblance ; le **scaled lasso** (M22) itère.
 - La **rétropropagation** (M12) — puis sa généralisation, la **différentiation
   automatique** (M28) — fournit les gradients mécaniquement.
+- Tout l'apprentissage profond n'est que cette règle de la chaîne, spécialisée :
+  la convolution du **CNN** (M36) et la **BPTT** du RNN/LSTM (M37) sont des cas
+  d'autodiff, l'**attention** (M38) aussi ; les **optimiseurs adaptatifs**
+  (Adam, RMSprop, M35) ne changent que le *pas*. Quand le gradient n'existe pas,
+  on l'évite : **QP** pour la marge du SVM (M39), **MCMC** pour un posterieur sans
+  forme close (M33), **itération de la valeur / Q-learning** pour un contrôle
+  optimal (M43). Le **GARCH** (M45) et le **probit/Tobit** (M30) reviennent au
+  Newton de M0.
 
 > Derrière chaque estimateur, un problème d'optimisation ; derrière chaque
-> gradient, la règle de la chaîne.
+> gradient, la règle de la chaîne — et quand elle manque, un substitut assumé.
 
 ## Le tissu complet
 
 | Fil | Modules |
 |---|---|
-| Projection / orthogonalité | 0, 1, 4, 5, 16, 21, 22, 25, 27 |
-| Fonction d'influence / inférence | 1, 2, 14, 17, 18, 22, 23, 24 |
-| Biais-variance / régularisation | 4, 6, 7, 8, 10, 12, 13, 26, 27 |
-| Optimisation / autodiff | 0, 3, 4, 10, 11, 12, 22, 28 |
-| Causalité | 5, 15, 16, 23, 24, 25 |
+| Projection / orthogonalité / noyaux | 0, 1, 4, 5, 16, 21, 22, 25, 27, 39, 41, 42 |
+| Fonction d'influence / inférence | 1, 2, 14, 17, 18, 22, 23, 24, 34, 45, 46, 47 |
+| Biais-variance / régularisation | 4, 6, 7, 8, 10, 12, 13, 26, 27, 35, 39, 40, 42 |
+| Optimisation / autodiff / substrat | 0, 3, 4, 10, 11, 12, 22, 28, 30, 33, 35, 36, 37, 38, 39, 43, 45 |
+| Causalité | 5, 15, 16, 23, 24, 25, 47 |
+
+## Le motif temporel : un cinquième fil, honnêtement
+
+Quatre idées organisent l'essentiel — mais il serait malhonnête de prétendre
+qu'elles *épuisent* tout. Les modules à **dépendance temporelle** introduisent un
+motif propre, la **récurrence** : l'autorégression du VAR (M44) et des séries
+(M31), la volatilité qui se souvient de la veille dans le GARCH (M45), la cellule
+récurrente du RNN/LSTM (M37), l'actualisation du futur dans le RL (M43). Ce n'est
+pas une cinquième « idée » au même rang — chacun de ces modules *se ramène* aux
+quatre (le VAR est une projection, le GARCH une vraisemblance, la BPTT une règle
+de la chaîne) — mais l'**axe du temps** est un ingrédient transversal que les
+quatre idées, formulées en univers i.i.d., ne portaient pas seules. Le signaler
+plutôt que de le dissoudre est plus fidèle.
 
 Chaque module a été **dérivé** depuis les premiers principes, **implémenté** en R
 base, **validé** contre sa référence à la précision requise, et **étudié** par
 Monte Carlo. Mais lu comme un tout, le projet raconte que le *machine learning*,
 l'*économétrie* et la *statistique* ne sont pas trois disciplines : ce sont trois
-vocabulaires pour les **mêmes** quatre idées.
+vocabulaires pour les **mêmes** quatre idées — plus un fil de récurrence là où le
+temps entre en jeu.

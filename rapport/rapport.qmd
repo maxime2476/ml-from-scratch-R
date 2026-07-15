@@ -23,25 +23,25 @@ bibliography: false
 Ce projet réimplémente en **R base**, à partir de leurs **dérivations
 mathématiques complètes**, les principaux modèles d'apprentissage automatique,
 puis les **valide numériquement** contre les packages de référence (tolérance
-cible $10^{-8}$) et les **étudie par simulation Monte Carlo**. Il couvre **22
-modules** — des fondations d'algèbre linéaire au pont ML/causalité et à cinq
-extensions économétriques (bootstrap, GMM, prédiction conforme, régression
-quantile, panel) — avec pour chacun quatre livrables : dérivation
+cible $10^{-8}$) et les **étudie par simulation Monte Carlo**. Il couvre **48
+modules** — des fondations d'algèbre linéaire au pont ML/causalité, aux réseaux de
+neurones profonds (CNN, RNN/LSTM, Transformer) et à l'économétrie avancée (VAR,
+GARCH, survie, panel dynamique) — avec pour chacun quatre livrables : dérivation
 (`derivations/`), implémentation (`R/`), tests de conformité (`tests/`) et étude
-Monte Carlo (`simulations/`). L'ensemble totalise **~300 tests** au vert et **22
-études Monte Carlo**. L'objectif n'est pas la performance, mais la **compréhension
-profonde** des fondements statistiques et économétriques.
+Monte Carlo (`simulations/`). L'ensemble totalise **622 tests** au vert et autant
+d'**études Monte Carlo**. L'objectif n'est pas la performance, mais la
+**compréhension profonde** des fondements statistiques et économétriques.
 
 ## Abstract (English) {.unnumbered}
 
 This project re-implements, in **base R** and from their **complete mathematical
 derivations**, the main machine-learning models, then **validates** them against
 reference packages (target tolerance $10^{-8}$) and **studies** them through Monte
-Carlo simulation. It spans **22 modules** — from numerical linear algebra to the
-ML/causality bridge and five econometric extensions (bootstrap, GMM, conformal
-prediction, quantile regression, panel data) — each delivering four artefacts:
-derivation, implementation, conformance tests, and a Monte Carlo study (**~300
-passing tests**, **22 simulations**). The goal is not performance but a **deep
+Carlo simulation. It spans **48 modules** — from numerical linear algebra to the
+ML/causality bridge, deep networks (CNN, RNN/LSTM, Transformer) and advanced
+econometrics (VAR, GARCH, survival, dynamic panels) — each delivering four
+artefacts: derivation, implementation, conformance tests, and a Monte Carlo study
+(**622 passing tests**). The goal is not performance but a **deep
 understanding** of the statistical and econometric foundations. Three threads
 unify the work: the **sandwich variance** $A^{-1}BA^{-1}$ (robustness =
 M-estimation = DML), the **penalty-as-prior** duality (ridge/lasso = Bayesian MAP

@@ -1,6 +1,6 @@
 ---
 title: "ML from Scratch in R"
-subtitle: "Déconstruction mathématique et statistique des modèles d'apprentissage"
+subtitle: "Déconstruction mathématique de l'apprentissage — des moindres carrés au Transformer"
 author: "Maxime Gourguechon"
 date: today
 lang: fr
@@ -16,118 +16,235 @@ format:
 ## Le projet en une phrase
 
 > Réimplémenter en **R base**, à partir de leurs **dérivations mathématiques
-> complètes**, les principaux modèles d'apprentissage — puis les **valider**
+> complètes**, les modèles d'apprentissage et d'économétrie — puis les **valider**
 > contre les packages de référence et les **étudier par simulation Monte Carlo**.
 
-**But** : non la performance, mais la **compréhension profonde** des fondements
-statistiques et économétriques.
+**But** : non la performance, mais la **compréhension** des fondements.
 
-- 22 modules · 21 dérivations · ~300 tests au vert · 22 études Monte Carlo
-- Validation à $10^{-8}$ contre `lm`, `glm`, `sandwich`, `glmnet`, `AER`,
-  `randomForest`, `gbm`, `mclust`, `DoubleML`, `grf`, `quantreg`, `plm`, …
+- **48 modules** · 48 dérivations · **622 tests au vert** · autant d'études Monte Carlo
+- Validation à $10^{-8}$ contre `lm`, `glmnet`, `sandwich`, `DoubleML`, `grf`,
+  `fixest`, `did`, `DiceKriging`, `e1071`, `kernlab`, `vars`, `tseries`,
+  `survival`, `plm`, …
 
-## Cinq principes
+## La méthode, imposée à chaque module
 
-1. **Les mathématiques d'abord** — aucune ligne de code sans dérivation.
-2. **R base pour le cœur** — les packages ne servent qu'à valider.
+1. **Les mathématiques d'abord** — aucune ligne de code sans dérivation
+   (hypothèses numérotées, preuves).
+2. **R base pour le cœur** — les packages ne servent **qu'à valider**.
 3. **Validation systématique** à $10^{-8}$ (ou divergence documentée).
-4. **Simulation** : DGP connu → biais, variance, couverture, puissance, avec
-   **erreurs Monte Carlo**.
-5. **Auto-suffisance par module** — chacun réimplémente ses briques.
+4. **Simulation** : DGP connu → biais, variance, couverture, puissance, **avec
+   erreurs Monte Carlo**.
+5. **Ne jamais avancer sans tests verts.**
 
-## La carte des modules
+> Appeler `glmnet` prouve qu'on sait *utiliser*. Le réimplémenter prouve qu'on
+> *comprend*.
+
+## La carte des 48 modules
 
 | Bloc | Modules |
 |---|---|
-| Fondations | 0 algèbre · 1 OLS · 2 robustesse · 3 GLM · 4 régularisation · 5 IV · 6 validation |
-| Théorie | 13 apprentissage · 14 économétrie |
-| Non linéaire | 7 KNN · 8 CART · 9 forêts · 10 boosting |
-| Non supervisé / réseaux | 11 PCA/k-means/EM · 12 MLP |
-| Post-hoc / causalité | 15 interprétabilité · 16 DML |
-| **Extensions** | 17 bootstrap · 18 GMM · 19 conforme · 20 quantile · 21 panel |
+| Fondations | 0 algèbre/optim · 1 OLS · 2 robustesse · 3 GLM · 4 régularisation · 5 IV · 6 validation |
+| Théorie & non-linéaire | 7–13 KNN, CART, forêts, boosting, non-sup., MLP, apprentissage |
+| Économétrie & causalité | 14–25 M-estim., DML, panel, lasso débiaisé, DiD moderne |
+| Frontières | 26 double descente · 27 processus gaussiens · 28 autodiff |
+| Compléments éco/stat | 29–34 diagnostics, LDV, séries, non-param., MCMC, delta |
+| **Réseaux profonds** | 35 Adam/dropout/BN · 36 CNN · 37 RNN/LSTM · **38 Transformer** |
+| **ML compléments** | 39 SVM · 40 génératifs · 41 clustering · 42 réduction dim. · 43 RL |
+| **Économétrie avancée** | 44 VAR · 45 GARCH · 46 survie/Cox · 47 panel dynamique |
 
-## Un résultat fondateur : Gauss-Markov
+## La thèse : quatre idées, quarante-huit masques
 
-**Théorème (M1)** : sous (H1)–(H4), l'OLS est **BLUE**. *Preuve* par
-$\operatorname{Var}(\tilde\beta)-\operatorname{Var}(\hat\beta)=\sigma^2 DD^\top
-\succeq 0$.
+Le projet n'est pas un catalogue. Les **mêmes idées** reviennent, déguisées :
 
-Monte Carlo ($n=15$, 5000 rép.) :
+1. **Projeter** — OLS, FWL, régularisation, orthogonalité de Neyman, **noyaux**
+   (GP, SVM, spectral).
+2. **Influencer** — la fonction d'influence unifie sandwich, bootstrap, jackknife,
+   one-step, efficacité — jusqu'au **Cox** et au **GARCH**.
+3. **Arbitrer** — biais-variance et régularisation, jusqu'à la **double descente**
+   et au **dropout**.
+4. **Optimiser** — gradient, Newton, IRLS, EM, **rétropropagation → autodiff →
+   attention**, MCMC.
 
-| | couverture IC 95 % |
+*Plus un cinquième fil, honnêtement :* la **récurrence**, là où le temps entre
+(VAR, GARCH, RNN, RL).
+
+# Dix modules phares {.center}
+
+L'arc complet, de la projection linéaire à l'apprentissage profond.
+
+## 1 · Projection & Gauss-Markov (M0–M1)
+
+**Théorème** : sous (H1)–(H4), l'OLS est **BLUE**. *Preuve* par
+$\operatorname{Var}(\tilde\beta)-\operatorname{Var}(\hat\beta)=\sigma^2 DD^\top\succeq 0$.
+
+La **QR** du Module 0 résout *tous* les moindres carrés du projet ; jamais
+d'inverse explicite.
+
+Monte Carlo ($n=15$, 5000 rép.) — la théorie exacte se **voit** :
+
+| IC 95 % | couverture |
 |---|:---:|
 | Student (correct) | **0.951** ✓ |
 | Normal (naïf) | 0.928 (sous-couvre) |
 
-La théorie exacte se **voit** dans la simulation.
+## 2 · Régularisation : la pénalité est un prior (M4)
 
-## Trois invariants qui unifient le projet
+Le lasso résout $\min \tfrac12\lVert y-X\beta\rVert^2 + \lambda\lVert\beta\rVert_1$
+par **coordinate descent** ; solution en **soft-thresholding**.
 
-- **Le sandwich $A^{-1}BA^{-1}$** apparaît *trois fois, identique* : robustesse
-  HC0 (M2) = M-estimation (M14) = variance du DML (M16).
-- **La pénalité est un prior** : ridge = gaussien, lasso = Laplace (M4, M14) ;
-  et contrôle de la complexité de Rademacher (M13).
-- **Frisch-Waugh-Lovell** (M1) → **score orthogonal de Neyman** (M16) → **within
-  panel** (M21) : la même partialisation, du linéaire au ML.
+- Ridge = prior **gaussien** ; lasso = prior **Laplace** — le même curseur
+  biais-variance, deux langages.
+- Le noyau (M27) porte cette projection *rétrécie* en dimension infinie ; la
+  **SVD** (M0) en donne la géométrie — celle-là même qui explique la double
+  descente (M26).
 
-## Où l'inférence casse (M14)
+> Un seul curseur, sous vingt formes ; la régularisation en est la grammaire.
 
-Sous $H_0$ (coefficients nuls), taux de rejet à 5 % :
+## 3 · Où l'inférence casse → le DML la répare (M14 → M16)
 
-| Méthode | rejet |
+Réutiliser les données pour **sélectionner puis tester** casse l'inférence :
+
+| sous $H_0$ | taux de rejet (visé 5 %) |
 |---|:---:|
 | **t-test post-lasso naïf** | **24.3 %** |
 | OLS complet | 4.9 % ✓ |
 | Sample-splitting | 4.8 % ✓ |
 
-Réutiliser les données pour **sélectionner puis tester** casse l'inférence.
-→ motive le **cross-fitting** du Module 16.
+Le **score orthogonal de Neyman** (M16) rend $\hat\theta$ insensible au premier
+ordre aux nuisances ML :
 
-## Le point culminant : Double ML (M16)
-
-**Score de Neyman** pour $Y=\theta D+g(X)+\varepsilon$ : insensible au premier
-ordre aux nuisances → $\hat\theta$ $\sqrt n$-consistant malgré des nuisances ML.
-
-Tableau de synthèse ($\theta=1$, confusion non linéaire) :
-
-| Méthode | biais | RMSE | couverture |
+| $\theta=1$, confusion non-linéaire | biais | RMSE | couv. |
 |---|:---:|:---:|:---:|
 | OLS naïf | 0.04 | 0.334 | — |
-| Lasso naïf | −0.18 | 0.340 | — |
-| DML sans cross-fit | −0.12 | 0.214 | 0.945 |
 | **DML complet** | **−0.04** | **0.184** | **0.970** |
 
-## Une garantie moderne : prédiction conforme (M19)
+## 4 · Le fil unificateur : fonctions d'influence (M24)
 
-**Théorème** : intervalles valides en **échantillon fini, distribution-libre**,
-sous simple **échangeabilité**, autour de **n'importe quel** modèle.
+Presque tout estimateur est **asymptotiquement linéaire** :
+$$\sqrt n(\hat\theta-\theta_0)=\tfrac1{\sqrt n}\textstyle\sum_i \mathrm{IC}(z_i)+o_p(1).$$
 
-Couverture visée 90 % :
+- Sa variance **est** le sandwich (M2, M14) ; le bootstrap (M17) la simule ; le
+  jackknife l'approche — trois visages d'un même second moment.
+- La correction « en un pas » est la forme abstraite du **lasso débiaisé** (M22)
+  et du **DML** (M16).
+- Le score de Neyman **= la fonction d'influence efficace** → borne
+  semiparamétrique (chapitre de théorie).
 
-| DGP | conforme | gaussien naïf |
-|---|:---:|:---:|
-| gaussien | 0.90 | 0.89 |
-| queues lourdes | **0.90** | 0.94 (dé-calibré) |
-| mal spécifié | **0.90** | 0.92 (dé-calibré) |
+> Une fois qu'on la voit, l'inférence de *tout* le projet est **une seule**
+> démonstration.
 
-## Reproductibilité et qualité
+## 5 · DiD moderne : pourquoi le TWFE ment (M25)
 
-- **Un compendium reproductible** : `make all`, `renv.lock` (160 packages),
-  livre Quarto (21 dérivations + rapport).
-- **Package** documenté : `NAMESPACE`, 106 pages `man/`, `R CMD check` propre.
+À adoption **échelonnée** avec effets dynamiques, la régression à deux effets
+fixes pondère certains ATT par des **poids négatifs**
+(de Chaisemartin–D'Haultfœuille).
+
+- Reconstruit : **Callaway–Sant'Anna** $\widehat{ATT}(g,t)$, **Sun–Abraham**
+  (étude d'événement), **Goodman-Bacon** (décomposition).
+- Monte Carlo : le TWFE **inverse le signe** de l'effet quand la théorie
+  l'annonce ; les estimateurs par cohorte le récupèrent.
+
+> Un cas d'école : le même coefficient, correct en univers homogène, devient
+> trompeur dès que le traitement roule dans le temps.
+
+## 6 · Double descente : la surprise moderne (M26)
+
+Le risque de test, tracé contre la complexité, **remonte au seuil
+d'interpolation** ($p=n$) puis **redescend** — un second régime invisible à la
+théorie classique (M13).
+
+- L'interpolant de **norme minimale** (via SVD) généralise dans le régime
+  sur-paramétré.
+- Le **ridge monotonise** la courbe : la régularisation *supprime* le pic.
+
+> La théorie classique n'est pas fausse — elle est **incomplète**. Le montrer par
+> simulation, à la main, est plus convaincant qu'une figure citée.
+
+## 7 · Processus gaussiens & noyaux (M27)
+
+**Théorème de représentation** : la régression RKHS = combinaison de noyaux
+centrés aux données. GP = **kernel ridge** ; les hyperparamètres se choisissent
+par **vraisemblance marginale** (compromis ajustement/complexité intégré).
+
+- Validé à la précision machine contre `DiceKriging`.
+- Le **même noyau** revient au SVM (M39, exact vs `e1071`), au kernel PCA (M42,
+  vs `kernlab`), au clustering spectral (M41, ARI 1.0 vs k-means 0.03).
+
+> « Changer d'espace par un noyau, puis projeter » : un geste, cinq modules.
+
+## 8 · Le substrat : autodiff → Transformer (M28 → M38)
+
+La **différentiation automatique** en mode inverse (graphe de calcul, groupes
+génériques `Ops`/`Math`) fournit les gradients mécaniquement.
+
+- Rétropropagation CNN (M36) et **BPTT** (M37) validées contre `numDeriv`
+  ($10^{-7}$, $10^{-10}$).
+- **Attention** (M38) : $\text{softmax}(QK^\top/\sqrt d)V$, multi-têtes, encodage
+  positionnel — propriétés (équivariance de permutation) **exactes**.
+- **Adam** (M35) ne change que le *pas* : $6\times10^{-13}$ vs $8.8$ pour la
+  descente simple, à budget égal.
+
+> Tout l'apprentissage profond n'est que la **règle de la chaîne**, spécialisée.
+
+## 9 · Économétrie avancée : dynamique & durée (M45, M46)
+
+Le **cinquième fil** — la récurrence du temps — rendu explicite :
+
+- **GARCH(1,1)** par quasi-MLE ($\approx$ `tseries`) : la VaR **homoscédastique**
+  est mal calibrée en période de turbulence ; la volatilité conditionnelle la
+  corrige.
+- **Cox** par vraisemblance **partielle** ($=$ `survival`, $9\times10^{-5}$) :
+  risques proportionnels sans spécifier la ligne de base.
+- **VAR** (M44) $=$ `vars` ($3\times10^{-16}$) ; **panel dynamique** (M47) : le
+  **biais de Nickell** ($\hat\rho=0.26$) corrigé par IV Anderson-Hsiao
+  ($\hat\rho=0.58$, vrai $0.6$).
+
+## 10 · Contribution originale : le diagramme de phase
+
+La boîte à outils complète autorise une synthèse qu'aucun module isolé ne permet :
+confronter **cinq estimateurs causals** sur une grille (dimension $p/n$ × densité
+des contrôles).
+
+- **Sous parcimonie**, la double sélection **domine partout**, y compris $p>n$.
+- **Sous densité**, tout s'effondre : l'OLS sauve si $p<n$, mais **aucune** méthode
+  n'est fiable si $p\ge n$ — une **limite fondamentale**, reportée telle quelle.
+
+> La valeur n'est pas un classement : c'est la carte **méthode ↔ régime**.
+
+## Honnêteté scientifique
+
+Le projet revendique ses **échecs** comme des résultats :
+
+- l'inférence post-sélection **sur-rejette à 24 %** — on ne le cache pas, on le
+  *répare* (M22) puis on le *quantifie* (M23) ;
+- une première étude sur le cross-fitting a donné un effet **au signe opposé** à
+  la théorie → remplacée plutôt que publiée fausse ;
+- le diagramme de phase inclut une cellule où **aucune méthode ne marche**.
+
+> Reporter ce qui rate, chiffrer l'incertitude de simulation, distinguer une
+> limite d'un bug : ce qui sépare une démonstration d'un argument publicitaire.
+
+## Reproductibilité & qualité
+
+- **Compendium citable** : `renv.lock`, `_targets.R`, `Dockerfile`,
+  `CITATION.cff`, livre Quarto (48 dérivations + mémoire + synthèse).
+- **Package** documenté : `NAMESPACE`, ~212 pages `man/`, `R CMD check` propre,
+  site `pkgdown`.
+- **Suite** : **622 vérifications, 0 échec**, en processus isolés
+  (`Rscript run_tests.R`).
 - **Rigueur** : erreurs Monte Carlo systématiques ; convergence $\sqrt n$
-  vérifiée.
-- **CI** : GitHub Actions (Linux+Windows) + couverture `covr` (~97 % noyau).
+  vérifiée ; ≥ 1000 réplications.
 
 ## Conclusion
 
-Un **tout cohérent**, non une juxtaposition :
+Quarante-huit modules, plus de deux cents fonctions, des milliers de réplications
+— mais, au fond, **quatre idées** (plus la récurrence du temps).
 
-- la **QR** du Module 0 résout tous les moindres carrés ;
-- le **sandwich**, le **prior-pénalité**, la **partialisation FWL→Neyman**
-  traversent tout le projet ;
-- chaque estimateur est vu sous **quatre angles** (perte, bayésien,
-  optimisation, inférence).
+- **Projeter, influencer, arbitrer, optimiser** traversent tout le projet.
+- Le SVM = astuce du noyau ; l'attention = recherche associative ; le GARCH =
+  hétéroscédasticité conditionnelle : **des masques, non des disciplines**.
+- Reconstruire chaque méthode à la main était le seul chemin pour *voir* cette
+  unité — et pour la faire voir.
 
 **Des mathématiques rigoureuses, du code lisible, une validation systématique.**
 
@@ -135,5 +252,5 @@ Un **tout cohérent**, non une juxtaposition :
 
 Questions ?
 
-Code, dérivations et simulations : dépôt du projet · `make book` pour le livre
-complet.
+Code, dérivations et simulations : dépôt du projet · `quarto render` pour le livre
+complet · site `pkgdown` en ligne.

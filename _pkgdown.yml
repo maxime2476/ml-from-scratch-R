@@ -9,7 +9,7 @@ template:
 home:
   title: "ML from Scratch in R"
   description: >-
-    Déconstruction mathématique de 29 modules d'apprentissage et d'économétrie,
+    Déconstruction mathématique de 48 modules d'apprentissage et d'économétrie,
     en R base, validés contre les packages de référence et étudiés par Monte Carlo.
 
 navbar:

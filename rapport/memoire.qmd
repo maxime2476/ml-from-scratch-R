@@ -12,28 +12,32 @@ format:
 ## Résumé {.unnumbered}
 
 Ce mémoire réimplémente en **R base**, à partir de leurs dérivations
-mathématiques complètes, vingt-neuf modules d'apprentissage automatique et
-d'économétrie — des moindres carrés à la différentiation automatique, en passant
-par la causalité en haute dimension, les processus gaussiens et la double
-descente. Chaque implémentation est **validée numériquement** contre son package
-de référence (souvent à la précision machine) et **étudiée par simulation Monte
+mathématiques complètes, quarante-huit modules d'apprentissage automatique et
+d'économétrie — des moindres carrés au Transformer, en passant par la causalité
+en haute dimension, les processus gaussiens, la double descente, les réseaux de
+neurones profonds (CNN, RNN/LSTM, attention), le SVM, l'apprentissage par
+renforcement, et l'économétrie avancée (VAR, GARCH, survie, panel dynamique).
+Chaque implémentation est **validée numériquement** contre son package de
+référence (souvent à la précision machine) et **étudiée par simulation Monte
 Carlo**. Mais l'objet du mémoire n'est pas la collection : c'est la **thèse**
 qu'elle démontre — que le *machine learning*, l'*économétrie* et la *statistique*
 ne sont pas trois disciplines, mais **trois vocabulaires pour quatre idées**
-(projection, fonction d'influence, compromis biais-variance, optimisation). La
-contribution originale est un **diagramme de phase des estimateurs** d'effet
-causal, carte de décision « quelle méthode dans quel régime » produite par la
-boîte à outils complète.
+(projection, fonction d'influence, compromis biais-variance, optimisation), plus
+un fil de récurrence là où le temps entre en jeu. La contribution originale est un
+**diagramme de phase des estimateurs** d'effet causal, carte de décision « quelle
+méthode dans quel régime » produite par la boîte à outils complète.
 
 > **Abstract.** This thesis reimplements, in base R and from complete mathematical
-> derivations, twenty-nine modules spanning machine learning and econometrics —
-> from least squares to automatic differentiation, through high-dimensional
-> causal inference, Gaussian processes and double descent. Each implementation is
-> validated numerically against its reference package, often to machine precision,
-> and studied by Monte Carlo simulation. The thesis it defends is that machine
-> learning, econometrics and statistics are not three fields but **three
-> vocabularies for four ideas**. Its original contribution is a **phase diagram of
-> causal estimators** — a "which method, which regime" decision map.
+> derivations, forty-eight modules spanning machine learning and econometrics —
+> from least squares to the Transformer, through high-dimensional causal inference,
+> Gaussian processes, double descent, deep networks (CNN, RNN/LSTM, attention),
+> SVMs, reinforcement learning and advanced econometrics (VAR, GARCH, survival,
+> dynamic panels). Each implementation is validated numerically against its
+> reference package, often to machine precision, and studied by Monte Carlo
+> simulation. The thesis it defends is that machine learning, econometrics and
+> statistics are not three fields but **three vocabularies for four ideas**. Its
+> original contribution is a **phase diagram of causal estimators** — a "which
+> method, which regime" decision map.
 
 ## Question et positionnement {#sec-intro}
 
@@ -72,7 +76,7 @@ validation. Le résultat n'est pas du code performant — il est plus lent que
 LAPACK, et l'assume — mais du code **compris**, dont chaque étape est traçable
 jusqu'à une ligne de mathématiques.
 
-## La thèse : quatre idées, vingt-neuf masques {#sec-these}
+## La thèse : quatre idées, quarante-huit masques {#sec-these}
 
 Lu comme un tout, le projet révèle qu'un petit nombre d'idées, déguisées,
 gouvernent l'ensemble. (Le détail est développé dans le chapitre de synthèse ; on
@@ -82,14 +86,19 @@ en donne ici l'ossature argumentative.)
 l'espace des colonnes (M1) ; Frisch-Waugh-Lovell résidualise (M1) ; le *within*
 des panels (M21), le TWFE (M25), le lasso débiaisé (M22) et l'orthogonalisation
 de Neyman (M16) sont *la même opération*. « Contrôler pour $X$ », c'est projeter.
+Un noyau ne fait que changer d'espace avant de projeter : SVM (M39), kernel PCA
+(M42), clustering spectral (M41) prolongent le théorème de représentation du GP
+(M27).
 
 **Idée 2 — la fonction d'influence.** Presque tout estimateur est
 asymptotiquement linéaire (M24) ; sa variance est le sandwich (M2, M14), que le
 bootstrap (M17) et le jackknife estiment autrement. La correction « en un pas »
 est la forme abstraite du lasso débiaisé (M22) et du DML (M16) ; le score
 orthogonal de Neyman **est** la fonction d'influence efficace (démontré au
-chapitre de théorie approfondie). L'inférence de tout le projet est *une seule*
-démonstration.
+chapitre de théorie approfondie). Le Cox (M46), le GARCH (M45) et le panel
+dynamique (M47) n'y échappent pas : vraisemblance partielle, quasi-vraisemblance,
+moment instrumental — trois M-estimateurs de plus. L'inférence de tout le projet
+est *une seule* démonstration.
 
 **Idée 3 — le compromis biais-variance et sa régularisation.** De la
 décomposition (M6) aux bornes de généralisation (M13), du ridge (M4) aux
@@ -99,10 +108,22 @@ classique décrit mal.
 
 **Idée 4 — l'optimisation comme substrat.** Rien ne tourne sans savoir minimiser
 (M0) : l'IRLS est Newton (M3), le boosting une descente fonctionnelle (M10), la
-rétropropagation un cas de la différentiation automatique (M28).
+rétropropagation un cas de la différentiation automatique (M28) — dont le CNN
+(M36), la BPTT du LSTM (M37) et l'attention (M38) ne sont que des spécialisations,
+Adam (M35) n'en changeant que le pas. Là où le gradient manque, un substitut
+assumé : QP pour la marge du SVM (M39), MCMC pour un posterieur (M33), itération
+de la valeur pour le contrôle optimal (M43).
 
-C'est la thèse : **ces quatre idées, et leurs entrelacements, épuisent
-l'essentiel de la statistique de l'apprentissage.**
+**Un cinquième fil, honnêtement.** Les quatre idées, formulées en univers i.i.d.,
+ne portaient pas le **temps**. Les modules à dépendance temporelle — VAR (M44),
+séries (M31), GARCH (M45), RNN/LSTM (M37), RL (M43) — ajoutent le motif de la
+**récurrence**. Chacun *se ramène* aux quatre (le VAR est une projection, le GARCH
+une vraisemblance), mais l'axe temporel est un ingrédient transversal qu'il est
+plus honnête de nommer que de dissoudre.
+
+C'est la thèse : **ces quatre idées, et leurs entrelacements — plus la récurrence
+là où le temps entre en jeu — épuisent l'essentiel de la statistique de
+l'apprentissage.**
 
 ## Contribution originale : le diagramme de phase {#sec-contrib}
 
@@ -157,14 +178,14 @@ dans l'architecture des quatre idées.
 
 Le dépôt est un **compendium citable** : versions figées (`renv.lock`), pipeline à
 dépendances suivies (`_targets.R`), environnement conteneurisé (`Dockerfile`),
-métadonnées de citation (`CITATION.cff`). La suite complète — **375+ vérifications
+métadonnées de citation (`CITATION.cff`). La suite complète — **622 vérifications
 de conformité et de propriétés, 0 échec** — s'exécute par `Rscript run_tests.R`
 (un processus par fichier, pour isoler les conflits entre packages de référence).
 
 ## Conclusion {#sec-conclusion}
 
-Vingt-neuf modules, une centaine de fonctions, des milliers de réplications Monte
-Carlo — mais, au fond, **quatre idées**. Le mémoire aura atteint son but s'il
+Quarante-huit modules, plus de deux cents fonctions, des milliers de réplications
+Monte Carlo — mais, au fond, **quatre idées**. Le mémoire aura atteint son but s'il
 convainc que la frontière entre *machine learning*, *statistique* et
 *économétrie* est une frontière de vocabulaire, non de substance : projeter,
 influencer, arbitrer, optimiser. Reconstruire chaque méthode à la main n'était pas

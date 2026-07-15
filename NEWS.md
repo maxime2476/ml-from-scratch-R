@@ -1,6 +1,6 @@
 # mlfromscratch 0.0.0.9000
 
-Projet de mémoire — réimplémentation en R base de 35 modules (0–34)
+Projet de mémoire — réimplémentation en R base de 48 modules (0–47)
 d'apprentissage et d'économétrie, validés contre les packages de référence et
 étudiés par Monte Carlo.
 
@@ -31,5 +31,5 @@ d'apprentissage et d'économétrie, validés contre les packages de référence 
   théorie (efficacité semiparamétrique du DML) ; mémoire écrit défendu.
 * Infrastructure : compendium reproductible (`renv`, `_targets.R`, `Dockerfile`,
   `CITATION.cff`), site `pkgdown`, bibliographie consolidée, glossaire.
-* Tests : plus de 500 vérifications de conformité et de propriétés, exécutées en
+* Tests : 622 vérifications de conformité et de propriétés, exécutées en
   processus isolés (`run_tests.R`), 0 échec.

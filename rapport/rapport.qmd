@@ -15,7 +15,6 @@ format:
     toc: true
     number-sections: true
     documentclass: scrreprt
-bibliography: false
 ---
 
 ## Résumé {.unnumbered}

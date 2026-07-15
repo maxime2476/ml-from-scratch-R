@@ -10,7 +10,6 @@ format:
   pdf:
     toc: true
     number-sections: true
-bibliography: false
 ---
 
 ## Objet et notations {#sec-notations}

@@ -37,3 +37,5 @@ renv/library/
 renv/local/
 renv/cellar/
 renv/staging/
+
+**/*.quarto_ipynb

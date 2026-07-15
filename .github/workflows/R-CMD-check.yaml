@@ -31,11 +31,22 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: any::rcmdcheck, any::callr
           needs: check
 
+      # Le check valide la STRUCTURE : documentation, NAMESPACE, exemples,
+      # métadonnées. Il n'exécute pas la suite (--no-tests) : R CMD check lance
+      # tous les fichiers dans un seul processus, or les packages de référence
+      # (DoubleML, grf, hdm, gmm...) y installent des méthodes S4 qui détournent
+      # log/coef/mean et cassent des tests sans rapport. La suite est donc
+      # exécutée à l'étape suivante, isolée par fichier.
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          # Les jeux de tests utilisent les packages de référence (Suggests) ;
-          # ils sont installés par setup-r-dependencies.
+          args: 'c("--no-manual", "--no-tests")'
+
+      # La VRAIE suite : un sous-processus R frais par fichier de test.
+      # Échoue le job si un seul test échoue (run_tests.R renvoie un code != 0).
+      - name: Suite de tests (isolée par fichier)
+        run: Rscript run_tests.R
+        shell: bash

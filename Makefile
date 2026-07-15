@@ -25,13 +25,16 @@ docker:          ## Construit l'image Docker reproductible
 memoire:         ## Rend le mémoire (manuscrit) en PDF (prêt pour dépôt/arXiv)
 	$(QUARTO) render rapport/memoire.qmd --to pdf
 
+slides:          ## Rend le diaporama de soutenance (revealjs, HTML)
+	$(QUARTO) render rapport/slides.qmd
+
 site:            ## Construit le site de documentation pkgdown
 	$(RSCRIPT) -e "pkgdown::build_site()"
 
 sims:            ## Toutes les études Monte Carlo
 	$(RSCRIPT) run_all.R sims
 
-derivations:     ## Rend les 17 dérivations Quarto (HTML)
+derivations:     ## Rend les 48 dérivations Quarto (HTML)
 	$(QUARTO) render derivations
 
 rapport:         ## Rend le rapport de synthèse et l'annexe

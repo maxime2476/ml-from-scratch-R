@@ -116,3 +116,21 @@ format:
   pdf:
     documentclass: scrbook
     number-sections: true
+    # KaTeX connait psmallmatrix nativement ; LaTeX a besoin de mathtools.
+    # newunicodechar : les glyphes unicode du texte (fleches, comparateurs) ne
+    # sont pas dans Latin Modern ; sans declaration ils disparaitraient du PDF
+    # en silence (simple avertissement "Missing character").
+    include-in-header:
+      text: |
+        \usepackage{mathtools}
+        \usepackage{newunicodechar}
+        \newunicodechar{→}{\ensuremath{\rightarrow}}
+        \newunicodechar{←}{\ensuremath{\leftarrow}}
+        \newunicodechar{↔}{\ensuremath{\leftrightarrow}}
+        \newunicodechar{≈}{\ensuremath{\approx}}
+        \newunicodechar{≥}{\ensuremath{\geq}}
+        \newunicodechar{≤}{\ensuremath{\leq}}
+        \newunicodechar{≠}{\ensuremath{\neq}}
+        \newunicodechar{×}{\ensuremath{\times}}
+        \newunicodechar{✓}{\ensuremath{\checkmark}}
+        \newunicodechar{✗}{\ensuremath{\times}}

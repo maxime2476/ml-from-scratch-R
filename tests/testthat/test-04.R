@@ -45,7 +45,7 @@ test_that("soft_threshold : opérateur de seuillage doux (éq. 4.9)", {
 
 test_that("lasso_fit reproduit glmnet (alpha=1) sur design bien conditionné", {
   d <- make_reg()
-  st <- .standardize(d$X); Xs <- st$Xs; yc <- d$y - mean(d$y)
+  st <- mlfromscratch:::.standardize(d$X); Xs <- st$Xs; yc <- d$y - mean(d$y)
   n <- nrow(Xs)
   old <- glmnet::glmnet.control(); on.exit(do.call(glmnet::glmnet.control, old))
   glmnet::glmnet.control(thresh = 1e-14)
@@ -72,7 +72,7 @@ test_that("lasso produit de la sparsité ; lambda=0 -> proche OLS", {
 test_that("ridge_bias_var : EQM analytique = EQM Monte Carlo", {
   set.seed(11)
   n <- 60; p <- 5
-  X <- .standardize(matrix(rnorm(n * p), n, p))$Xs
+  X <- mlfromscratch:::.standardize(matrix(rnorm(n * p), n, p))$Xs
   beta_true <- c(2, -1, 0.5, 0, 1.5)
   sigma2 <- 1.5; lam <- 8
   bv <- ridge_bias_var(X, beta_true, sigma2, lam)
@@ -92,7 +92,7 @@ test_that("ridge_bias_var : EQM analytique = EQM Monte Carlo", {
 test_that("ridge_bias_var : biais croît, variance décroît avec lambda", {
   set.seed(1)
   n <- 60; p <- 5
-  X <- .standardize(matrix(rnorm(n * p), n, p))$Xs
+  X <- mlfromscratch:::.standardize(matrix(rnorm(n * p), n, p))$Xs
   bt <- c(2, -1, 0.5, 0, 1.5)
   bv_small <- ridge_bias_var(X, bt, 1, 1)
   bv_big   <- ridge_bias_var(X, bt, 1, 100)

@@ -13,7 +13,7 @@ help:            ## Affiche les cibles disponibles
 
 all: tests sims  ## Lance les tests puis toutes les simulations
 
-tests:           ## Suite de tests, un processus par fichier (isolation, 380+ vérifs)
+tests:           ## Suite de tests, un processus par fichier (isolation, 622 vérifs)
 	$(RSCRIPT) run_tests.R
 
 pipeline:        ## Reproduction à dépendances suivies (targets::tar_make)

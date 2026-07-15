@@ -61,6 +61,7 @@ rademacher_linear_bound <- function(X, B = 1) {
 #'
 #' @param V matrice (colonnes = points).
 #' @return la distance minimale de l'origine à l'enveloppe convexe.
+#' @keywords internal
 .min_dist_hull <- function(V) {
   V <- as.matrix(V); m <- ncol(V)
   Dmat <- crossprod(V) + diag(1e-10, m)          # V'V (régularisée pour la SDP)

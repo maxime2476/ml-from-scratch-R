@@ -18,3 +18,4 @@ programmation quadratique. Sert au test de séparabilité (théorème de Gordan 
 un étiquetage est linéairement séparable ssi 0 n'est PAS dans l'enveloppe
 convexe des \eqn{y_i\,\tilde x_i}).
 }
+\keyword{internal}

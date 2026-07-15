@@ -23,6 +23,7 @@ navbar:
     github:
       icon: fab fa-github
       href: https://github.com/mgourguechon/ml-from-scratch-R
+      aria-label: Dépôt GitHub du projet
 
 reference:
 - title: "Fondations : algèbre, OLS, inférence"

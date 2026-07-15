@@ -101,7 +101,7 @@ book:
         - rapport/glossaire.qmd
         - rapport/bibliographie.qmd
   reader-mode: true
-  repo-url: https://github.com/mgourguechon/ml-from-scratch-R
+  repo-url: https://github.com/maxime2476/ml-from-scratch-R
   search: true
 
 bibliography: references.bib

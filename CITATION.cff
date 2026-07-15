@@ -18,7 +18,7 @@ authors:
 version: 0.0.0.9000
 date-released: "2026-07-14"
 license: MIT
-repository-code: "https://github.com/mgourguechon/ml-from-scratch-R"
+repository-code: "https://github.com/maxime2476/ml-from-scratch-R"
 keywords:
   - machine learning
   - econometrics

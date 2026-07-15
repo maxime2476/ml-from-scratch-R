@@ -11,8 +11,8 @@ Description: Réimplémentation pédagogique, en R base, des principaux modèles
     et économétrie. Les implémentations n'utilisent que R base ; les packages
     de ML ne servent qu'à la validation.
 License: MIT + file LICENSE
-URL: https://mgourguechon.github.io/ml-from-scratch-R, https://github.com/mgourguechon/ml-from-scratch-R
-BugReports: https://github.com/mgourguechon/ml-from-scratch-R/issues
+URL: https://maxime2476.github.io/ml-from-scratch-R, https://github.com/maxime2476/ml-from-scratch-R
+BugReports: https://github.com/maxime2476/ml-from-scratch-R/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

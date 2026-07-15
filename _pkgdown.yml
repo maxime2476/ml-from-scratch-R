@@ -1,4 +1,4 @@
-url: https://mgourguechon.github.io/ml-from-scratch-R
+url: https://maxime2476.github.io/ml-from-scratch-R
 
 template:
   bootstrap: 5
@@ -19,10 +19,10 @@ navbar:
   components:
     articles:
       text: Livre (dérivations)
-      href: https://mgourguechon.github.io/ml-from-scratch-R/book/
+      href: https://maxime2476.github.io/ml-from-scratch-R/book/
     github:
       icon: fab fa-github
-      href: https://github.com/mgourguechon/ml-from-scratch-R
+      href: https://github.com/maxime2476/ml-from-scratch-R
       aria-label: Dépôt GitHub du projet
 
 reference:

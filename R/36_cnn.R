@@ -12,7 +12,8 @@
 #' Partage de poids : le meme noyau \eqn{K^f} est applique en toute position.
 #'
 #' @param X image d'entree (matrice H x W).
-#' @param K noyaux, tableau (kh x kw x F) ; @param b biais (longueur F).
+#' @param K noyaux, tableau (kh x kw x F)
+#' @param b biais (longueur F).
 #' @return liste : `out` (Hout x Wout x F), `cache`.
 #' @export
 conv2d <- function(X, K, b = rep(0, dim(K)[3])) {
@@ -48,7 +49,8 @@ conv2d_backward <- function(dout, cache) {
 #' Reduit chaque bloc `pool` x `pool` a son maximum (invariance locale a la
 #' translation, reduction de dimension).
 #'
-#' @param X carte de caracteristiques (H x W) ; @param pool taille du bloc.
+#' @param X carte de caracteristiques (H x W)
+#' @param pool taille du bloc.
 #' @return liste : `out`, `cache` (positions des maxima).
 #' @export
 max_pool2d <- function(X, pool = 2L) {
@@ -68,7 +70,8 @@ max_pool2d <- function(X, pool = 2L) {
 #' Route le gradient vers la position du maximum de chaque bloc (les autres
 #' recoivent 0).
 #'
-#' @param dout gradient en sortie (oh x ow) ; @param cache sortie de `max_pool2d`.
+#' @param dout gradient en sortie (oh x ow)
+#' @param cache sortie de `max_pool2d`.
 #' @return `dX` (matrice de la taille de l'entree).
 #' @export
 max_pool2d_backward <- function(dout, cache) {

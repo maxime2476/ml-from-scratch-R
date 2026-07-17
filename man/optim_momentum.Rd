@@ -14,7 +14,11 @@ optim_momentum(
 )
 }
 \arguments{
-\item{grad, x0}{cf. \code{optim_adam} ; @param step pas ; @param momentum \eqn{\mu} ;}
+\item{grad, x0}{cf. \code{optim_adam}}
+
+\item{step}{pas}
+
+\item{momentum}{\eqn{\mu}}
 
 \item{max_iter, tol}{arret.}
 }

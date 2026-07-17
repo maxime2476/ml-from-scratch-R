@@ -7,7 +7,11 @@
 spectral_clustering(X, k, gamma = 1)
 }
 \arguments{
-\item{X}{matrice n x p ; @param k nombre de clusters ; @param gamma echelle RBF.}
+\item{X}{matrice n x p}
+
+\item{k}{nombre de clusters}
+
+\item{gamma}{echelle RBF.}
 }
 \value{
 vecteur d'assignation.

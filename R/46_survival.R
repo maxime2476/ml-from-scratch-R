@@ -12,7 +12,8 @@
 #' \eqn{n_i} sujets a risque en \eqn{t_i}. Gere la **censure** a droite (les
 #' censures reduisent le risque sans compter comme evenement).
 #'
-#' @param time durees observees ; @param event 1 = evenement, 0 = censure.
+#' @param time durees observees
+#' @param event 1 = evenement, 0 = censure.
 #' @return liste : `time` (temps d'evenement), `surv`, `n_risk`, `n_event`.
 #' @export
 kaplan_meier <- function(time, event) {
@@ -30,7 +31,8 @@ kaplan_meier <- function(time, event) {
 #' Compare les deces **observes** et **attendus** entre groupes a chaque temps
 #' d'evenement ; \eqn{\chi^2} sous l'hypothese de survies egales.
 #'
-#' @param time,event durees et indicateurs ; @param group facteur a 2 niveaux.
+#' @param time,event durees et indicateurs
+#' @param group facteur a 2 niveaux.
 #' @return liste : `statistic`, `df`, `p_value`.
 #' @export
 logrank_test <- function(time, event, group) {
@@ -54,7 +56,8 @@ logrank_test <- function(time, event, group) {
 #' \eqn{\prod_{i:\text{evt}}\exp(x_i^\top\beta)/\sum_{j\in R(t_i)}\exp(x_j^\top\beta)}
 #' (gestion des ex-aequo de Breslow), maximisee par Newton.
 #'
-#' @param time,event durees et indicateurs ; @param X matrice de covariables.
+#' @param time,event durees et indicateurs
+#' @param X matrice de covariables.
 #' @return liste : `coefficients`, `se`, `loglik`, `hazard_ratio`.
 #' @export
 cox_ph <- function(time, event, X) {

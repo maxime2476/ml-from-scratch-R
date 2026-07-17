@@ -7,7 +7,11 @@
 dbscan_fit(X, eps, minPts = 5L)
 }
 \arguments{
-\item{X}{matrice n x p ; @param eps rayon ; @param minPts densite minimale.}
+\item{X}{matrice n x p}
+
+\item{eps}{rayon}
+
+\item{minPts}{densite minimale.}
 }
 \value{
 vecteur d'etiquettes (0 = bruit).

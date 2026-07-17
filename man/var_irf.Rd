@@ -7,7 +7,9 @@
 var_irf(object, h = 10L)
 }
 \arguments{
-\item{object}{objet \code{var_fit} ; @param h horizon.}
+\item{object}{objet \code{var_fit}}
+
+\item{h}{horizon.}
 }
 \value{
 tableau (h+1) x k x k : \code{irf[t, reponse, choc]}.

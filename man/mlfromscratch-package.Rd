@@ -14,9 +14,9 @@ de synthèse dans \verb{rapport/}.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://mgourguechon.github.io/ml-from-scratch-R}
-  \item \url{https://github.com/mgourguechon/ml-from-scratch-R}
-  \item Report bugs at \url{https://github.com/mgourguechon/ml-from-scratch-R/issues}
+  \item \url{https://maxime2476.github.io/ml-from-scratch-R}
+  \item \url{https://github.com/maxime2476/ml-from-scratch-R}
+  \item Report bugs at \url{https://github.com/maxime2476/ml-from-scratch-R/issues}
 }
 
 }

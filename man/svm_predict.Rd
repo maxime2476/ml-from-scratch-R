@@ -7,7 +7,9 @@
 svm_predict(object, Xnew, decision = FALSE)
 }
 \arguments{
-\item{object}{objet \code{svm_fit} ; @param Xnew nouvelles observations ;}
+\item{object}{objet \code{svm_fit}}
+
+\item{Xnew}{nouvelles observations}
 
 \item{decision}{renvoyer la valeur de decision (defaut FALSE : le signe).}
 }

@@ -7,7 +7,11 @@
 nmf(V, k, iter = 500L)
 }
 \arguments{
-\item{V}{matrice non negative n x m ; @param k rang ; @param iter iterations.}
+\item{V}{matrice non negative n x m}
+
+\item{k}{rang}
+
+\item{iter}{iterations.}
 }
 \value{
 liste : \code{W} (n x k), \code{H} (k x m), \code{reconstruction}.

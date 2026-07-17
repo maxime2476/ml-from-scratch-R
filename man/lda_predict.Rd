@@ -7,7 +7,9 @@
 lda_predict(object, Xnew)
 }
 \arguments{
-\item{object}{objet \code{lda_fit} ; @param Xnew nouvelles observations.}
+\item{object}{objet \code{lda_fit}}
+
+\item{Xnew}{nouvelles observations.}
 }
 \value{
 classes predites.

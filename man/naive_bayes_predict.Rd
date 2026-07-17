@@ -7,7 +7,9 @@
 naive_bayes_predict(object, Xnew)
 }
 \arguments{
-\item{object}{objet \code{naive_bayes_fit} ; @param Xnew nouvelles observations.}
+\item{object}{objet \code{naive_bayes_fit}}
+
+\item{Xnew}{nouvelles observations.}
 }
 \value{
 classes predites.

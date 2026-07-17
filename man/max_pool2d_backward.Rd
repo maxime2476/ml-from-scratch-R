@@ -7,7 +7,9 @@
 max_pool2d_backward(dout, cache)
 }
 \arguments{
-\item{dout}{gradient en sortie (oh x ow) ; @param cache sortie de \code{max_pool2d}.}
+\item{dout}{gradient en sortie (oh x ow)}
+
+\item{cache}{sortie de \code{max_pool2d}.}
 }
 \value{
 \code{dX} (matrice de la taille de l'entree).

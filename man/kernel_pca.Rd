@@ -7,7 +7,11 @@
 kernel_pca(X, k = 2L, gamma = 1)
 }
 \arguments{
-\item{X}{matrice n x p ; @param k nb de composantes ; @param gamma echelle RBF.}
+\item{X}{matrice n x p}
+
+\item{k}{nb de composantes}
+
+\item{gamma}{echelle RBF.}
 }
 \value{
 liste : \code{proj} (n x k), \code{lambda} (valeurs propres).

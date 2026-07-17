@@ -12,7 +12,8 @@
 #' (mise a jour de Lance-Williams), jusqu'a `k` groupes. Liaisons : "complete"
 #' (diametre), "single" (chaine), "average" (moyenne).
 #'
-#' @param X matrice n x p (ou objet `dist`) ; @param k nombre de groupes ;
+#' @param X matrice n x p (ou objet `dist`)
+#' @param k nombre de groupes
 #' @param linkage "complete", "single" ou "average".
 #' @return vecteur d'assignation (longueur n).
 #' @export
@@ -43,7 +44,9 @@ agglomerative <- function(X, k, linkage = c("complete", "single", "average")) {
 #' les points isoles sont du **bruit** (label 0). Detecte des formes arbitraires,
 #' sans fixer le nombre de clusters.
 #'
-#' @param X matrice n x p ; @param eps rayon ; @param minPts densite minimale.
+#' @param X matrice n x p
+#' @param eps rayon
+#' @param minPts densite minimale.
 #' @return vecteur d'etiquettes (0 = bruit).
 #' @export
 dbscan_fit <- function(X, eps, minPts = 5L) {
@@ -71,7 +74,9 @@ dbscan_fit <- function(X, eps, minPts = 5L) {
 #' vecteurs propres, puis applique k-means. Separe des clusters **non convexes**
 #' (spirales, cercles) que le k-means echoue a distinguer.
 #'
-#' @param X matrice n x p ; @param k nombre de clusters ; @param gamma echelle RBF.
+#' @param X matrice n x p
+#' @param k nombre de clusters
+#' @param gamma echelle RBF.
 #' @return vecteur d'assignation.
 #' @export
 spectral_clustering <- function(X, k, gamma = 1) {

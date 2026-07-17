@@ -7,7 +7,9 @@
 layer_norm(X, gamma = rep(1, ncol(X)), beta = rep(0, ncol(X)), eps = 1e-05)
 }
 \arguments{
-\item{X}{matrice ; @param gamma,beta echelle et decalage (longueur ncol) ;}
+\item{X}{matrice}
+
+\item{gamma, beta}{echelle et decalage (longueur ncol)}
 
 \item{eps}{stabilisateur.}
 }

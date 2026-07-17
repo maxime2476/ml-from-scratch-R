@@ -7,7 +7,9 @@
 var_fit(Y, p = 1L)
 }
 \arguments{
-\item{Y}{matrice n x k des series ; @param p ordre.}
+\item{Y}{matrice n x k des series}
+
+\item{p}{ordre.}
 }
 \value{
 objet \code{var_scratch} : \code{B} (coefficients), \code{Sigma}, \code{A} (liste des A_l), etc.

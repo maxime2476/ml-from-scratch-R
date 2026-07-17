@@ -7,7 +7,9 @@
 max_pool2d(X, pool = 2L)
 }
 \arguments{
-\item{X}{carte de caracteristiques (H x W) ; @param pool taille du bloc.}
+\item{X}{carte de caracteristiques (H x W)}
+
+\item{pool}{taille du bloc.}
 }
 \value{
 liste : \code{out}, \code{cache} (positions des maxima).

@@ -7,7 +7,8 @@
 # =============================================================================
 
 #' Noyau gaussien (RBF) pour SVM
-#' @param X1,X2 matrices ; @param gamma largeur inverse.
+#' @param X1,X2 matrices
+#' @param gamma largeur inverse.
 #' @return matrice de noyau.
 #' @export
 svm_rbf <- function(X1, X2, gamma) {
@@ -22,8 +23,10 @@ svm_rbf <- function(X1, X2, gamma) {
 #' `quadprog::solve.QP`. Seuls les **vecteurs de support** (\eqn{\alpha_i>0})
 #' comptent.
 #'
-#' @param X matrice n x p ; @param y etiquettes dans \eqn{\{-1,+1\}}.
-#' @param C penalite (marge souple) ; @param kernel "linear" ou "rbf" ;
+#' @param X matrice n x p
+#' @param y etiquettes dans \eqn{\{-1,+1\}}.
+#' @param C penalite (marge souple)
+#' @param kernel "linear" ou "rbf"
 #' @param gamma parametre RBF.
 #' @return objet `svm` : `alpha`, `b`, vecteurs de support, hyperparametres.
 #' @export
@@ -45,7 +48,8 @@ svm_fit <- function(X, y, C = 1, kernel = c("linear", "rbf"), gamma = 0.5) {
 #'
 #' \eqn{\hat y(x)=\mathrm{sign}\bigl(\sum_i\alpha_i y_i K(x_i,x)+b\bigr)}.
 #'
-#' @param object objet `svm_fit` ; @param Xnew nouvelles observations ;
+#' @param object objet `svm_fit`
+#' @param Xnew nouvelles observations
 #' @param decision renvoyer la valeur de decision (defaut FALSE : le signe).
 #' @return vecteur de classes (ou de valeurs de decision).
 #' @export

@@ -7,7 +7,9 @@
 dynamic_panel_iv(data, id = "id", time = "time", y = "y")
 }
 \arguments{
-\item{data}{data.frame ; @param id,time,y noms des colonnes.}
+\item{data}{data.frame}
+
+\item{id, time, y}{noms des colonnes.}
 }
 \value{
 liste : \code{rho} (coefficient autoregressif).

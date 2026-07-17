@@ -18,7 +18,9 @@ q_learning(
 \arguments{
 \item{P, R, gamma}{cf. \code{value_iteration} (utilises pour SIMULER l'environnement) ;}
 
-\item{episodes, steps}{duree ; @param alpha,epsilon taux et exploration ;}
+\item{episodes, steps}{duree}
+
+\item{alpha, epsilon}{taux et exploration}
 
 \item{seed}{graine.}
 }

@@ -37,7 +37,8 @@ synthetic_control <- function(Y1, Y0, pre) {
 #' \eqn{\alpha_i} puis on instrumente \eqn{\Delta y_{i,t-1}} par le **niveau
 #' retarde** \eqn{y_{i,t-2}} (valide car non correle a \eqn{\Delta\varepsilon}).
 #'
-#' @param data data.frame ; @param id,time,y noms des colonnes.
+#' @param data data.frame
+#' @param id,time,y noms des colonnes.
 #' @return liste : `rho` (coefficient autoregressif).
 #' @export
 dynamic_panel_iv <- function(data, id = "id", time = "time", y = "y") {

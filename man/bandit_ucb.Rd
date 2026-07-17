@@ -7,7 +7,9 @@
 bandit_ucb(means, horizon, seed = NULL)
 }
 \arguments{
-\item{means}{moyennes VRAIES des bras (Bernoulli ou bornees) ; @param horizon T ;}
+\item{means}{moyennes VRAIES des bras (Bernoulli ou bornees)}
+
+\item{horizon}{T}
 
 \item{seed}{graine.}
 }

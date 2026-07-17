@@ -7,7 +7,9 @@
 granger_test(object, cause, effect)
 }
 \arguments{
-\item{object}{objet \code{var_fit} ; @param cause indice de la variable causante ;}
+\item{object}{objet \code{var_fit}}
+
+\item{cause}{indice de la variable causante}
 
 \item{effect}{indice de la variable expliquee.}
 }

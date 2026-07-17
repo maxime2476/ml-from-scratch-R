@@ -67,6 +67,7 @@ Référence transversale : les **notations** communes à tout le projet et les
 | **LDA / QDA / Naive Bayes** | classifieurs génératifs (frontière linéaire/quadratique/naïve) | 40 |
 | **DBSCAN / spectral** | clustering par densité ; par le spectre du graphe | 41 |
 | **kernel PCA / ICA / NMF / t-SNE** | réductions de dimension non linéaires | 42 |
+| **Perplexité** | nombre effectif de voisins ; fixe un $\sigma_i$ par point (t-SNE) | 42 |
 | **UCB / Thompson / Q-learning** | exploration-exploitation ; RL sans modèle | 43 |
 | **VAR / Granger / IRF** | séries multivariées ; précédence prédictive ; réponse à un choc | 44 |
 | **ARCH / GARCH** | volatilité conditionnelle (regroupement) | 45 |

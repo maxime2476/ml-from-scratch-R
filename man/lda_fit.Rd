@@ -7,7 +7,9 @@
 lda_fit(X, y)
 }
 \arguments{
-\item{X}{matrice n x p ; @param y etiquettes de classe.}
+\item{X}{matrice n x p}
+
+\item{y}{etiquettes de classe.}
 }
 \value{
 objet \code{lda_scratch}.

@@ -7,7 +7,9 @@
 garch_fit(x, maxit = 500L)
 }
 \arguments{
-\item{x}{serie (rendements centres) ; @param maxit iterations de l'optimiseur.}
+\item{x}{serie (rendements centres)}
+
+\item{maxit}{iterations de l'optimiseur.}
 }
 \value{
 liste : \code{omega}, \code{alpha}, \code{beta}, \code{sigma} (volatilite conditionnelle), \code{loglik}.

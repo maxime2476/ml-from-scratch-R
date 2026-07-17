@@ -11,7 +11,8 @@
 #' \eqn{Y_t=c+A_1Y_{t-1}+\dots+A_pY_{t-p}+\varepsilon_t}. Chaque equation est une
 #' regression OLS sur la constante et les retards empiles.
 #'
-#' @param Y matrice n x k des series ; @param p ordre.
+#' @param Y matrice n x k des series
+#' @param p ordre.
 #' @return objet `var_scratch` : `B` (coefficients), `Sigma`, `A` (liste des A_l), etc.
 #' @export
 var_fit <- function(Y, p = 1L) {
@@ -31,7 +32,8 @@ var_fit <- function(Y, p = 1L) {
 #' prediction de \eqn{y}. Test F comparant l'equation de \eqn{y} avec et sans les
 #' retards de \eqn{x}.
 #'
-#' @param object objet `var_fit` ; @param cause indice de la variable causante ;
+#' @param object objet `var_fit`
+#' @param cause indice de la variable causante
 #' @param effect indice de la variable expliquee.
 #' @return liste : `statistic` (F), `df1`, `df2`, `p_value`.
 #' @export
@@ -53,7 +55,8 @@ granger_test <- function(object, cause, effect) {
 #' Cholesky de \eqn{\Sigma}) dans chaque variable, sur `h` periodes. Coeur de
 #' l'analyse macro-econometrique (propagation des chocs).
 #'
-#' @param object objet `var_fit` ; @param h horizon.
+#' @param object objet `var_fit`
+#' @param h horizon.
 #' @return tableau (h+1) x k x k : `irf[t, reponse, choc]`.
 #' @export
 var_irf <- function(object, h = 10L) {

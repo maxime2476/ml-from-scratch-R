@@ -7,7 +7,9 @@
 logrank_test(time, event, group)
 }
 \arguments{
-\item{time, event}{durees et indicateurs ; @param group facteur a 2 niveaux.}
+\item{time, event}{durees et indicateurs}
+
+\item{group}{facteur a 2 niveaux.}
 }
 \value{
 liste : \code{statistic}, \code{df}, \code{p_value}.

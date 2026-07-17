@@ -38,7 +38,9 @@ optim_adam <- function(grad, x0, lr = 0.01, beta1 = 0.9, beta2 = 0.999, eps = 1e
 #'
 #' \eqn{v_t=\rho v_{t-1}+(1-\rho)g_t^2}, \eqn{x_{t+1}=x_t-\eta g_t/(\sqrt{v_t}+\epsilon)}.
 #'
-#' @param grad,x0,lr cf. `optim_adam` ; @param rho decroissance ; @param eps,max_iter,tol arret.
+#' @param grad,x0,lr cf. `optim_adam`
+#' @param rho decroissance
+#' @param eps,max_iter,tol arret.
 #' @return liste : `par`, `iters`.
 #' @export
 optim_rmsprop <- function(grad, x0, lr = 0.01, rho = 0.9, eps = 1e-8, max_iter = 5000L, tol = 1e-8) {
@@ -55,7 +57,9 @@ optim_rmsprop <- function(grad, x0, lr = 0.01, rho = 0.9, eps = 1e-8, max_iter =
 #'
 #' \eqn{u_t=\mu u_{t-1}-\eta g_t}, \eqn{x_{t+1}=x_t+u_t}.
 #'
-#' @param grad,x0 cf. `optim_adam` ; @param step pas ; @param momentum \eqn{\mu} ;
+#' @param grad,x0 cf. `optim_adam`
+#' @param step pas
+#' @param momentum \eqn{\mu}
 #' @param max_iter,tol arret.
 #' @return liste : `par`, `iters`.
 #' @export

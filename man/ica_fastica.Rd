@@ -7,7 +7,11 @@
 ica_fastica(X, n_comp = ncol(X), iter = 300L, tol = 1e-09)
 }
 \arguments{
-\item{X}{melange (n x d) ; @param n_comp nb de composantes ; @param iter,tol arret.}
+\item{X}{melange (n x d)}
+
+\item{n_comp}{nb de composantes}
+
+\item{iter, tol}{arret.}
 }
 \value{
 liste : \code{S} (sources estimees), \code{W} (matrice de separation).

@@ -7,7 +7,9 @@
 agglomerative(X, k, linkage = c("complete", "single", "average"))
 }
 \arguments{
-\item{X}{matrice n x p (ou objet \code{dist}) ; @param k nombre de groupes ;}
+\item{X}{matrice n x p (ou objet \code{dist})}
+
+\item{k}{nombre de groupes}
 
 \item{linkage}{"complete", "single" ou "average".}
 }

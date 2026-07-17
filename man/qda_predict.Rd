@@ -7,7 +7,9 @@
 qda_predict(object, Xnew)
 }
 \arguments{
-\item{object}{objet \code{qda_fit} ; @param Xnew nouvelles observations.}
+\item{object}{objet \code{qda_fit}}
+
+\item{Xnew}{nouvelles observations.}
 }
 \value{
 classes predites.

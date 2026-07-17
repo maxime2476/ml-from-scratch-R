@@ -7,7 +7,9 @@
 positional_encoding(seq_len, d_model)
 }
 \arguments{
-\item{seq_len}{longueur de la sequence ; @param d_model dimension du modele.}
+\item{seq_len}{longueur de la sequence}
+
+\item{d_model}{dimension du modele.}
 }
 \value{
 matrice (seq_len x d_model).

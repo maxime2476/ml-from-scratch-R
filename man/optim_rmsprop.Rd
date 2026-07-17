@@ -15,7 +15,11 @@ optim_rmsprop(
 )
 }
 \arguments{
-\item{grad, x0, lr}{cf. \code{optim_adam} ; @param rho decroissance ; @param eps,max_iter,tol arret.}
+\item{grad, x0, lr}{cf. \code{optim_adam}}
+
+\item{rho}{decroissance}
+
+\item{eps, max_iter, tol}{arret.}
 }
 \value{
 liste : \code{par}, \code{iters}.

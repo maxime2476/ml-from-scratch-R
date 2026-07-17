@@ -11,7 +11,8 @@
 #' Choisit a chaque tour le bras maximisant \eqn{\hat\mu_a+\sqrt{2\log t/n_a}} :
 #' l'optimisme face a l'incertitude. Regret **logarithmique** \eqn{O(\log T)}.
 #'
-#' @param means moyennes VRAIES des bras (Bernoulli ou bornees) ; @param horizon T ;
+#' @param means moyennes VRAIES des bras (Bernoulli ou bornees)
+#' @param horizon T
 #' @param seed graine.
 #' @return liste : `regret` (cumule), `arms` (choisis), `counts`.
 #' @export
@@ -53,8 +54,10 @@ bandit_thompson <- function(means, horizon, seed = NULL) {
 #' Itere l'operateur de Bellman \eqn{Q(s,a)=R(s,a)+\gamma\sum_{s'}P(s'|s,a)
 #' \max_{a'}Q(s',a')} jusqu'a convergence. Fournit le \eqn{Q^\*} optimal.
 #'
-#' @param P transitions, tableau (S x A x S) ; @param R recompenses (S x A) ;
-#' @param gamma facteur d'actualisation ; @param tol tolerance.
+#' @param P transitions, tableau (S x A x S)
+#' @param R recompenses (S x A)
+#' @param gamma facteur d'actualisation
+#' @param tol tolerance.
 #' @return liste : `Q`, `V`, `policy`.
 #' @export
 value_iteration <- function(P, R, gamma = 0.9, tol = 1e-10) {
@@ -75,7 +78,8 @@ value_iteration <- function(P, R, gamma = 0.9, tol = 1e-10) {
 #' Converge vers l'optimum du `value_iteration`.
 #'
 #' @param P,R,gamma cf. `value_iteration` (utilises pour SIMULER l'environnement) ;
-#' @param episodes,steps duree ; @param alpha,epsilon taux et exploration ;
+#' @param episodes,steps duree
+#' @param alpha,epsilon taux et exploration
 #' @param seed graine.
 #' @return liste : `Q`, `policy`.
 #' @export

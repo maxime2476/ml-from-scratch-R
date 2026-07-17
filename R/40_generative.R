@@ -18,7 +18,8 @@
 #' La regle de Bayes donne une frontiere **lineaire** ; le discriminant est
 #' \eqn{\delta_k(x)=x^\top\Sigma^{-1}\mu_k-\tfrac12\mu_k^\top\Sigma^{-1}\mu_k+\log\pi_k}.
 #'
-#' @param X matrice n x p ; @param y etiquettes de classe.
+#' @param X matrice n x p
+#' @param y etiquettes de classe.
 #' @return objet `lda_scratch`.
 #' @export
 lda_fit <- function(X, y) {
@@ -30,7 +31,8 @@ lda_fit <- function(X, y) {
 }
 
 #' Prediction LDA
-#' @param object objet `lda_fit` ; @param Xnew nouvelles observations.
+#' @param object objet `lda_fit`
+#' @param Xnew nouvelles observations.
 #' @return classes predites.
 #' @export
 lda_predict <- function(object, Xnew) {
@@ -59,7 +61,8 @@ qda_fit <- function(X, y) {
 }
 
 #' Prediction QDA
-#' @param object objet `qda_fit` ; @param Xnew nouvelles observations.
+#' @param object objet `qda_fit`
+#' @param Xnew nouvelles observations.
 #' @return classes predites.
 #' @export
 qda_predict <- function(object, Xnew) {
@@ -88,7 +91,8 @@ naive_bayes_fit <- function(X, y) {
 }
 
 #' Prediction Naive Bayes
-#' @param object objet `naive_bayes_fit` ; @param Xnew nouvelles observations.
+#' @param object objet `naive_bayes_fit`
+#' @param Xnew nouvelles observations.
 #' @return classes predites.
 #' @export
 naive_bayes_predict <- function(object, Xnew) {

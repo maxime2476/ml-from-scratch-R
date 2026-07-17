@@ -7,9 +7,17 @@
 tsne(X, dims = 2L, perplexity = 30, iter = 500L, eta = 200, sigma = NULL)
 }
 \arguments{
-\item{X}{matrice n x p ; @param dims dimension de sortie (2) ; @param perplexity ;}
+\item{X}{matrice n x p}
 
-\item{iter, eta, sigma}{nb d'iterations, pas, largeur des gaussiennes.}
+\item{dims}{dimension de sortie (2)}
+
+\item{perplexity}{nombre effectif de voisins vise (eq. 42.5) ; fixe un
+sigma_i PAR POINT par dichotomie. Ignore si \code{sigma} est fourni.}
+
+\item{iter, eta}{nb d'iterations, pas de la descente.}
+
+\item{sigma}{largeur commune imposee a tous les points ; par defaut \code{NULL},
+et les sigma_i sont calibres depuis \code{perplexity}.}
 }
 \value{
 matrice n x dims (le plongement).

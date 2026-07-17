@@ -8,7 +8,7 @@
 
 #' Softmax numeriquement stable (par ligne)
 #'
-#' @param X matrice ; @param axis 1 (par ligne, defaut).
+#' @param X matrice
 #' @return matrice de memes dimensions, chaque ligne sommant a 1.
 #' @export
 softmax_rows <- function(X) {
@@ -41,7 +41,8 @@ attention <- function(Q, K, V, mask = FALSE) {
 #'
 #' @param X entree (T x d_model).
 #' @param Wq,Wk,Wv,Wo matrices de projection (d_model x d_model).
-#' @param n_heads nombre de tetes (divise d_model) ; @param mask masque causal.
+#' @param n_heads nombre de tetes (divise d_model)
+#' @param mask masque causal.
 #' @return liste : `out` (T x d_model), `weights` (liste par tete).
 #' @export
 multi_head_attention <- function(X, Wq, Wk, Wv, Wo, n_heads = 1L, mask = FALSE) {
@@ -62,7 +63,8 @@ multi_head_attention <- function(X, Wq, Wk, Wv, Wo, n_heads = 1L, mask = FALSE) 
 #' \eqn{PE_{pos,2i}=\sin(pos/10000^{2i/d})}, \eqn{PE_{pos,2i+1}=\cos(\cdot)}.
 #' Ajoute l'information d'ORDRE (que l'attention, permutation-equivariante, ignore).
 #'
-#' @param seq_len longueur de la sequence ; @param d_model dimension du modele.
+#' @param seq_len longueur de la sequence
+#' @param d_model dimension du modele.
 #' @return matrice (seq_len x d_model).
 #' @export
 positional_encoding <- function(seq_len, d_model) {
@@ -79,7 +81,8 @@ positional_encoding <- function(seq_len, d_model) {
 #' Normalise chaque LIGNE (par exemple) puis remet a l'echelle : brique des blocs
 #' de Transformer (avec les connexions residuelles).
 #'
-#' @param X matrice ; @param gamma,beta echelle et decalage (longueur ncol) ;
+#' @param X matrice
+#' @param gamma,beta echelle et decalage (longueur ncol)
 #' @param eps stabilisateur.
 #' @return matrice normalisee.
 #' @export

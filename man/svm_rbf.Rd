@@ -7,7 +7,9 @@
 svm_rbf(X1, X2, gamma)
 }
 \arguments{
-\item{X1, X2}{matrices ; @param gamma largeur inverse.}
+\item{X1, X2}{matrices}
+
+\item{gamma}{largeur inverse.}
 }
 \value{
 matrice de noyau.

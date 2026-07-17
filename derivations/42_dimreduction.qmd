@@ -49,6 +49,52 @@ Il préserve la structure **locale** : les clusters se séparent nettement, mêm
 quand la direction discriminante est de **faible variance** (invisible à la PCA).
 *(MC : t-SNE sépare des clusters que la PCA à 2 composantes mélange.)*
 
+### La perplexité fixe une largeur de bande **par point** {#sec-perplexite}
+
+Une seule largeur $\sigma$ pour tout le nuage est inadéquate : là où les points
+sont denses, une gaussienne large noie le voisinage ; là où ils sont clairsemés,
+une gaussienne étroite l'annule. t-SNE choisit donc **un $\sigma_i$ par point**.
+Les voisinages conditionnels sont
+
+$$
+p_{j\mid i}=\frac{\exp(-\lVert x_i-x_j\rVert^2/2\sigma_i^2)}
+                 {\sum_{k\ne i}\exp(-\lVert x_i-x_k\rVert^2/2\sigma_i^2)},
+\qquad p_{i\mid i}=0 .
+\tag{42.4}
+$$
+
+Chaque $\sigma_i$ est fixé en imposant que la distribution $P_i=(p_{j\mid i})_j$
+ait une **perplexité** cible $\mathrm{Perp}$ :
+
+$$
+\mathrm{Perp}(P_i)=2^{H(P_i)},\qquad
+H(P_i)=-\sum_{j\ne i}p_{j\mid i}\log_2 p_{j\mid i}.
+\tag{42.5}
+$$
+
+**Lecture.** La perplexité est un **nombre effectif de voisins** : si $P_i$ est
+uniforme sur $m$ points, $H=\log_2 m$ et $\mathrm{Perp}=m$. Fixer
+$\mathrm{Perp}=30$ revient donc à demander « environ 30 voisins » — *partout*,
+quelle que soit la densité locale.
+
+**Proposition 42.1 (monotonie, d'où la dichotomie).** $\sigma_i\mapsto H(P_i)$
+est croissante : $\sigma_i\to 0$ concentre toute la masse sur le plus proche
+voisin ($H\to 0$, $\mathrm{Perp}\to 1$) ; $\sigma_i\to\infty$ tend vers
+l'uniforme ($\mathrm{Perp}\to n-1$). L'entropie étant continue et croissante en
+$\sigma_i$, la cible est atteinte pour un $\sigma_i$ **unique**, que l'on obtient
+par **recherche dichotomique** sur $\sigma_i$ (ou $\beta_i=1/2\sigma_i^2$).
+
+Enfin on **symétrise** en une loi jointe, ce qui empêche un point isolé de
+n'avoir aucune influence :
+
+$$
+p_{ij}=\frac{p_{j\mid i}+p_{i\mid j}}{2n}.
+\tag{42.6}
+$$
+
+*(Vérifié : la perplexité atteinte égale la cible à $10^{-3}$ près, et croît de
+1 à $n-1$ avec $\sigma$.)*
+
 ## Encadré — de la math au code {#sec-mathcode}
 
 | Méthode | Idée | Fonction R (`R/42_dimreduction.R`) | Référence |
@@ -57,10 +103,13 @@ quand la direction discriminante est de **faible variance** (invisible à la PCA
 | ICA (FastICA) | indépendance | `ica_fastica(X, n_comp)` | `fastICA` |
 | NMF | parts additives | `nmf(V, k)` | *reconstruction* |
 | t-SNE | voisinage local | `tsne(X, dims, perplexity)` | *séparation de clusters* |
+| ↳ calibration | $\sigma_i$ par dichotomie (42.4–42.5) | `.p_conditional_perplexity(D2, perplexity)` | *perplexité atteinte à $10^{-3}$* |
 
 Validation : PCA à noyau = `kernlab` ; FastICA récupère les sources ; NMF
-reconstruit exactement ; t-SNE préserve les clusters. Monte Carlo : t-SNE bat la
-PCA quand la structure est portée par une direction de faible variance.
+reconstruit exactement ; t-SNE préserve les clusters, et sa dichotomie atteint la
+perplexité visée **en chaque point** à $10^{-3}$ près, même quand deux amas ont
+des densités très différentes. Monte Carlo : t-SNE bat la PCA quand la structure
+est portée par une direction de faible variance.
 
 ## Références {.unnumbered}
 

@@ -7,9 +7,13 @@
 svm_fit(X, y, C = 1, kernel = c("linear", "rbf"), gamma = 0.5)
 }
 \arguments{
-\item{X}{matrice n x p ; @param y etiquettes dans \eqn{\{-1,+1\}}.}
+\item{X}{matrice n x p}
 
-\item{C}{penalite (marge souple) ; @param kernel "linear" ou "rbf" ;}
+\item{y}{etiquettes dans \eqn{\{-1,+1\}}.}
+
+\item{C}{penalite (marge souple)}
+
+\item{kernel}{"linear" ou "rbf"}
 
 \item{gamma}{parametre RBF.}
 }

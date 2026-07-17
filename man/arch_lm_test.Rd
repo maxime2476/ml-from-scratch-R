@@ -7,7 +7,9 @@
 arch_lm_test(x, q = 5L)
 }
 \arguments{
-\item{x}{serie (rendements) ; @param q nombre de retards.}
+\item{x}{serie (rendements)}
+
+\item{q}{nombre de retards.}
 }
 \value{
 liste : \code{statistic}, \code{df}, \code{p_value}.

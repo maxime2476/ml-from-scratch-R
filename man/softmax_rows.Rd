@@ -7,7 +7,7 @@
 softmax_rows(X)
 }
 \arguments{
-\item{X}{matrice ; @param axis 1 (par ligne, defaut).}
+\item{X}{matrice}
 }
 \value{
 matrice de memes dimensions, chaque ligne sommant a 1.

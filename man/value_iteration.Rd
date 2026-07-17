@@ -7,9 +7,13 @@
 value_iteration(P, R, gamma = 0.9, tol = 1e-10)
 }
 \arguments{
-\item{P}{transitions, tableau (S x A x S) ; @param R recompenses (S x A) ;}
+\item{P}{transitions, tableau (S x A x S)}
 
-\item{gamma}{facteur d'actualisation ; @param tol tolerance.}
+\item{R}{recompenses (S x A)}
+
+\item{gamma}{facteur d'actualisation}
+
+\item{tol}{tolerance.}
 }
 \value{
 liste : \code{Q}, \code{V}, \code{policy}.

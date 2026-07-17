@@ -7,7 +7,9 @@
 kaplan_meier(time, event)
 }
 \arguments{
-\item{time}{durees observees ; @param event 1 = evenement, 0 = censure.}
+\item{time}{durees observees}
+
+\item{event}{1 = evenement, 0 = censure.}
 }
 \value{
 liste : \code{time} (temps d'evenement), \code{surv}, \code{n_risk}, \code{n_event}.

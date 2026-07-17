@@ -11,7 +11,9 @@ multi_head_attention(X, Wq, Wk, Wv, Wo, n_heads = 1L, mask = FALSE)
 
 \item{Wq, Wk, Wv, Wo}{matrices de projection (d_model x d_model).}
 
-\item{n_heads}{nombre de tetes (divise d_model) ; @param mask masque causal.}
+\item{n_heads}{nombre de tetes (divise d_model)}
+
+\item{mask}{masque causal.}
 }
 \value{
 liste : \code{out} (T x d_model), \code{weights} (liste par tete).

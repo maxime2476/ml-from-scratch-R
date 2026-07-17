@@ -11,7 +11,8 @@
 #' Regresse \eqn{\hat\varepsilon_t^2} sur ses \eqn{q} retards ; \eqn{nR^2\sim
 #' \chi^2_q} sous absence d'effet ARCH. Rejet = la volatilite se regroupe.
 #'
-#' @param x serie (rendements) ; @param q nombre de retards.
+#' @param x serie (rendements)
+#' @param q nombre de retards.
 #' @return liste : `statistic`, `df`, `p_value`.
 #' @export
 arch_lm_test <- function(x, q = 5L) {
@@ -29,7 +30,8 @@ arch_lm_test <- function(x, q = 5L) {
 #' log-vraisemblance gaussienne (paramétrage assurant \eqn{\omega>0}, \eqn{\alpha,
 #' \beta\ge0}, \eqn{\alpha+\beta<1} : stationnarite).
 #'
-#' @param x serie (rendements centres) ; @param maxit iterations de l'optimiseur.
+#' @param x serie (rendements centres)
+#' @param maxit iterations de l'optimiseur.
 #' @return liste : `omega`, `alpha`, `beta`, `sigma` (volatilite conditionnelle), `loglik`.
 #' @export
 garch_fit <- function(x, maxit = 500L) {

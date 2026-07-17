@@ -9,7 +9,9 @@ conv2d(X, K, b = rep(0, dim(K)[3]))
 \arguments{
 \item{X}{image d'entree (matrice H x W).}
 
-\item{K}{noyaux, tableau (kh x kw x F) ; @param b biais (longueur F).}
+\item{K}{noyaux, tableau (kh x kw x F)}
+
+\item{b}{biais (longueur F).}
 }
 \value{
 liste : \code{out} (Hout x Wout x F), \code{cache}.

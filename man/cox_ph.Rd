@@ -7,7 +7,9 @@
 cox_ph(time, event, X)
 }
 \arguments{
-\item{time, event}{durees et indicateurs ; @param X matrice de covariables.}
+\item{time, event}{durees et indicateurs}
+
+\item{X}{matrice de covariables.}
 }
 \value{
 liste : \code{coefficients}, \code{se}, \code{loglik}, \code{hazard_ratio}.

@@ -12,7 +12,7 @@ softmax_rows(X)
 
 - X:
 
-  matrice ; @param axis 1 (par ligne, defaut).
+  matrice
 
 ## Value
 

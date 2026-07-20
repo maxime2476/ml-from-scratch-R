@@ -14,7 +14,11 @@ var_irf(object, h = 10L)
 
 - object:
 
-  objet `var_fit` ; @param h horizon.
+  objet `var_fit`
+
+- h:
+
+  horizon.
 
 ## Value
 

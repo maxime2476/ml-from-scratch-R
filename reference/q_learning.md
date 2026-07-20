@@ -28,7 +28,11 @@ q_learning(
 
 - episodes, steps:
 
-  duree ; @param alpha,epsilon taux et exploration ;
+  duree
+
+- alpha, epsilon:
+
+  taux et exploration
 
 - seed:
 

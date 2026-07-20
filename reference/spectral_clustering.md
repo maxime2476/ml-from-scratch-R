@@ -15,8 +15,15 @@ spectral_clustering(X, k, gamma = 1)
 
 - X:
 
-  matrice n x p ; @param k nombre de clusters ; @param gamma echelle
-  RBF.
+  matrice n x p
+
+- k:
+
+  nombre de clusters
+
+- gamma:
+
+  echelle RBF.
 
 ## Value
 

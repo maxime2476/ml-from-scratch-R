@@ -17,7 +17,11 @@ dynamic_panel_iv(data, id = "id", time = "time", y = "y")
 
 - data:
 
-  data.frame ; @param id,time,y noms des colonnes.
+  data.frame
+
+- id, time, y:
+
+  noms des colonnes.
 
 ## Value
 

@@ -13,7 +13,11 @@ max_pool2d(X, pool = 2L)
 
 - X:
 
-  carte de caracteristiques (H x W) ; @param pool taille du bloc.
+  carte de caracteristiques (H x W)
+
+- pool:
+
+  taille du bloc.
 
 ## Value
 

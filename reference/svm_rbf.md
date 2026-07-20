@@ -12,7 +12,11 @@ svm_rbf(X1, X2, gamma)
 
 - X1, X2:
 
-  matrices ; @param gamma largeur inverse.
+  matrices
+
+- gamma:
+
+  largeur inverse.
 
 ## Value
 

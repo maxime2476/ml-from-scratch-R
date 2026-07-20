@@ -15,7 +15,15 @@ dbscan_fit(X, eps, minPts = 5L)
 
 - X:
 
-  matrice n x p ; @param eps rayon ; @param minPts densite minimale.
+  matrice n x p
+
+- eps:
+
+  rayon
+
+- minPts:
+
+  densite minimale.
 
 ## Value
 

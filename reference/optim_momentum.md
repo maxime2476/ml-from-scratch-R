@@ -19,7 +19,15 @@ optim_momentum(
 
 - grad, x0:
 
-  cf. `optim_adam` ; @param step pas ; @param momentum \\\mu\\ ;
+  cf. `optim_adam`
+
+- step:
+
+  pas
+
+- momentum:
+
+  \\\mu\\
 
 - max_iter, tol:
 

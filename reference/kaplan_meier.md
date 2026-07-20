@@ -14,7 +14,11 @@ kaplan_meier(time, event)
 
 - time:
 
-  durees observees ; @param event 1 = evenement, 0 = censure.
+  durees observees
+
+- event:
+
+  1 = evenement, 0 = censure.
 
 ## Value
 

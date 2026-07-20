@@ -15,7 +15,15 @@ kernel_pca(X, k = 2L, gamma = 1)
 
 - X:
 
-  matrice n x p ; @param k nb de composantes ; @param gamma echelle RBF.
+  matrice n x p
+
+- k:
+
+  nb de composantes
+
+- gamma:
+
+  echelle RBF.
 
 ## Value
 

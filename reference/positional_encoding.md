@@ -14,7 +14,11 @@ positional_encoding(seq_len, d_model)
 
 - seq_len:
 
-  longueur de la sequence ; @param d_model dimension du modele.
+  longueur de la sequence
+
+- d_model:
+
+  dimension du modele.
 
 ## Value
 

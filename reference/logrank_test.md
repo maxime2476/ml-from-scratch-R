@@ -13,7 +13,11 @@ logrank_test(time, event, group)
 
 - time, event:
 
-  durees et indicateurs ; @param group facteur a 2 niveaux.
+  durees et indicateurs
+
+- group:
+
+  facteur a 2 niveaux.
 
 ## Value
 

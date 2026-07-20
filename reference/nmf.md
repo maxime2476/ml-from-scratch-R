@@ -15,7 +15,15 @@ nmf(V, k, iter = 500L)
 
 - V:
 
-  matrice non negative n x m ; @param k rang ; @param iter iterations.
+  matrice non negative n x m
+
+- k:
+
+  rang
+
+- iter:
+
+  iterations.
 
 ## Value
 

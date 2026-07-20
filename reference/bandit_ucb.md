@@ -14,7 +14,11 @@ bandit_ucb(means, horizon, seed = NULL)
 
 - means:
 
-  moyennes VRAIES des bras (Bernoulli ou bornees) ; @param horizon T ;
+  moyennes VRAIES des bras (Bernoulli ou bornees)
+
+- horizon:
+
+  T
 
 - seed:
 

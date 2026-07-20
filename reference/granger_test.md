@@ -14,7 +14,11 @@ granger_test(object, cause, effect)
 
 - object:
 
-  objet `var_fit` ; @param cause indice de la variable causante ;
+  objet `var_fit`
+
+- cause:
+
+  indice de la variable causante
 
 - effect:
 

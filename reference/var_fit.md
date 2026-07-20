@@ -13,7 +13,11 @@ var_fit(Y, p = 1L)
 
 - Y:
 
-  matrice n x k des series ; @param p ordre.
+  matrice n x k des series
+
+- p:
+
+  ordre.
 
 ## Value
 

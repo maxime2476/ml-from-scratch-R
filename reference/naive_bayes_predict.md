@@ -12,7 +12,11 @@ naive_bayes_predict(object, Xnew)
 
 - object:
 
-  objet `naive_bayes_fit` ; @param Xnew nouvelles observations.
+  objet `naive_bayes_fit`
+
+- Xnew:
+
+  nouvelles observations.
 
 ## Value
 

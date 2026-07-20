@@ -16,11 +16,19 @@ svm_fit(X, y, C = 1, kernel = c("linear", "rbf"), gamma = 0.5)
 
 - X:
 
-  matrice n x p ; @param y etiquettes dans \\\\-1,+1\\\\.
+  matrice n x p
+
+- y:
+
+  etiquettes dans \\\\-1,+1\\\\.
 
 - C:
 
-  penalite (marge souple) ; @param kernel "linear" ou "rbf" ;
+  penalite (marge souple)
+
+- kernel:
+
+  "linear" ou "rbf"
 
 - gamma:
 

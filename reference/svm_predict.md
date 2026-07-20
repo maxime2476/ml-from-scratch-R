@@ -12,7 +12,11 @@ svm_predict(object, Xnew, decision = FALSE)
 
 - object:
 
-  objet `svm_fit` ; @param Xnew nouvelles observations ;
+  objet `svm_fit`
+
+- Xnew:
+
+  nouvelles observations
 
 - decision:
 

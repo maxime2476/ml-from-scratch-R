@@ -13,7 +13,11 @@ arch_lm_test(x, q = 5L)
 
 - x:
 
-  serie (rendements) ; @param q nombre de retards.
+  serie (rendements)
+
+- q:
+
+  nombre de retards.
 
 ## Value
 

@@ -22,7 +22,11 @@ multi_head_attention(X, Wq, Wk, Wv, Wo, n_heads = 1L, mask = FALSE)
 
 - n_heads:
 
-  nombre de tetes (divise d_model) ; @param mask masque causal.
+  nombre de tetes (divise d_model)
+
+- mask:
+
+  masque causal.
 
 ## Value
 

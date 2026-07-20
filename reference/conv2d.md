@@ -18,7 +18,11 @@ conv2d(X, K, b = rep(0, dim(K)[3]))
 
 - K:
 
-  noyaux, tableau (kh x kw x F) ; @param b biais (longueur F).
+  noyaux, tableau (kh x kw x F)
+
+- b:
+
+  biais (longueur F).
 
 ## Value
 

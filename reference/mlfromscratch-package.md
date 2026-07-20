@@ -9,12 +9,12 @@ et validée contre les packages de référence. Voir les dérivations dans
 
 Useful links:
 
-- <https://mgourguechon.github.io/ml-from-scratch-R>
+- <https://maxime2476.github.io/ml-from-scratch-R>
 
-- <https://github.com/mgourguechon/ml-from-scratch-R>
+- <https://github.com/maxime2476/ml-from-scratch-R>
 
 - Report bugs at
-  <https://github.com/mgourguechon/ml-from-scratch-R/issues>
+  <https://github.com/maxime2476/ml-from-scratch-R/issues>
 
 ## Author
 

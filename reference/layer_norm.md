@@ -13,7 +13,11 @@ layer_norm(X, gamma = rep(1, ncol(X)), beta = rep(0, ncol(X)), eps = 1e-05)
 
 - X:
 
-  matrice ; @param gamma,beta echelle et decalage (longueur ncol) ;
+  matrice
+
+- gamma, beta:
+
+  echelle et decalage (longueur ncol)
 
 - eps:
 

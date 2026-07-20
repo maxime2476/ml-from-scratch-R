@@ -15,12 +15,25 @@ tsne(X, dims = 2L, perplexity = 30, iter = 500L, eta = 200, sigma = NULL)
 
 - X:
 
-  matrice n x p ; @param dims dimension de sortie (2) ; @param
-  perplexity ;
+  matrice n x p
 
-- iter, eta, sigma:
+- dims:
 
-  nb d'iterations, pas, largeur des gaussiennes.
+  dimension de sortie (2)
+
+- perplexity:
+
+  nombre effectif de voisins vise (eq. 42.5) ; fixe un sigma_i PAR POINT
+  par dichotomie. Ignore si `sigma` est fourni.
+
+- iter, eta:
+
+  nb d'iterations, pas de la descente.
+
+- sigma:
+
+  largeur commune imposee a tous les points ; par defaut `NULL`, et les
+  sigma_i sont calibres depuis `perplexity`.
 
 ## Value
 

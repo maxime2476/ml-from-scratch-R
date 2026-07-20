@@ -21,7 +21,14 @@ optim_rmsprop(
 
 - grad, x0, lr:
 
-  cf. `optim_adam` ; @param rho decroissance ; @param eps,max_iter,tol
+  cf. `optim_adam`
+
+- rho:
+
+  decroissance
+
+- eps, max_iter, tol:
+
   arret.
 
 ## Value

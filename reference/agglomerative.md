@@ -15,7 +15,11 @@ agglomerative(X, k, linkage = c("complete", "single", "average"))
 
 - X:
 
-  matrice n x p (ou objet `dist`) ; @param k nombre de groupes ;
+  matrice n x p (ou objet `dist`)
+
+- k:
+
+  nombre de groupes
 
 - linkage:
 

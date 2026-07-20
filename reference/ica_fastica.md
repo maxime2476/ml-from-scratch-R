@@ -15,7 +15,14 @@ ica_fastica(X, n_comp = ncol(X), iter = 300L, tol = 1e-09)
 
 - X:
 
-  melange (n x d) ; @param n_comp nb de composantes ; @param iter,tol
+  melange (n x d)
+
+- n_comp:
+
+  nb de composantes
+
+- iter, tol:
+
   arret.
 
 ## Value

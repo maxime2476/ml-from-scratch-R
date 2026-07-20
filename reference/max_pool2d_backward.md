@@ -13,7 +13,11 @@ max_pool2d_backward(dout, cache)
 
 - dout:
 
-  gradient en sortie (oh x ow) ; @param cache sortie de `max_pool2d`.
+  gradient en sortie (oh x ow)
+
+- cache:
+
+  sortie de `max_pool2d`.
 
 ## Value
 

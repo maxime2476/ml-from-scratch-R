@@ -13,11 +13,19 @@ value_iteration(P, R, gamma = 0.9, tol = 1e-10)
 
 - P:
 
-  transitions, tableau (S x A x S) ; @param R recompenses (S x A) ;
+  transitions, tableau (S x A x S)
+
+- R:
+
+  recompenses (S x A)
 
 - gamma:
 
-  facteur d'actualisation ; @param tol tolerance.
+  facteur d'actualisation
+
+- tol:
+
+  tolerance.
 
 ## Value
 

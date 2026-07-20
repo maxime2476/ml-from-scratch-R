@@ -18,7 +18,11 @@ cox_ph(time, event, X)
 
 - time, event:
 
-  durees et indicateurs ; @param X matrice de covariables.
+  durees et indicateurs
+
+- X:
+
+  matrice de covariables.
 
 ## Value
 

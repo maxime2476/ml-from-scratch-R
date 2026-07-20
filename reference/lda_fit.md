@@ -15,7 +15,11 @@ lda_fit(X, y)
 
 - X:
 
-  matrice n x p ; @param y etiquettes de classe.
+  matrice n x p
+
+- y:
+
+  etiquettes de classe.
 
 ## Value
 

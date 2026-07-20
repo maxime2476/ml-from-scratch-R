@@ -53,11 +53,25 @@ gradient. Preserve la structure LOCALE : les clusters se separent nettement.</p>
 
 
 <dl><dt id="arg-x">X<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>matrice n x p ; @param dims dimension de sortie (2) ; @param perplexity ;</p></dd>
+<dd><p>matrice n x p</p></dd>
 
 
-<dt id="arg-iter-eta-sigma">iter, eta, sigma<a class="anchor" aria-label="anchor" href="#arg-iter-eta-sigma"></a></dt>
-<dd><p>nb d'iterations, pas, largeur des gaussiennes.</p></dd>
+<dt id="arg-dims">dims<a class="anchor" aria-label="anchor" href="#arg-dims"></a></dt>
+<dd><p>dimension de sortie (2)</p></dd>
+
+
+<dt id="arg-perplexity">perplexity<a class="anchor" aria-label="anchor" href="#arg-perplexity"></a></dt>
+<dd><p>nombre effectif de voisins vise (eq. 42.5) ; fixe un
+sigma_i PAR POINT par dichotomie. Ignore si <code>sigma</code> est fourni.</p></dd>
+
+
+<dt id="arg-iter-eta">iter, eta<a class="anchor" aria-label="anchor" href="#arg-iter-eta"></a></dt>
+<dd><p>nb d'iterations, pas de la descente.</p></dd>
+
+
+<dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>
+<dd><p>largeur commune imposee a tous les points ; par defaut <code>NULL</code>,
+et les sigma_i sont calibres depuis <code>perplexity</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

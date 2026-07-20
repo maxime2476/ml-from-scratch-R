@@ -12,7 +12,11 @@ qda_predict(object, Xnew)
 
 - object:
 
-  objet `qda_fit` ; @param Xnew nouvelles observations.
+  objet `qda_fit`
+
+- Xnew:
+
+  nouvelles observations.
 
 ## Value
 

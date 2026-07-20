@@ -16,7 +16,11 @@ garch_fit(x, maxit = 500L)
 
 - x:
 
-  serie (rendements centres) ; @param maxit iterations de l'optimiseur.
+  serie (rendements centres)
+
+- maxit:
+
+  iterations de l'optimiseur.
 
 ## Value
 

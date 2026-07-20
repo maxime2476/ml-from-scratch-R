@@ -12,7 +12,11 @@ lda_predict(object, Xnew)
 
 - object:
 
-  objet `lda_fit` ; @param Xnew nouvelles observations.
+  objet `lda_fit`
+
+- Xnew:
+
+  nouvelles observations.
 
 ## Value
 

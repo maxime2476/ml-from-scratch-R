@@ -1,0 +1,253 @@
+---
+title: "Fiche de soutenance — questions du jury"
+subtitle: "ML from Scratch in R · anticipations et réponses défendables"
+author: "Maxime Gourguechon"
+date: today
+lang: fr
+format:
+  html: {toc: true, toc-depth: 2, number-sections: true, theme: cosmo}
+  pdf: {toc: true, number-sections: true, documentclass: scrartcl}
+---
+
+## Comment utiliser cette fiche {.unnumbered}
+
+Un jury ne teste pas votre capacité à *réciter* les 48 modules — il cherche les
+**points de faiblesse** de la thèse et votre **lucidité** face à eux. Les
+questions ci-dessous sont les plus probables et les plus dures, classées par
+angle d'attaque. Chaque réponse tient en **quelques phrases**, s'appuie sur un
+**résultat chiffré du projet**, et — le plus important — **concède ce qui doit
+l'être**. Une limite reconnue vaut mieux qu'une esquive.
+
+> **Méta-stratégie.** Trois réflexes qui désamorcent presque tout : (1) ramener
+> la question à l'une des quatre idées ; (2) citer un chiffre précis plutôt qu'une
+> impression ; (3) si on vous pousse dans vos retranchements, distinguer une
+> *limite fondamentale* (que vous avez identifiée) d'un *choix d'implémentation*
+> (que vous assumez). Ne jamais défendre une position fausse pour sauver la face.
+
+# La thèse et la contribution
+
+## « Vos "quatre idées" ne sont-elles pas un habillage rhétorique a posteriori ? »
+
+Non, et le test est **prédictif**, pas décoratif. La thèse a été écrite avant les
+modules 35-47 (réseaux profonds, ML récent, économétrie avancée) ; si elle était
+un simple habillage, ces ajouts modernes auraient dû résister au cadre. Ils s'y
+rangent sans forcer : le SVM et l'attention sous la projection dans un espace de
+caractéristiques, le Cox et le GARCH sous la M-estimation, Adam et la BPTT sous
+la règle de la chaîne. **Un cadre qui absorbe sans modification ce qu'il n'avait
+pas anticipé n'est pas un récit *ex post* — c'est une structure.**
+
+## « Attention, SVM, régression ridge : prétendre que c'est "la même idée" n'est-il pas abusif ? »
+
+C'est une **unité mathématique précise, pas une analogie floue**. Les trois
+projettent sur un sous-espace après une transformation de l'entrée : le ridge
+projette linéairement (SVD, Module 0), le SVM et le GP projettent dans l'espace
+d'un noyau via le **théorème de représentation** (Module 27) — j'ai vérifié que
+mon GP égale la régression ridge à noyau à la précision machine. L'attention
+diffère : c'est une **moyenne convexe pondérée par similarité** (softmax de
+$QK^\top$), donc un mécanisme de *recherche associative*, pas une projection au
+sens strict. Je ne prétends pas qu'elle soit identique au SVM — je dis que les
+deux exploitent la géométrie des similarités, ce qui est plus faible et
+défendable.
+
+## « En quoi votre diagramme de phase est-il une *contribution* et non une simulation de plus ? »
+
+Une simulation isolée compare deux estimateurs sur un DGP ; ma contribution est
+une **carte de décision** sur une grille de régimes ($p/n$ × densité des
+contrôles) qu'**aucun module isolé ne pouvait produire** — il fallait toute la
+boîte à outils. Elle explicite un couplage rarement présenté d'un bloc : sous
+parcimonie la double sélection domine partout, **y compris $p>n$** ; sous densité
+tout s'effondre et **aucune méthode n'est fiable si $p\ge n$**. La valeur n'est
+pas un classement — c'est de transformer « quelle méthode est la meilleure ? »
+(mal posée) en « quelle méthode dans quel régime, à quel risque de
+sous-couverture ? » (décidable).
+
+## « Votre cinquième fil (la récurrence) n'avoue-t-il pas que "quatre idées" est faux ? »
+
+Au contraire, c'est ce qui rend la thèse **honnête plutôt que dogmatique**. Les
+quatre idées sont formulées en univers i.i.d. et n'y portent pas le temps ; les
+modules à dépendance temporelle (VAR, GARCH, RNN, RL) ajoutent le motif de la
+récurrence. Mais chacun *se ramène* aux quatre — le VAR est une projection, le
+GARCH une vraisemblance, la BPTT une règle de la chaîne. **Signaler un ingrédient
+transversal que le cadre n'épuisait pas, plutôt que le dissimuler, est un signe
+de maîtrise du cadre, pas de son échec.**
+
+# Méthode et validation
+
+## « Réimplémenter à la main : au-delà de l'exercice, qu'est-ce que ça *prouve* ? »
+
+Appeler `glmnet` prouve qu'on sait *utiliser* ; le réimplémenter prouve qu'on
+comprend le *fondement*. La preuve concrète : la réimplémentation m'a forcé à
+buter sur des choses qu'un appel de fonction cache — pourquoi les équations
+normales carrent le conditionnement (matrice de Läuchli, benchmark), pourquoi le
+cross-fitting est nécessaire à la $\sqrt n$-consistance du DML, pourquoi le TWFE
+pondère négativement. **Chacune de ces compréhensions est devenue un résultat
+vérifié, pas une intuition.** Le code est plus lent que LAPACK, et je l'assume :
+l'objectif n'est pas la performance mais la traçabilité de chaque étape jusqu'à
+une ligne de mathématiques.
+
+## « Valider à $10^{-8}$ contre un package : n'est-ce pas circulaire ? Le package peut être faux. »
+
+Objection juste, et j'y réponds sur deux plans. D'abord, égaler `glmnet`,
+`survival` ou `vars` à la précision machine ne prouve pas que *le package* a
+raison — mais qu'**il n'y a pas d'écart d'implémentation** entre deux codes
+indépendants résolvant la même équation, ce qui rend une erreur commune très
+improbable. Ensuite, et c'est le point clé, la validation contre package n'est
+**qu'une** des quatre couches : chaque module est aussi confronté à un **DGP
+connu** en Monte Carlo, où c'est la *vérité mathématique* (biais nul, couverture
+nominale, convergence $\sqrt n$) qui sert d'étalon — pas un autre logiciel. La
+double descente et le diagramme de phase, eux, n'ont pas de package de référence
+du tout.
+
+## « Le processus gaussien égale la régression ridge à noyau : alors qu'apporte le module ? »
+
+L'égalité *est* l'apport pédagogique — elle montre que deux communautés
+(bayésienne, régularisation) décrivent le même objet. Mais le GP ajoute ce que le
+ridge n'a pas : une **quantification d'incertitude** (variance a posteriori) et
+un **choix d'hyperparamètres par vraisemblance marginale**, qui arbitre
+ajustement contre complexité *sans validation croisée*. J'ai vérifié les deux :
+moyenne du GP = ridge à noyau, et l'optimisation de la vraisemblance marginale ne
+dégrade jamais la log-vraisemblance. C'est l'idée 3 (biais-variance) qui se règle
+elle-même.
+
+# Questions techniques pointues
+
+## « Expliquez en une phrase pourquoi le TWFE donne des poids négatifs. »
+
+Sous adoption échelonnée, la régression à deux effets fixes utilise les unités
+**déjà traitées** comme contrôles pour les unités traitées plus tard ; quand
+l'effet varie dans le temps, cette comparaison soustrait une tendance de
+traitement, d'où des poids négatifs sur certains ATT (de
+Chaisemartin–D'Haultfœuille). Ma simulation le montre : le TWFE **inverse le
+signe** de l'effet quand la théorie l'annonce, là où Callaway–Sant'Anna le
+récupère.
+
+## « Votre double descente ne contredit-elle pas la théorie de Vapnik ? »
+
+Non : elle la **complète**, elle ne la réfute pas. La borne classique (Module 13,
+VC/Rademacher) majore l'écart généralisation dans le régime sous-paramétré et y
+reste valide. La double descente vit **au-delà** du seuil d'interpolation, où
+l'interpolant de **norme minimale** (via la SVD) généralise — un régime que la
+borne uniforme décrit mal parce qu'elle ignore le biais implicite de
+l'algorithme. Ma courbe le montre, et j'ajoute le contre-point honnête : le
+**ridge monotonise** la courbe, donc la régularisation *supprime* le second pic.
+La théorie classique n'est pas fausse, elle est *incomplète*.
+
+## « L'inférence post-sélection sur-rejette à 24 % : est-ce un bug ou un phénomène ? »
+
+Un **phénomène**, et c'est un résultat, pas un accident. Réutiliser les données
+pour sélectionner *puis* tester invalide les niveaux : mon Monte Carlo donne
+24,3 % de rejet sous $H_0$ à un seuil de 5 %, contre 4,9 % pour l'OLS complet et
+4,8 % pour le sample-splitting. Je ne le cache pas — je le *répare* (lasso
+débiaisé, Module 22, qui restaure la couverture en $p>n$) puis je le *quantifie*
+(analyse de sensibilité, Module 23). Le trajet erreur → réparation → mesure est
+précisément l'argument.
+
+## « Pourquoi le DML atteint-il la $\sqrt n$-consistance malgré des nuisances ML lentes ? »
+
+Grâce à l'**orthogonalité de Neyman** : le score est construit pour que sa
+dérivée de Gateaux par rapport aux nuisances s'annule au premier ordre. L'erreur
+d'estimation des nuisances entre donc au *second* ordre, et le produit de deux
+erreurs $o(n^{-1/4})$ devient $o(n^{-1/2})$ — négligeable. Le cross-fitting brise
+en plus la corrélation entre l'estimation des nuisances et celle de l'effet.
+Résultat vérifié : biais $-0{,}04$, couverture $0{,}97$ pour le DML complet,
+contre un lasso naïf biaisé à $-0{,}18$. Et je démontre au chapitre de théorie
+que ce score orthogonal **est** la fonction d'influence efficace.
+
+## « La perplexité de t-SNE : que garantit votre calibration, et t-SNE est-il reproductible ? »
+
+La calibration résout, **pour chaque point**, l'équation
+$\mathrm{Perp}(P_i)=2^{H(P_i)}$ par dichotomie sur $\sigma_i$ — l'entropie étant
+monotone en $\sigma_i$ (Proposition 42.1), la cible est atteinte pour un
+$\sigma_i$ unique. J'ai vérifié qu'elle est atteinte **à $10^{-3}$ près en chaque
+point** (écart observé de l'ordre de $10^{-4}$), même quand deux amas ont des
+densités très différentes. Sur la
+reproductibilité, je suis franc : la divergence KL de t-SNE est **non convexe**,
+donc le plongement dépend de l'initialisation — c'est pourquoi t-SNE est un outil
+de *visualisation exploratoire*, pas d'inférence, et je ne lui fais porter aucune
+conclusion quantitative.
+
+## « Le Cox utilise une vraisemblance *partielle* : qu'abandonnez-vous, et est-ce gratuit ? »
+
+On abandonne l'information portée par la **fonction de risque de base** $h_0(t)$ :
+la vraisemblance partielle ne retient que l'*ordre* des événements, pas leurs
+temps absolus. Ce n'est pas gratuit — c'est un échange délibéré : en
+conditionnant sur les ensembles à risque, on estime les effets des covariables
+**sans jamais spécifier** $h_0$, ce qui rend le modèle semi-paramétrique et
+robuste à sa forme. La perte d'efficacité est faible sous risques
+proportionnels, et j'ai vérifié que mes coefficients égalent `survival::coxph` à
+$9\times10^{-5}$.
+
+## « Le GARCH est estimé par quasi-MLE : pourquoi "quasi", et est-ce consistant ? »
+
+« Quasi » parce que je maximise une vraisemblance **gaussienne** alors que les
+rendements ont des queues lourdes — la loi est donc probablement mal spécifiée.
+Le résultat clé de White : le QMLE gaussien reste **consistant** pour les
+paramètres de la variance conditionnelle tant que celle-ci est correctement
+spécifiée, même si la loi ne l'est pas ; seuls les écarts-types doivent être
+robustifiés (sandwich). Vérifié contre `tseries` à $10^{-3}$. C'est un cas de
+plus de l'idée 2 : un M-estimateur dont la variance est un sandwich.
+
+# Les limites et l'honnêteté scientifique
+
+## « Vous reportez une cellule où *aucune* méthode ne marche. N'est-ce pas un aveu de faiblesse ? »
+
+C'est l'inverse — c'est ce qui distingue une démonstration d'un argument
+publicitaire. La cellule « densité, $p\ge n$ » où tout échoue n'est pas un défaut
+de mon code : c'est une **limite fondamentale d'identification** (sans parcimonie
+ni $p<n$, l'effet n'est pas estimable de façon fiable). La reporter telle quelle
+prouve que je sais distinguer un mur théorique d'un bug. Un jury se méfie d'un
+projet où *tout* marche ; il fait confiance à celui qui montre *où* et *pourquoi*
+ça casse.
+
+## « Vos études Monte Carlo sont toutes gaussiennes. N'est-ce pas une validation en vase clos ? »
+
+Concession réelle, et je la nomme dans les limites du mémoire. Les DGP gaussiens
+facilitent le contrôle analytique (biais et couverture connus), mais ne testent
+pas la robustesse aux queues lourdes ou à l'asymétrie. Deux nuances : d'abord,
+certains modules attaquent précisément la non-gaussianité (prédiction conforme
+sous queues lourdes — couverture $0{,}90$ maintenue là où le gaussien naïf
+dé-calibre ; QMLE du GARCH ; régression quantile). Ensuite, c'est un
+**prolongement identifié**, pas un angle mort ignoré. Étendre aux DGP à queues
+lourdes serait la première extension.
+
+## « Si c'était à refaire, qu'est-ce qui vous semble le plus fragile ? »
+
+Trois points, par honnêteté. (1) Mon **autodiff** ne couvre ni l'indexation ni le
+contrôle de flot — il suffit pour les modules mais n'est pas un framework
+général. (2) Le t-SNE et les réseaux profonds reposent sur des optimisations
+**non convexes** : je les valide sur des propriétés (gradients exacts vs
+`numDeriv`, perplexité atteinte, équivariance de l'attention) plutôt que sur une
+solution unique, ce qui est le bon niveau de garantie mais reste plus faible que
+mes modules convexes. (3) Certaines tolérances Monte Carlo (GARCH, Q-learning)
+sont larges par nécessité d'échantillonnage — je les documente comme telles
+plutôt que de les maquiller.
+
+## « Quel module défendriez-vous comme le plus abouti, et lequel comme le plus faible ? »
+
+Le plus abouti : le **fil des fonctions d'influence** (Module 24), parce qu'il
+*unifie* — il montre que le sandwich, le bootstrap, le jackknife, la correction
+en un pas, le lasso débiaisé et le DML sont une seule démonstration, et je le
+prolonge jusqu'à l'efficacité semiparamétrique. Le plus faible, en toute
+franchise : le **DBSCAN** (Module 41), dont mon Monte Carlo montre la sensibilité
+au paramètre `eps` (ARI médiocre sur les cercles concentriques) — je l'ai gardé
+comme *leçon honnête*, avec le clustering spectral (ARI $1{,}0$) en contrepoint.
+
+# Trois questions-pièges classiques {.unnumbered}
+
+**« Tout cela existe déjà dans des packages. Où est la nouveauté ? »**
+La nouveauté n'est pas dans les méthodes prises une à une — c'est dans leur
+**mise en unité** (les quatre idées, démontrées et non affirmées) et dans le
+**diagramme de phase**, une synthèse produite *par* la boîte à outils complète et
+que je n'ai vue nulle part sous cette forme.
+
+**« Combien de temps avant que vous ne sachiez plus expliquer une de ces preuves ? »**
+Chaque module suit le même trajet — dérivation, code, validation, Monte Carlo —
+donc je ne récite pas, je reconstruis : donnez-moi n'importe quel module et je
+repars de la condition d'optimalité. C'est précisément ce que réimplémenter à la
+main devait garantir.
+
+**« Si je vous donne un nouveau problème, sauriez-vous choisir la méthode ? »**
+C'est exactement l'usage du diagramme de phase et du glossaire des quatre idées :
+identifier le régime ($p/n$, parcimonie, dépendance temporelle, besoin
+d'incertitude), puis la méthode et son risque. Le projet n'est pas une
+collection — c'est un outil de décision.

@@ -38,6 +38,9 @@ memoire:         ## Rend le mémoire SEUL en PDF (manuscrit autonome, prêt pour
 slides:          ## Rend le diaporama de soutenance (revealjs, HTML)
 	$(QUARTO) render rapport/slides.qmd
 
+jury:            ## Rend la fiche des questions du jury (HTML)
+	$(QUARTO) render rapport/questions_jury.qmd --to html
+
 site:            ## Construit le site de documentation pkgdown
 	$(RSCRIPT) -e "pkgdown::build_site()"
 

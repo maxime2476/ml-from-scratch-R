@@ -17,11 +17,15 @@ for (f in c("00_linalg", "01_ols", "03_glm_irls", "04_regularisation",
             "08_cart", "09_bagging_rf", "16_causal_ml", "22_debiased_lasso",
             "23_sensitivity"))
   source(file.path("R", paste0(f, ".R")))
-suppressMessages({ library(qte); library(ggplot2) })
+suppressMessages({ library(ggplot2) })
 out_dir <- "applications/output"; dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 set.seed(2026)
 
-data(lalonde.exp,  package = "qte"); data(lalonde.psid, package = "qte")
+# Donnees LaLonde/Dehejia-Wahba (NSW experimental + comparaison PSID), embarquees
+# dans le depot : le package source qte a ete archive de CRAN, on rend donc le
+# chapitre autonome et reproductible. Voir applications/data/README.md.
+lalonde.exp  <- readRDS("applications/data/lalonde_exp.rds")
+lalonde.psid <- readRDS("applications/data/lalonde_psid.rds")
 covs <- c("age", "education", "black", "hispanic", "married", "nodegree", "re74", "re75")
 fml  <- as.formula(paste("re78 ~ treat +", paste(covs, collapse = " + ")))
 

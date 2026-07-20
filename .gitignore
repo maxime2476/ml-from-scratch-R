@@ -33,6 +33,9 @@ Thumbs.db
 /simulations/output/
 /applications/output/
 *.rds
+# ...sauf les donnees LaLonde embarquees (qte archive de CRAN) : le chapitre
+# application doit rester reproductible sans dependance externe.
+!/applications/data/*.rds
 
 # Artefacts de build package
 *.Rcheck/

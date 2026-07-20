@@ -45,7 +45,6 @@ Suggests:
     plm,
     hdm,
     sensemakr,
-    qte,
     microbenchmark,
     shiny,
     callr,
